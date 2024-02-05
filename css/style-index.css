@@ -1,7 +1,7 @@
 #header{
     width: 100%;
     height: 100vh;
-    /* background-image: url("/images/header-bg.png"); */
+    /* background-image: url("images/header-bg.png"); */
     background-size: cover;
     background-position: center;
 }
@@ -327,7 +327,7 @@
 #blogs{
     padding: 50px 0;
     width: 100%;
-    background-image: url("/images/blog-section-image.png");
+    background-image: url("images/blog-section-image.png");
     background-size: cover;
     background-position: center;
 }
