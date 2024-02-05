@@ -314,7 +314,7 @@ let tie = null;
 let firePoints;
 
 blasterGreen = LoadGLBMoedl(
-    '/assets/models/laser_blast.glb', (file) => {
+    'assets/models/laser_blast.glb', (file) => {
 
         blasterGreen = file;
 
@@ -347,7 +347,7 @@ blasterGreen = LoadGLBMoedl(
 
 function LoadPlanet(){
     planet = LoadGLBMoedl(
-        '/assets/models/planet.glb', (file) => {
+        'assets/models/planet.glb', (file) => {
             planet = file.scene;
             //file.scene.position.copy(dynamicPlanetPostion);
             const size = 12;
@@ -359,9 +359,9 @@ function LoadPlanet(){
             /*
             let mat = AddStandardTexture(
                 file,
-                '/assets/texture/planet_Albedo.png',
-                '/assets/texture/planet_Roughness.png',
-                '/assets/texture/xwing_AO.png', 
+                'assets/texture/planet_Albedo.png',
+                'assets/texture/planet_Roughness.png',
+                'assets/texture/xwing_AO.png', 
                 generalMaterialProperty
             );
 
@@ -391,7 +391,7 @@ function LoadPlanet(){
 let shySphere = null;
 function SkySphere() {
     shySphere = LoadGLBMoedl(
-        '/assets/models/skySphere.glb', (file) => {
+        'assets/models/skySphere.glb', (file) => {
             shySphere = file.scene;
             shySphere.position.set(0, 0, 0);
             shySphere.scale.set(100, 100, 100);
@@ -427,7 +427,7 @@ function SkySphere() {
 
 function LoadXWing(){
     glbModel = LoadGLBMoedl(
-        '/assets/models/x-wing.glb', (file) => {
+        'assets/models/x-wing.glb', (file) => {
             glbModel = file.scene;
             file.scene.position.set(0, 0, -5);
             file.scene.scale.set(.5, .5, .5);
@@ -436,9 +436,9 @@ function LoadXWing(){
 
             // AddStandardTexture(
             //     file,
-            //     '/assets/texture/xwing_Albedo.png',
-            //     '/assets/texture/xwing_Roughness.png',
-            //     '/assets/texture/xwing_AO.png', 
+            //     'assets/texture/xwing_Albedo.png',
+            //     'assets/texture/xwing_Roughness.png',
+            //     'assets/texture/xwing_AO.png', 
             //     generalMaterialProperty
             // );
 
@@ -453,9 +453,9 @@ function LoadXWing(){
                 wireframe: false,
             });
 
-            AddTextureToMaterial(baseMaterial, '/assets/texture/xwing_Albedo.png', "map");
-            AddTextureToMaterial(baseMaterial, '/assets/texture/xwing_Roughness.png', "roughnessMap");
-            AddTextureToMaterial(baseMaterial, '/assets/texture/xwing_AO.png', "aoMap");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_Albedo.png', "map");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_Roughness.png', "roughnessMap");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_AO.png', "aoMap");
 
             const tailGlow = new THREE.MeshBasicMaterial(
                 {
@@ -470,8 +470,8 @@ function LoadXWing(){
                 }
             );
 
-            AddTextureToMaterial(tailGlow, '/assets/texture/transparent_VFX.png', "map");
-            AddTextureToMaterial(tailGlow, '/assets/texture/transparent_VFX.png', "emissiveMap");
+            AddTextureToMaterial(tailGlow, 'assets/texture/transparent_VFX.png', "map");
+            AddTextureToMaterial(tailGlow, 'assets/texture/transparent_VFX.png', "emissiveMap");
 
 
             file.scene.traverse((node) => {
@@ -497,7 +497,7 @@ function LoadXWing(){
 
 function LoadTie(){
     tie = LoadGLBMoedl(
-        '/assets/models/tie_fighter.glb', (file) => {
+        'assets/models/tie_fighter.glb', (file) => {
             tie = file.scene;
             file.scene.position.set(0, 1, -35);
             file.scene.scale.set(.5, .5, .5);
@@ -517,9 +517,9 @@ function LoadTie(){
             /*
             AddStandardTexture(
                 file,
-                '/assets/texture/tie_Albedo.png',
-                '/assets/texture/tie_Roughness.png',
-                '/assets/texture/tie_AO.png', 
+                'assets/texture/tie_Albedo.png',
+                'assets/texture/tie_Roughness.png',
+                'assets/texture/tie_AO.png', 
                 generalMaterialProperty
             );
             */
@@ -535,9 +535,9 @@ function LoadTie(){
                 wireframe: false,
             });
 
-            AddTextureToMaterial(baseMaterial, '/assets/texture/tie_Albedo.png', "map");
-            AddTextureToMaterial(baseMaterial, '/assets/texture/tie_Roughness.png', "roughnessMap");
-            AddTextureToMaterial(baseMaterial, '/assets/texture/tie_AO.png', "aoMap");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_Albedo.png', "map");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_Roughness.png', "roughnessMap");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_AO.png', "aoMap");
 
             file.scene.traverse((node) => {
                 console.log(node.name);
@@ -557,7 +557,7 @@ let starDestroyer3 = null;
 
 function LoadStarDestroyer() {
     starDestroyer = LoadGLBMoedl(
-        '/assets/models/starDestroyer.glb', (file) => {
+        'assets/models/starDestroyer.glb', (file) => {
             starDestroyer = file.scene;
             starDestroyer2 = starDestroyer.clone();
             starDestroyer3 = starDestroyer.clone();
@@ -589,7 +589,7 @@ let deathStar = null;
 
 async function aLoadStarDestroyer() {
     try {
-        const model = await aLoadGLBModel('/assets/models/deathStar.glb');
+        const model = await aLoadGLBModel('assets/models/deathStar.glb');
        
         deathStar = model;
 
@@ -625,7 +625,7 @@ async function aLoadStarDestroyer() {
 
 async function onModelLoaded(glbModel) {
     try {
-        const scene = await loadGLBModel('/path/to/model.glb');
+        const scene = await loadGLBModel('path/to/model.glb');
         // Do something with the loaded scene
     } catch (error) {
         console.error(error);
@@ -641,7 +641,7 @@ function LoadWorldHDRI(onLoad) {
 
     if(hdrEquirectangularMap == null){
 
-    let hdrEquirectangularMap = hdriLoader.load( '/assets/texture/hdri/lighting_3.hdr', function (hdrImage) {
+    let hdrEquirectangularMap = hdriLoader.load( 'assets/texture/hdri/lighting_3.hdr', function (hdrImage) {
     
             hdrEquirectangularMap = hdrImage;
     

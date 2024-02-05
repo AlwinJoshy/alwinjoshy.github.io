@@ -218,7 +218,7 @@ function AddStandardTexture(file, albedoPath, roughnessPath, aoMapPath, material
 }
 
 let blasterGreen = LoadGLBMoedl(
-    '/assets/models/laser_blast.glb', (file) => {
+    'assets/models/laser_blast.glb', (file) => {
 
         blasterGreen = file;
 
@@ -248,7 +248,7 @@ let blasterGreen = LoadGLBMoedl(
 
 
 let glbModel = LoadGLBMoedl(
-    '/assets/models/x-wing.glb', (file) => {
+    'assets/models/x-wing.glb', (file) => {
         glbModel = file.scene;
         file.scene.position.set(0, 0, 0);
         file.scene.scale.set(.5, .5, .5);
@@ -256,9 +256,9 @@ let glbModel = LoadGLBMoedl(
 
         AddStandardTexture(
             file,
-            '/assets/texture/xwing_Albedo.png',
-            '/assets/texture/xwing_Roughness.png',
-            '/assets/texture/xwing_AO.png', 
+            'assets/texture/xwing_Albedo.png',
+            'assets/texture/xwing_Roughness.png',
+            'assets/texture/xwing_AO.png', 
             generalMaterialProperty
         );
     }
@@ -266,7 +266,7 @@ let glbModel = LoadGLBMoedl(
 
 let firePoints;
 let tie = LoadGLBMoedl(
-    '/assets/models/tie_fighter.glb', (file) => {
+    'assets/models/tie_fighter.glb', (file) => {
         tie = file.scene;
         file.scene.position.set(0, 1, -15);
         file.scene.scale.set(.5, .5, .5);
@@ -285,9 +285,9 @@ let tie = LoadGLBMoedl(
 
         AddStandardTexture(
             file,
-            '/assets/texture/tie_Albedo.png',
-            '/assets/texture/tie_Roughness.png',
-            '/assets/texture/tie_AO.png', 
+            'assets/texture/tie_Albedo.png',
+            'assets/texture/tie_Roughness.png',
+            'assets/texture/tie_AO.png', 
             generalMaterialProperty
         );
     }
@@ -301,7 +301,7 @@ function LoadWorldHDRI(onLoad) {
 
     if(hdrEquirectangularMap == null){
 
-    let hdrEquirectangularMap = hdriLoader.load( '/assets/texture/hdri/sky_desert_gree.hdr', function (hdrImage) {
+    let hdrEquirectangularMap = hdriLoader.load( 'assets/texture/hdri/sky_desert_gree.hdr', function (hdrImage) {
     
             hdrEquirectangularMap = hdrImage;
     
