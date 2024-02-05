@@ -327,7 +327,7 @@
 #blogs{
     padding: 50px 0;
     width: 100%;
-    background-image: url("images/blog-section-image.png");
+    background-image: url("/images/blog-section-image.png");
     background-size: cover;
     background-position: center;
 }
