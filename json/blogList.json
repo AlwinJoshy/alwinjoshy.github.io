@@ -3,19 +3,19 @@
         {
             "year": "2021",
             "pages":[
-                "/pages/blogs/allblogs/blogTemplate-blank.html",
-                "/pages/blogs/allblogs/blogTemplate-blank.html",
-                "/pages/blogs/allblogs/blogTemplate-blank.html",
-                "/pages/blogs/allblogs/blogTemplate-blank.html"
+                "pages/blogs/allblogs/blogTemplate-blank.html",
+                "pages/blogs/allblogs/blogTemplate-blank.html",
+                "pages/blogs/allblogs/blogTemplate-blank.html",
+                "pages/blogs/allblogs/blogTemplate-blank.html"
             ]
         },
         {
             "year": "2020",
             "pages":[
-                "/pages/blogs/allblogs/blogTemplate-blank.html",
-                "/pages/blogs/allblogs/blogTemplate-blank.html",
-                "/pages/blogs/allblogs/blogTemplate-blank.html",
-                "/pages/blogs/allblogs/blogTemplate-blank.html"
+                "pages/blogs/allblogs/blogTemplate-blank.html",
+                "pages/blogs/allblogs/blogTemplate-blank.html",
+                "pages/blogs/allblogs/blogTemplate-blank.html",
+                "pages/blogs/allblogs/blogTemplate-blank.html"
             ]
         }
     ]
