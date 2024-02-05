@@ -1,5 +1,5 @@
 #blog-banner-area{
-    background-image: url("/images/blog-section-image.png");
+    background-image: url("images/blog-section-image.png");
     height: 200px;
     display: flex;
     align-items: center;
