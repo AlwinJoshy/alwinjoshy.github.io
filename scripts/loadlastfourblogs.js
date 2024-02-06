@@ -124,8 +124,8 @@ function LoadAllBlogData(allblogs) {
 
 function AutoLoadBlogs() {
 
-    const blogYearTextFilePath = "../components/blogYearSection.html";
-    const blogBlockTextFilePath = "../components/blogContentDisplay.html";
+    const blogYearTextFilePath = "/components/blogYearSection.html";
+    const blogBlockTextFilePath = "/components/blogContentDisplay.html";
     const blogContentMapFilePath = 'json/blogList.json';
 
     LoadTextFile(blogYearTextFilePath,
