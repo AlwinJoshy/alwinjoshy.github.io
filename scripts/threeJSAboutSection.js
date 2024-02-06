@@ -311,7 +311,7 @@ let blasterGreen = null;
 let planet = null;
 let glbModel = null;
 let tie = null;
-let firePoints;
+let firePoints = null;
 
 blasterGreen = LoadGLBMoedl(
     'assets/models/laser_blast.glb', (file) => {
@@ -776,6 +776,9 @@ function Remove(updateFunction){
 const shootDelay = 0.1;
 let nextShoot = .2;
 function Shoot(){
+
+    if(firePoints == null) return;
+
     if(blasterGreen == null || blasterGreen == undefined) {
         return;
     }
