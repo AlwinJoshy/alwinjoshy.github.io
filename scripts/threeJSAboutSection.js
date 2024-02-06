@@ -604,7 +604,9 @@ SkySphere(
             LoadStarDestroyer(
                 LoadTie(
                     LoadXWing(
-
+                        () => {
+                            console.log("models loaded");
+                        }
                     )
                 )
             )
