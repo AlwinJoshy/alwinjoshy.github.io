@@ -364,7 +364,9 @@ function LoadPlanet(action){
             });
 
             scene.add(planet);
-            action();
+            if(action == null || action == undefined){
+     action();
+}
         }
     );
 }
@@ -403,7 +405,9 @@ function SkySphere(action) {
 
             scene.add(shySphere);
 
-            action();
+            if(action == null || action == undefined){
+     action();
+}
         }
     );
 }
@@ -462,7 +466,9 @@ function LoadXWing(action){
 
             scene.add(file.scene);
 
-            action();
+            if(action == null || action == undefined){
+     action();
+}
         }
     );
     
@@ -509,7 +515,9 @@ function LoadTie(action){
             });
 
             scene.add(file.scene);
-            action();
+            if(action == null || action == undefined){
+     action();
+}
         }
     );
 }
@@ -542,7 +550,9 @@ function LoadStarDestroyer(action) {
             scene.add(starDestroyer2);
             scene.add(starDestroyer3);
             
-            action();
+            if(action == null || action == undefined){
+                action();
+            }
         }
     );
 }
@@ -581,7 +591,9 @@ async function LoadDeathStar(action) {
 
             scene.add(deathStar);
 
-            action();
+            if(action == null || action == undefined){
+     action();
+}
         
     } catch (error) {
         console.error(error);
