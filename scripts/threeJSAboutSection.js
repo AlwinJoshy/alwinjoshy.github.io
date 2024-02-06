@@ -312,8 +312,9 @@ let planet = null;
 let glbModel = null;
 let tie = null;
 let firePoints = null;
+let shySphere = null;
 
-blasterGreen = LoadGLBMoedl(
+LoadGLBMoedl(
     'assets/models/laser_blast.glb', (file) => {
 
         blasterGreen = file;
@@ -337,15 +338,10 @@ blasterGreen = LoadGLBMoedl(
                 node.material = material;
             }
         });
-
-        //scene.add(file.scene);
-       LoadPlanet();
-       LoadXWing();
-       SkySphere();
     }
 );
 
-function LoadPlanet(){
+function LoadPlanet(action){
     planet = LoadGLBMoedl(
         'assets/models/planet.glb', (file) => {
             planet = file.scene;
@@ -354,21 +350,6 @@ function LoadPlanet(){
             planet.scale.set(size, size, size);
             planet.rotation.set(0, 3.14159, 0);
             planet.position.set(50, -350, -200);
-
-
-            /*
-            let mat = AddStandardTexture(
-                file,
-                'assets/texture/planet_Albedo.png',
-                'assets/texture/planet_Roughness.png',
-                'assets/texture/xwing_AO.png', 
-                generalMaterialProperty
-            );
-
-            */
-
-            //mat.color = {r:.4, g:.4, b:.7};
-
   
             planet.traverse((node) => {
                 console.log(node.name);
@@ -383,13 +364,13 @@ function LoadPlanet(){
             });
 
             scene.add(planet);
-           
+            action();
         }
     );
 }
 
-let shySphere = null;
-function SkySphere() {
+
+function SkySphere(action) {
     shySphere = LoadGLBMoedl(
         'assets/models/skySphere.glb', (file) => {
             shySphere = file.scene;
@@ -421,11 +402,13 @@ function SkySphere() {
             });
 
             scene.add(shySphere);
+
+            action();
         }
     );
 }
 
-function LoadXWing(){
+function LoadXWing(action){
     glbModel = LoadGLBMoedl(
         'assets/models/x-wing.glb', (file) => {
             glbModel = file.scene;
@@ -433,15 +416,6 @@ function LoadXWing(){
             file.scene.scale.set(.5, .5, .5);
             file.scene.rotation.set(0, 3.14159, 0);
     
-
-            // AddStandardTexture(
-            //     file,
-            //     'assets/texture/xwing_Albedo.png',
-            //     'assets/texture/xwing_Roughness.png',
-            //     'assets/texture/xwing_AO.png', 
-            //     generalMaterialProperty
-            // );
-
             const baseMaterial = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
                 aoMapIntensity: .7,
@@ -488,14 +462,13 @@ function LoadXWing(){
 
             scene.add(file.scene);
 
-            LoadTie();
-            LoadStarDestroyer();
+            action();
         }
     );
     
 }
 
-function LoadTie(){
+function LoadTie(action){
     tie = LoadGLBMoedl(
         'assets/models/tie_fighter.glb', (file) => {
             tie = file.scene;
@@ -513,17 +486,6 @@ function LoadTie(){
             greenPointLight.position.copy(worldPosition);
             file.scene.add(greenPointLight);
     
-    
-            /*
-            AddStandardTexture(
-                file,
-                'assets/texture/tie_Albedo.png',
-                'assets/texture/tie_Roughness.png',
-                'assets/texture/tie_AO.png', 
-                generalMaterialProperty
-            );
-            */
-
             const baseMaterial = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
                 aoMapIntensity: .7,
@@ -547,6 +509,7 @@ function LoadTie(){
             });
 
             scene.add(file.scene);
+            action();
         }
     );
 }
@@ -555,7 +518,7 @@ let starDestroyer = null;
 let starDestroyer2 = null;
 let starDestroyer3 = null;
 
-function LoadStarDestroyer() {
+function LoadStarDestroyer(action) {
     starDestroyer = LoadGLBMoedl(
         'assets/models/starDestroyer.glb', (file) => {
             starDestroyer = file.scene;
@@ -579,7 +542,7 @@ function LoadStarDestroyer() {
             scene.add(starDestroyer2);
             scene.add(starDestroyer3);
             
-            aLoadStarDestroyer();
+            action();
         }
     );
 }
@@ -587,7 +550,7 @@ function LoadStarDestroyer() {
 let deathStar = null;
 
 
-async function aLoadStarDestroyer() {
+async function LoadDeathStar(action) {
     try {
         const model = await aLoadGLBModel('assets/models/deathStar.glb');
        
@@ -617,6 +580,8 @@ async function aLoadStarDestroyer() {
             });
 
             scene.add(deathStar);
+
+            action();
         
     } catch (error) {
         console.error(error);
@@ -631,6 +596,22 @@ async function onModelLoaded(glbModel) {
         console.error(error);
     }
 }
+
+// load all the modals in order
+SkySphere(
+    LoadPlanet(
+        LoadDeathStar(
+            LoadStarDestroyer(
+                LoadTie(
+                    LoadXWing(
+
+                    )
+                )
+            )
+        )
+    ));
+
+
 
 //#endregion
 
