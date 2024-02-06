@@ -1,7 +1,7 @@
 
 const LoadJsonFile = (jsonFilePath, action) => {
 
-    fetch("../json/blogList.json")
+    fetch(jsonFilePath)
     .then(response => {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);

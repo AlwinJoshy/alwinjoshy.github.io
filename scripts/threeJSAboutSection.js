@@ -364,7 +364,7 @@ function LoadPlanet(action){
             });
 
             scene.add(planet);
-            if(action == null || action == undefined){
+            if(action != null || action != undefined){
      action();
 }
         }
@@ -405,7 +405,7 @@ function SkySphere(action) {
 
             scene.add(shySphere);
 
-            if(action == null || action == undefined){
+            if(action != null || action != undefined){
      action();
 }
         }
@@ -466,7 +466,7 @@ function LoadXWing(action){
 
             scene.add(file.scene);
 
-            if(action == null || action == undefined){
+            if(action != null || action != undefined){
      action();
 }
         }
@@ -515,7 +515,7 @@ function LoadTie(action){
             });
 
             scene.add(file.scene);
-            if(action == null || action == undefined){
+            if(action != null || action != undefined){
      action();
 }
         }
@@ -550,7 +550,7 @@ function LoadStarDestroyer(action) {
             scene.add(starDestroyer2);
             scene.add(starDestroyer3);
             
-            if(action == null || action == undefined){
+            if(action != null || action != undefined){
                 action();
             }
         }
@@ -591,9 +591,9 @@ async function LoadDeathStar(action) {
 
             scene.add(deathStar);
 
-            if(action == null || action == undefined){
-     action();
-}
+            if(action != null || action != undefined){
+                action();
+            }
         
     } catch (error) {
         console.error(error);
