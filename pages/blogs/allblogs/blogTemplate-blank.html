@@ -10,8 +10,9 @@
     <script>
         // document.write( '<link rel="stylesheet" href="' + my_constant_path + '"style.css"/>' );
 
-        document.write( '<link rel="stylesheet" href="/css/style-general.css">' );
-        document.write( '<link rel="stylesheet" href="/css/style-blog.css">' );
+        document.write( '<link rel="stylesheet" href="' + sessionStorage.getItem("pageBaseRoot") + 'css/style-general.css">' );
+        document.write( '<link rel="stylesheet" href="' + sessionStorage.getItem("pageBaseRoot") + 'css/style-blog.css">' );
+        alert(window.location.pathname);
 
       </script>
 

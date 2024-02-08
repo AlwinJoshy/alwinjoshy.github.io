@@ -9,8 +9,14 @@
     <lisk rel="stylesheet" href="css/style-blog-archives.css">
 
         <script>
-            alert(window.location.origin);
-            alert(window.location.pathname);
+            //alert(window.location.origin);
+            //alert(window.location.pathname);
+            //window.pageBaseRoot = window.location.pathname;
+            //window.pageBaseRoot = "this is a test content";
+
+            sessionStorage.setItem("pageBaseRoot", "/");
+            let storedPath = sessionStorage.getItem("pageBaseRoot");
+            alert(storedPath);
         </script>
 
     <script src="https://kit.fontawesome.com/a3c67ea782.js" crossorigin="anonymous"></script>
