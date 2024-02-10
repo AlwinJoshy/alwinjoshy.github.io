@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="css/style-general.css">
+    <link rel="stylesheet" href="css/style-blog-archives.css">
+    <script src="https://kit.fontawesome.com/a3c67ea782.js" crossorigin="anonymous"></script>
+
+
+</head>
+
+<body>
+    <!-- --------------------------------- header bar -->
+    <div id="header">
+        <div class="container">
+            <nav>
+                <img src="images/name-symbol.png" alt="name image of Alwin Joshy Joseph" class="logo">
+                <ul id="sidemenu">
+                    <li><a href="index.html#header">HOME</a></li>
+                    <li><a href="index.html#about">ABOUT</a></li>
+                    <li><a href="index.html#services">SERVICES</a></li> 
+                    <li><a href="index.html#portfolio">WORK</a></li>  
+                    <li  class="active-page-marker"><a href="blogArchive.html">BLOGS</a></li> 
+                    <li><a href="index.html#contact">CONTACT</a></li>
+                    <i class="fa-solid fa-xmark" onclick='closeNavMenu()'></i>
+                </ul>
+                <i class="fa-solid fa-bars" onclick='openNavMenu()'></i>
+            </nav>
+        </div>
+    </div>
+
+    <div id="blog-banner-area">
+        <div class="container">
+            <h1 class="blog-title">
+                Welcom to my Blogs!
+            </h1>
+        </div>
+    </div>
+    <div class="blog-content">
+        <div class="container" id="all-blogs-list">
+
+        </div>
+    </div>
+
+    <div class="copyright">
+        <p>Copyright © Alwin. Made by Alwin joshy</p>
+    </div>
+    </div>
+
+    <!-- final load scripts -->
+    <script src="scripts/smallscreennavrops.js"></script>
+    <script src="scripts/josnFileLoader.js"></script>
+    <script src="scripts/textFileLoader.js"></script>
+    <script src="scripts/loadblogsfromfolder.js"></script>
+    <script src="scripts/openPageLink.js"></script>
+    
+</body>
+
+</html>

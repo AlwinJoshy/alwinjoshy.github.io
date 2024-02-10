@@ -1,0 +1,211 @@
+*{
+    margin: 0;
+    padding: 0;
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+body{
+    background: #000d02;
+    color: #fff;
+}
+
+html{
+    scroll-behavior: smooth;
+}
+
+.subtitle{
+    font-size: 40px;
+    font-weight: 600;
+    color: #fff;
+}
+
+#header{
+    width: 100%;
+    height: 100px;
+}
+.container{
+    padding: 10px 10%;
+}
+nav{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+
+.logo{
+    width: 140px;
+}
+nav ul li{
+    display: inline-block;
+    list-style: none;
+    margin: 10px 20px;
+}
+nav ul li a{
+    color: #fff;
+    text-decoration: none;
+    font-size: 18px;
+    position: relative;
+}
+
+nav ul li a::after{
+    content:'';
+    width: 0%;
+    height: 3px;
+    background: #2eaa25;
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    transition: .5s;
+}
+
+nav ul li a:hover::after{
+    width: 100%;
+}
+
+.active-page-marker a::after{
+    width: 100%;
+}
+
+.row{
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+a{
+    color: #2eaa25;
+}
+
+nav .fa-solid{
+    display: none;
+}
+
+#msg{
+    color: #2eaa25;
+    margin-top: -20px;
+    display: block;
+}
+
+.copyright{
+    width: 100%;
+    text-align: center;
+    padding: 25px 0;
+    background: #262626;
+    font-weight: 300;
+    margin-top: 20px;
+}
+
+.social-icons{
+    margin-top: 20px;
+}
+
+.social-icons a{
+    text-decoration: none;
+    color: #ababab;
+    font-size: 30px;
+    margin-right: 15px;
+    display: inline-block;
+    transition: transform 0.5s;
+}
+
+.social-icons a:hover{
+    color: #2eaa25;
+    transform: translateY(-5px);
+}
+
+.btn.btn2{
+    background-color: #2eaa25;
+    display: inline-block;
+}
+
+form input, form textarea{
+    width: 100%;
+    outline: none;
+    border: 0;
+    background: #262626;
+    margin: 15px 0;
+    padding: 15px;
+    font-size: 18px;
+    color: #fff;
+    border-radius: 5px;
+}
+
+form textarea{
+    resize: none;
+}
+
+form .btn2{
+    padding: 14px 60px;
+    font-size: 18px;
+    margin-top: 20px;
+    cursor: pointer;
+}
+
+/* ------------------------------------- normal button */
+.btn{
+    display: block;
+    text-decoration: none;
+    width: fit-content;
+    border: 1px solid #2eaa25;
+    padding: 14px 50px;
+    border-radius: 6px;
+    color: #fff;
+    margin: 50px auto;
+    transition: background-color 0.5s;
+}
+
+.btn:hover{
+    background-color: #2eaa25;
+}
+
+@media only screen and (max-width: 600px){
+
+    #header{
+        width: 100%;
+        height: 100vh;
+        /* background-image: url("/images/header-bg-sml-screen.png"); */
+    }
+
+    .hearder-text{
+        margin-top: 100%;
+        font-size: 16px;
+    }
+
+    .hearder-text h1{
+       font-size: 30px;
+    }
+    nav .fa-solid{
+        display: block;
+        font-size: 25px;
+    }
+
+    nav ul{
+        background: #2eaa25;
+        position: fixed;
+        top: 0;
+        right: -200px;
+        width: 200px;
+        height: 100vh;
+        padding-top: 50px;
+        z-index: 2;
+        transition: right .5s;
+    }
+
+    nav ul li{
+        display: block;
+        margin: 25px;
+    }
+
+    nav ul .fa-solid{
+        position: absolute;
+        cursor: pointer;
+        top: 25px;
+        left: 25px;
+        
+    }
+
+    .subtitle{
+        font-size: 40px;
+    }
+}
