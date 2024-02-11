@@ -298,6 +298,8 @@ function AddTextureToMaterial(material, path, name) {
     material[name] = LoadTexture(path);
 }
 
+
+
 //#region LoadHDRI
 let HDRITex;
     LoadWorldHDRI((texture)=>{
@@ -365,7 +367,7 @@ function LoadPlanet(action){
 
             scene.add(planet);
             if(action != null || action != undefined){
-     action();
+                //action();
 }
         }
     );
@@ -380,16 +382,10 @@ function SkySphere(action) {
             shySphere.scale.set(100, 100, 100);
             shySphere.rotation.set(0, -3.1, 0);
     
-            const skymaterial = new THREE.MeshBasicMaterial(
+            let skymaterial = new THREE.MeshBasicMaterial(
                 {
-                    color: {r:0, g:0, b:1}, 
-                    emissive: 0x000000, 
-                    emissiveIntensity: 0,
-                    opacity: 1,
-                    exposure: 2,
-                    transparent: true, 
-                    depthWrite: false,
-                    blending: THREE.AdditiveBlending,
+                    color: 0x000000, 
+                    emissive: {r:0, g:0, b:0},
                 }
             );
 
@@ -397,17 +393,43 @@ function SkySphere(action) {
             shySphere.traverse((node) => {
                 console.log(node.name);
                 if (node.isMesh) {
-                    //node.material = skymaterial;
-                    node.material.color = {r:0, g:.5, b:.6};
-                    node.material.emissive = {r:.3, g:.2, b:1};
+                    node.material = skymaterial;
                 }
             });
+
+
+            //AddTextureToMaterial(skymaterial, "assets/texture/sky_green_base.jpg", "map");
+
+            var a = LoadAsyncTexture("assets/texture/sky/sky_base_low.jpg", (tex) =>{
+                skymaterial["map"] = tex;
+                skymaterial.color = {r:0, g:.5, b:.6};
+                skymaterial.needsUpdate = true;
+
+                loadApplyTex("assets/texture/sky/sky_base_mid.jpg", () => {
+                    loadApplyTex("assets/texture/sky/sky_base_hig.jpg", () => {
+                        console.log("run action...");
+                    });
+                });
+            });
+            
+
+            const loadApplyTex = (path, action) => {
+                var a = LoadAsyncTexture(path, (tex) =>{
+                    //  skymaterial.color = {r:0, g:.5, b:.6};
+                    //  skymaterial.emissive = {r:0, g:0, b:0};
+                      skymaterial["map"] = tex;
+                      skymaterial.needsUpdate = true;
+                      
+                      action();
+                  });
+            };
+
 
             scene.add(shySphere);
 
             if(action != null || action != undefined){
-     action();
-}
+                action();
+            }
         }
     );
 }
@@ -831,6 +853,21 @@ function LoadTexture(path){
     const texture = textureLoader.load(path);
     texture.flipY = false;
     return texture;
+}
+
+async function LoadAsyncTexture(path, callback) {
+    return new Promise((resolve, reject) => {
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load(path, (texture) => {
+            texture.flipY = false;
+            if (callback && typeof callback === 'function') {
+                callback(texture);
+            }
+            resolve(texture);
+        }, undefined, (error) => {
+            reject(error);
+        });
+    });
 }
 
 function DrawLine(position, direction) {
