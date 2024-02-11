@@ -431,9 +431,9 @@ function LoadXWing(action){
                 wireframe: false,
             });
 
-            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_Albedo.png', "map");
-            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_Roughness.png', "roughnessMap");
-            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_AO.png', "aoMap");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_Albedo.jpg', "map");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_Roughness.jpg', "roughnessMap");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_AO.jpg', "aoMap");
 
             const tailGlow = new THREE.MeshBasicMaterial(
                 {
@@ -503,9 +503,9 @@ function LoadTie(action){
                 wireframe: false,
             });
 
-            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_Albedo.png', "map");
-            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_Roughness.png', "roughnessMap");
-            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_AO.png', "aoMap");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_Albedo.jpg', "map");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_Roughness.jpg', "roughnessMap");
+            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_AO.jpg', "aoMap");
 
             file.scene.traverse((node) => {
                 console.log(node.name);
