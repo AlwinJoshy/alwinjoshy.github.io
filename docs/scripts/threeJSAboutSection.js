@@ -633,19 +633,20 @@ async function onModelLoaded(glbModel) {
 
 // load all the modals in order
 SkySphere(
-    LoadPlanet(
-        LoadDeathStar(
-            LoadStarDestroyer(
-                LoadTie(
-                    LoadXWing(
-                        () => {
-                            console.log("models loaded");
-                        }
-                    )
-                )
-            )
-        )
-    ));
+    // LoadPlanet(
+    //     LoadDeathStar(
+    //         LoadStarDestroyer(
+    //             LoadTie(
+    //                 LoadXWing(
+    //                     () => {
+    //                         console.log("models loaded");
+    //                     }
+    //                 )
+    //             )
+    //         )
+    //     )
+    // )
+    );
 
 
 
