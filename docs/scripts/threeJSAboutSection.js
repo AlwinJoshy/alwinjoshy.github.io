@@ -631,23 +631,6 @@ async function onModelLoaded(glbModel) {
     }
 }
 
-// load all the modals in order
-SkySphere(
-    // LoadPlanet(
-    //     LoadDeathStar(
-    //         LoadStarDestroyer(
-    //             LoadTie(
-    //                 LoadXWing(
-    //                     () => {
-    //                         console.log("models loaded");
-    //                     }
-    //                 )
-    //             )
-    //         )
-    //     )
-    // )
-    );
-
 
 
 //#endregion
@@ -897,8 +880,31 @@ function DrawLine(position, direction) {
 
 }
 
-animate();
 
 
 
 
+document.addEventListener("DOMContentLoaded", function() {
+ console.log("page_loaded");
+
+ // load all the modals in order
+SkySphere(
+    LoadPlanet(
+        LoadDeathStar(
+            LoadStarDestroyer(
+                LoadTie(
+                    LoadXWing(
+                        () => {
+                            console.log("models loaded");
+                        }
+                    )
+                )
+            )
+        )
+    )
+    );
+
+
+
+ animate();
+});
