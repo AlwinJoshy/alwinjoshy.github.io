@@ -653,42 +653,42 @@ async function LoadDeathStar(action) {
 
             console.log(deathStarMaterial);
 
-            // load albedo
-            LoadAsyncTexture("assets/texture/deathStar/deathstar_albedo.jpg", (tex) =>{
-                tex.wrapS = THREE.RepeatWrapping;
-                tex.wrapT = THREE.RepeatWrapping;
-                deathStarMaterial.map = tex;
-                // loadApplyTex("/docs/assets/texture/deathStar/deathstar_albedo_med.png", deathStarMaterial, "map",() => {
-                //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_albedo_hig.png", deathStarMaterial, "map",() => {
+            // // load albedo
+            // LoadAsyncTexture("assets/texture/deathStar/deathstar_albedo.jpg", (tex) =>{
+            //     tex.wrapS = THREE.RepeatWrapping;
+            //     tex.wrapT = THREE.RepeatWrapping;
+            //     deathStarMaterial.map = tex;
+            //     // loadApplyTex("/docs/assets/texture/deathStar/deathstar_albedo_med.png", deathStarMaterial, "map",() => {
+            //     //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_albedo_hig.png", deathStarMaterial, "map",() => {
 
-                //     });
-                // });
-            });
+            //     //     });
+            //     // });
+            // });
 
 
-            // emission map
-            LoadAsyncTexture("assets/texture/deathStar/deathstar_emission.jpg", (tex) =>{
-                tex.wrapS = THREE.RepeatWrapping;
-                tex.wrapT = THREE.RepeatWrapping;
-                deathStarMaterial.emissiveMap = tex;
-                // loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_mid.jpg", deathStarMaterial, "emissiveMap",() => {
-                //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_hig.jpg", deathStarMaterial, "emissiveMap",() => {
+            // // emission map
+            // LoadAsyncTexture("assets/texture/deathStar/deathstar_emission.jpg", (tex) =>{
+            //     tex.wrapS = THREE.RepeatWrapping;
+            //     tex.wrapT = THREE.RepeatWrapping;
+            //     deathStarMaterial.emissiveMap = tex;
+            //     // loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_mid.jpg", deathStarMaterial, "emissiveMap",() => {
+            //     //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_hig.jpg", deathStarMaterial, "emissiveMap",() => {
 
-                //     });
-                // });
-            });
+            //     //     });
+            //     // });
+            // });
 
-              // normal map
-              LoadAsyncTexture("assets/texture/deathStar/deathstar_normal.jpg", (tex) =>{
-                tex.wrapS = THREE.RepeatWrapping;
-                tex.wrapT = THREE.RepeatWrapping;
-                deathStarMaterial.normalMap = tex;
-                // loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_mid.jpg", deathStarMaterial, "emissiveMap",() => {
-                //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_hig.jpg", deathStarMaterial, "emissiveMap",() => {
+            //   // normal map
+            //   LoadAsyncTexture("assets/texture/deathStar/deathstar_normal.jpg", (tex) =>{
+            //     tex.wrapS = THREE.RepeatWrapping;
+            //     tex.wrapT = THREE.RepeatWrapping;
+            //     deathStarMaterial.normalMap = tex;
+            //     // loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_mid.jpg", deathStarMaterial, "emissiveMap",() => {
+            //     //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_hig.jpg", deathStarMaterial, "emissiveMap",() => {
 
-                //     });
-                // });
-            });
+            //     //     });
+            //     // });
+            // });
 
 
 
