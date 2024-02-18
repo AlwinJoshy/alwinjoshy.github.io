@@ -642,11 +642,11 @@ async function LoadDeathStar(action) {
                     deathStarMaterial = node.material;
                     deathStarMaterial.emissiveIntensity = .8;
                     deathStarMaterial.color = {r:.4, g:.4, b:.4};
-                    deathStarMaterial.metalness = .9;
+                    deathStarMaterial.metalness = .3;
                     deathStarMaterial.metalnessMap = null;
                     deathStarMaterial.roughnessMap = null;
                     deathStarMaterial.roughness = .8;
-                    deathStarMaterial.envMapIntensity = .1;
+                    deathStarMaterial.envMapIntensity = .5;
                     deathStarMaterial.normalScale = new THREE.Vector2(.2, .2);
                 }
             });
@@ -973,13 +973,13 @@ SkySphere(
     LoadPlanet(
         LoadDeathStar(
             LoadStarDestroyer(
-                LoadTie(
-                    LoadXWing(
-                        () => {
-                            console.log("models loaded");
-                        }
-                    )
-                )
+                // LoadTie(
+                //     LoadXWing(
+                //         () => {
+                //             console.log("models loaded");
+                //         }
+                //     )
+                // )
             )
         )
     )
