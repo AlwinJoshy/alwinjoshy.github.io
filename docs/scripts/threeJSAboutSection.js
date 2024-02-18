@@ -539,8 +539,8 @@ function LoadTie(action){
     tie = LoadGLBMoedl(
         'assets/models/tie_fighter.glb', (file) => {
             tie = file.scene;
-            file.scene.position.set(0, 1, -35);
-            file.scene.scale.set(.5, .5, .5);
+            file.scene.position.set(0, 1, -30);
+            file.scene.scale.set(.7, .7, .7);
             file.scene.rotation.set(0, 0, 0);
     
             const aircraftModel = file.scene.getObjectByName('tie_fighter');
@@ -557,16 +557,31 @@ function LoadTie(action){
                 color: 0xffffff,
                 aoMapIntensity: .7,
                 envMapIntensity: .1,
-                emissiveIntensity: 100,
-                metalness: .1,
-                roughness: .3,
-                exposure: 1,
+                emissive: 0x112233,
+                emissiveIntensity: .1,
+                aoMap: dummy32x32Tex,
+                metalness: .2,
+                roughness: .1,
+                exposure: 3,
                 wireframe: false,
+                map: dummy32x32Tex,
+                roughnessMap: dummy32x32Tex
             });
 
-            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_Albedo.jpg', "map");
-            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_Roughness.jpg', "roughnessMap");
-            AddTextureToMaterial(baseMaterial, 'assets/texture/tie_AO.jpg', "aoMap");
+            // albedo
+            LoadAsyncTexture("/docs/assets/texture/ti/tie_albedo.jpg", (tex) =>{
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                baseMaterial.map = tex;
+            });
+
+
+            // roughness
+            LoadAsyncTexture("/docs/assets/texture/ti/tie_roughness.jpg", (tex) =>{
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                baseMaterial.roughnessMap = tex;
+            });
 
             file.scene.traverse((node) => {
                 console.log(node.name);
@@ -969,13 +984,13 @@ SkySphere(
     LoadPlanet(
         LoadDeathStar(
             LoadStarDestroyer(
-                // LoadTie(
-                //     LoadXWing(
-                //         () => {
-                //             console.log("models loaded");
-                //         }
-                //     )
-                // )
+                LoadTie(
+                    LoadXWing(
+                        () => {
+                            console.log("models loaded");
+                        }
+                    )
+                )
             )
         )
     )
