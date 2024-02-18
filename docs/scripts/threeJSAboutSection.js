@@ -450,7 +450,7 @@ function SkySphere(action) {
 
             var a = LoadAsyncTexture("assets/texture/sky/sky_base_low.jpg",(tex) =>{
                 skymaterial["map"] = tex;
-                skymaterial.color = {r:0, g:.5, b:.6};
+                skymaterial.color = {r:.3, g:.4, b:.5};
                 skymaterial.needsUpdate = true;
 
                 loadApplyTex("assets/texture/sky/sky_base_mid.jpg", skymaterial,"map", () => {
