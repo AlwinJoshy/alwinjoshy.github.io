@@ -53,6 +53,7 @@ class Bullet {
 
 //#endregion
 
+const dummy32x32Tex = LoadTexture("/docs/assets/texture/dummy_32x32.jpg");
 
 // Get the container div
 const container = document.getElementById('show-screen');
@@ -632,37 +633,39 @@ async function LoadDeathStar(action) {
             deathStar.scale.set(size, size, size);
 
             deathStar.rotation.set(0, .6, 0);
+            
+            
 
-            let deathStarMaterial = null;
+            let deathStarMaterial = new THREE.MeshStandardMaterial(
+                {
+                    color: 0x555555,
+                    metalness: .8,
+                    roughness: .7,
+                    envMapIntensity: .3,
+                    emissive: 0x000000,
+                    emissiveIntensity: 1,
+                    map: dummy32x32Tex,
+                    normalMap: dummy32x32Tex,
+                    emissiveMap: dummy32x32Tex,
+                    normalScale: new THREE.Vector2(.1, .1)
+                }
+            );
 
             
             deathStar.traverse((node) => {
                 console.log(node.name);
                 if (node.isMesh) {
-                    deathStarMaterial = node.material;
-                    deathStarMaterial.emissiveIntensity = .8;
-                    deathStarMaterial.color = {r:.4, g:.4, b:.4};
-                    deathStarMaterial.metalness = .3;
-                    deathStarMaterial.metalnessMap = null;
-                    deathStarMaterial.roughnessMap = null;
-                    deathStarMaterial.roughness = .8;
-                    deathStarMaterial.envMapIntensity = .5;
-                    deathStarMaterial.normalScale = new THREE.Vector2(.2, .2);
+                    node.material = deathStarMaterial;
                 }
             });
 
-            console.log(deathStarMaterial);
+            //console.log(deathStarMaterial);
 
             // load albedo
-            LoadAsyncTexture("assets/texture/deathStar/deathstar_albedo.jpg", (tex) =>{
+            LoadAsyncTexture("/docs/assets/texture/deathStar/deathstar_albedo.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 deathStarMaterial.map = tex;
-                // loadApplyTex("/docs/assets/texture/deathStar/deathstar_albedo_med.png", deathStarMaterial, "map",() => {
-                //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_albedo_hig.png", deathStarMaterial, "map",() => {
-
-                //     });
-                // });
             });
 
 
@@ -671,12 +674,10 @@ async function LoadDeathStar(action) {
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 deathStarMaterial.emissiveMap = tex;
-                // loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_mid.jpg", deathStarMaterial, "emissiveMap",() => {
-                //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_hig.jpg", deathStarMaterial, "emissiveMap",() => {
-
-                //     });
-                // });
+                deathStarMaterial.emissive = {r:1, g:1, b:1};
             });
+
+            
 
               // normal map
               LoadAsyncTexture("assets/texture/deathStar/deathstar_normal.jpg", (tex) =>{
