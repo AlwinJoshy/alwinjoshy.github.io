@@ -619,8 +619,6 @@ function LoadStarDestroyer(action) {
 }
 
 let deathStar = null;
-
-
 async function LoadDeathStar(action) {
     try {
         const model = await aLoadGLBModel('assets/models/deathStar.glb');
@@ -629,25 +627,23 @@ async function LoadDeathStar(action) {
 
             deathStar.position.set(-100, -30, -50);
 
-            const size = .4;
+            const size = .35;
             deathStar.scale.set(size, size, size);
 
             deathStar.rotation.set(0, .6, 0);
             
-            
-
             let deathStarMaterial = new THREE.MeshStandardMaterial(
                 {
-                    color: 0x888888,
+                    color: 0x777777,
                     metalness: .8,
-                    roughness: .8,
+                    roughness: .65,
                     envMapIntensity: .3,
                     emissive: 0x000000,
                     emissiveIntensity: 1,
                     map: dummy32x32Tex,
                     normalMap: dummy32x32Tex,
                     emissiveMap: dummy32x32Tex,
-                    normalScale: new THREE.Vector2(.1, .1)
+                    normalScale: new THREE.Vector2(.2, .2)
                 }
             );
 
@@ -690,7 +686,6 @@ async function LoadDeathStar(action) {
                 //     });
                 // });
             });
-
 
 
             scene.add(deathStar);
