@@ -53,7 +53,7 @@ class Bullet {
 
 //#endregion
 
-const dummy32x32Tex = LoadTexture("/docs/assets/texture/dummy_32x32.jpg");
+const dummy32x32Tex = LoadTexture("assets/texture/dummy_32x32.jpg");
 
 // Get the container div
 const container = document.getElementById('show-screen');
@@ -638,9 +638,9 @@ async function LoadDeathStar(action) {
 
             let deathStarMaterial = new THREE.MeshStandardMaterial(
                 {
-                    color: 0x555555,
+                    color: 0x888888,
                     metalness: .8,
-                    roughness: .7,
+                    roughness: .8,
                     envMapIntensity: .3,
                     emissive: 0x000000,
                     emissiveIntensity: 1,
@@ -662,7 +662,7 @@ async function LoadDeathStar(action) {
             //console.log(deathStarMaterial);
 
             // load albedo
-            LoadAsyncTexture("/docs/assets/texture/deathStar/deathstar_albedo.jpg", (tex) =>{
+            LoadAsyncTexture("assets/texture/deathStar/deathstar_albedo.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 deathStarMaterial.map = tex;
