@@ -118,7 +118,7 @@ composer.addPass(bloomPass);
 
 
 //#region resize
-let dynamicPlanetPostion = new THREE.Vector3(-200, -2000, -400);
+let dynamicPlanetPostion = new THREE.Vector3(-100, -2000, -400);
 SetScreenSize();
 
 window.addEventListener('resize', () => {
@@ -171,7 +171,7 @@ window.addEventListener('mousemove', (event) => {
 
 
 //#region Directional Light
-const directionalLight = new THREE.DirectionalLight(0xffffff, .3);
+const directionalLight = new THREE.DirectionalLight(0xffffff, .5);
 directionalLight.position.set(1, 1, -1);
 scene.add(directionalLight);
 //#endregion
@@ -351,19 +351,58 @@ function LoadPlanet(action){
             const size = 12;
             planet.scale.set(size, size, size);
             planet.rotation.set(0, 3.14159, 0);
-            planet.position.set(50, -350, -200);
+            planet.position.set(100, -350, -200);
   
+
+            let planetSurface = null;
+
+            let planetAtmos = new THREE.MeshStandardMaterial({
+                color: 0xff0000, 
+                emissive: {r:0, g:0, b:0},
+                transparent: true,
+                opacity: .03
+            })
+
             planet.traverse((node) => {
                 console.log(node.name);
                 if (node.isMesh) {
-                    if(node.name == "Phoenix_LOD0"){
-                        node.material.color = {r:.5, g:.1, b:.1};
+                    if(node.name == "planet"){
+                        planetSurface = node.material;
+                        ///console.log(planetSurface);
                     }
-                    else if(node.name == "Icosphere"){
-                        //node.material = fresnelMaterial;
+                    else if(node.name == "atmos"){
+                        node.material = planetAtmos;
                     }
                 }
             });
+
+            // load albedo
+            LoadAsyncTexture("assets/texture/planet/planet_albedo_low.jpg", (tex) =>{
+                planetSurface.map = tex;
+                planetSurface.roughness = .1;
+                planetSurface.metalness = .4;
+                planetSurface.envMapIntensity = 0;
+
+                planetSurface.color = {r:1, g:.3, b:.2};
+  
+                loadApplyTex("assets/texture/planet/planet_albedo_mid.jpg", planetSurface, "map",() => {
+                    loadApplyTex("assets/texture/planet/planet_albedo_hig.jpg", planetSurface, "map",() => {
+
+                    });
+                });
+            });
+
+            // load normal 
+            LoadAsyncTexture("assets/texture/planet/planet_normal_low.jpg", (tex) =>{
+                planetSurface.normalMap = tex;
+
+                loadApplyTex("assets/texture/planet/planet_normal_mid.jpg", planetSurface, "normalMap",() => {
+                    loadApplyTex("assets/texture/planet/planet_normal_hig.jpg", planetSurface, "normalMap",() => {
+
+                    });
+                });
+            });
+
 
             scene.add(planet);
             if(action != null || action != undefined){
@@ -373,6 +412,14 @@ function LoadPlanet(action){
     );
 }
 
+const loadApplyTex = (path, material, valueName, action) => {
+    var a = LoadAsyncTexture(path, (tex) =>
+    {
+            material[valueName] = tex;
+            material.needsUpdate = true;
+            action();
+    });
+};
 
 function SkySphere(action) {
     shySphere = LoadGLBMoedl(
@@ -400,29 +447,20 @@ function SkySphere(action) {
 
             //AddTextureToMaterial(skymaterial, "assets/texture/sky_green_base.jpg", "map");
 
-            var a = LoadAsyncTexture("assets/texture/sky/sky_base_low.jpg", (tex) =>{
+            var a = LoadAsyncTexture("assets/texture/sky/sky_base_low.jpg",(tex) =>{
                 skymaterial["map"] = tex;
                 skymaterial.color = {r:0, g:.5, b:.6};
                 skymaterial.needsUpdate = true;
 
-                loadApplyTex("assets/texture/sky/sky_base_mid.jpg", () => {
-                    loadApplyTex("assets/texture/sky/sky_base_hig.jpg", () => {
+                loadApplyTex("assets/texture/sky/sky_base_mid.jpg", skymaterial,"map", () => {
+                    loadApplyTex("assets/texture/sky/sky_base_hig.jpg", skymaterial, "map",() => {
                         console.log("run action...");
                     });
                 });
             });
             
 
-            const loadApplyTex = (path, action) => {
-                var a = LoadAsyncTexture(path, (tex) =>{
-                    //  skymaterial.color = {r:0, g:.5, b:.6};
-                    //  skymaterial.emissive = {r:0, g:0, b:0};
-                      skymaterial["map"] = tex;
-                      skymaterial.needsUpdate = true;
-                      
-                      action();
-                  });
-            };
+
 
 
             scene.add(shySphere);
@@ -588,28 +626,71 @@ async function LoadDeathStar(action) {
        
         deathStar = model;
 
-            deathStar.position.set(-100, -50, -50);
+            deathStar.position.set(-100, -30, -50);
 
-            const size = 1;
+            const size = .4;
             deathStar.scale.set(size, size, size);
 
-            deathStar.rotation.set(0, -.9, 0);
+            deathStar.rotation.set(0, .6, 0);
+
+            let deathStarMaterial = null;
 
             
             deathStar.traverse((node) => {
                 console.log(node.name);
                 if (node.isMesh) {
-                    let material = node.material;
-                    material.envMap = HDRITex;
-                    material.aoMapIntensity = 0;
-                    material.envMapIntensity = .3;
-                    material.wireframe = false;
-                    material.metalness = .1,
-                    material.roughness = 1,
-                    material.exposure = 1,
-                    material.needsUpdate = true;
+                    deathStarMaterial = node.material;
+                    deathStarMaterial.emissiveIntensity = .8;
+                    deathStarMaterial.color = {r:.4, g:.4, b:.4};
+                    deathStarMaterial.metalness = .9;
+                    deathStarMaterial.metalnessMap = null;
+                    deathStarMaterial.roughnessMap = null;
+                    deathStarMaterial.roughness = .8;
+                    deathStarMaterial.envMapIntensity = .1;
+                    deathStarMaterial.normalScale = new THREE.Vector2(.2, .2);
                 }
             });
+
+            console.log(deathStarMaterial);
+
+            // load albedo
+            LoadAsyncTexture("/docs/assets/texture/deathStar/deathstar_albedo.jpg", (tex) =>{
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                deathStarMaterial.map = tex;
+                // loadApplyTex("/docs/assets/texture/deathStar/deathstar_albedo_med.png", deathStarMaterial, "map",() => {
+                //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_albedo_hig.png", deathStarMaterial, "map",() => {
+
+                //     });
+                // });
+            });
+
+
+            // emission map
+            LoadAsyncTexture("/docs/assets/texture/deathStar/deathstar_emission.jpg", (tex) =>{
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                deathStarMaterial.emissiveMap = tex;
+                // loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_mid.jpg", deathStarMaterial, "emissiveMap",() => {
+                //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_hig.jpg", deathStarMaterial, "emissiveMap",() => {
+
+                //     });
+                // });
+            });
+
+              // normal map
+              LoadAsyncTexture("/docs/assets/texture/deathStar/deathstar_normal.jpg", (tex) =>{
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                deathStarMaterial.normalMap = tex;
+                // loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_mid.jpg", deathStarMaterial, "emissiveMap",() => {
+                //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_hig.jpg", deathStarMaterial, "emissiveMap",() => {
+
+                //     });
+                // });
+            });
+
+
 
             scene.add(deathStar);
 
@@ -642,7 +723,7 @@ function LoadWorldHDRI(onLoad) {
 
     if(hdrEquirectangularMap == null){
 
-    let hdrEquirectangularMap = hdriLoader.load( 'assets/texture/hdri/lighting_3.hdr', function (hdrImage) {
+    let hdrEquirectangularMap = hdriLoader.load( 'assets/texture/hdri/lighting_2.hdr', function (hdrImage) {
     
             hdrEquirectangularMap = hdrImage;
     
