@@ -654,7 +654,7 @@ async function LoadDeathStar(action) {
             console.log(deathStarMaterial);
 
             // load albedo
-            LoadAsyncTexture("/docs/assets/texture/deathStar/deathstar_albedo.jpg", (tex) =>{
+            LoadAsyncTexture("assets/texture/deathStar/deathstar_albedo.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 deathStarMaterial.map = tex;
@@ -667,7 +667,7 @@ async function LoadDeathStar(action) {
 
 
             // emission map
-            LoadAsyncTexture("/docs/assets/texture/deathStar/deathstar_emission.jpg", (tex) =>{
+            LoadAsyncTexture("assets/texture/deathStar/deathstar_emission.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 deathStarMaterial.emissiveMap = tex;
@@ -679,7 +679,7 @@ async function LoadDeathStar(action) {
             });
 
               // normal map
-              LoadAsyncTexture("/docs/assets/texture/deathStar/deathstar_normal.jpg", (tex) =>{
+              LoadAsyncTexture("assets/texture/deathStar/deathstar_normal.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 deathStarMaterial.normalMap = tex;
