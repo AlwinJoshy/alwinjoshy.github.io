@@ -670,7 +670,7 @@ async function LoadDeathStar(action) {
 
 
             // emission map
-            LoadAsyncTexture("assets/texture/deathStar/deathstar_emission.jpg", (tex) =>{
+            LoadAsyncTexture("assets/texture/deathStar/deathstar_emi.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 deathStarMaterial.emissiveMap = tex;
