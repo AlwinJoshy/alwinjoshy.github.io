@@ -34,11 +34,17 @@
 }
 
 .hearder-text span{
-    color: #2eaa25;
+    color: #5bec51;
+    text-shadow: 0px 0px 8px #2eaa25;
 }
 
 .hearder-text h1{
     z-index: 2;
+    text-shadow: -2px 2px 12px #000000;
+}
+
+.hearder-text p{
+    text-shadow: -0px 0px 6px #000000;
 }
 
 /* -----------------------------------------about */

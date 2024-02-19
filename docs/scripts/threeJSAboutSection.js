@@ -172,7 +172,7 @@ window.addEventListener('mousemove', (event) => {
 
 
 //#region Directional Light
-const directionalLight = new THREE.DirectionalLight(0xffffff, .5);
+const directionalLight = new THREE.DirectionalLight(0xffffff, .6);
 directionalLight.position.set(1, 1, -1);
 scene.add(directionalLight);
 //#endregion
@@ -480,7 +480,7 @@ function LoadXWing(action){
     glbModel = LoadGLBMoedl(
         'assets/models/x-wing.glb', (file) => {
             glbModel = file.scene;
-            file.scene.position.set(0, 0, -5);
+            file.scene.position.set(0, 0, -10);
             file.scene.scale.set(.5, .5, .5);
             file.scene.rotation.set(0, 3.14159, 0);
     
@@ -493,11 +493,33 @@ function LoadXWing(action){
                 roughness: .3,
                 exposure: 1,
                 wireframe: false,
+                map: dummy32x32Tex,
+                roughnessMap: dummy32x32Tex,
+                aoMap: dummy32x32Tex
             });
 
-            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_Albedo.jpg', "map");
-            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_Roughness.jpg', "roughnessMap");
-            AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_AO.jpg', "aoMap");
+            LoadAsyncTexture('assets/texture/xwing_Albedo.jpg', (tex) =>{
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                baseMaterial.map = tex;
+            });
+
+            LoadAsyncTexture('assets/texture/xwing_Roughness.jpg', (tex) =>{
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                baseMaterial.roughnessMap = tex;
+            });
+
+            LoadAsyncTexture('assets/texture/xwing_AO.jpg', (tex) =>{
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                baseMaterial.aoMap = tex;
+            });
+
+
+            // AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_Albedo.jpg', "map");
+            // AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_Roughness.jpg', "roughnessMap");
+            // AddTextureToMaterial(baseMaterial, 'assets/texture/xwing_AO.jpg', "aoMap");
 
             const tailGlow = new THREE.MeshBasicMaterial(
                 {
@@ -542,7 +564,7 @@ function LoadTie(action){
     tie = LoadGLBMoedl(
         'assets/models/tie_fighter.glb', (file) => {
             tie = file.scene;
-            file.scene.position.set(0, 1, -30);
+            file.scene.position.set(0, 1, -40);
             file.scene.scale.set(.7, .7, .7);
             file.scene.rotation.set(0, 0, 0);
     
@@ -682,16 +704,16 @@ async function LoadDeathStar(action) {
 
             deathStar.position.set(-100, -30, -50);
 
-            const size = .35;
+            const size = .3;
             deathStar.scale.set(size, size, size);
 
             deathStar.rotation.set(0, .6, 0);
             
             let deathStarMaterial = new THREE.MeshStandardMaterial(
                 {
-                    color: 0x777777,
-                    metalness: .8,
-                    roughness: .65,
+                    color: 0x444444,
+                    metalness: .85,
+                    roughness: .9,
                     envMapIntensity: .3,
                     emissive: 0x000000,
                     emissiveIntensity: 1,
