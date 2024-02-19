@@ -358,10 +358,10 @@ function LoadPlanet(action){
             let planetSurface = null;
 
             let planetAtmos = new THREE.MeshStandardMaterial({
-                color: 0xcc0022, 
+                color: 0xcc3344, 
                 emissive: {r:0, g:0, b:0},
                 transparent: true,
-                opacity: .03
+                opacity: .025
             })
 
             planet.traverse((node) => {
@@ -416,6 +416,8 @@ function LoadPlanet(action){
 const loadApplyTex = (path, material, valueName, action) => {
     var a = LoadAsyncTexture(path, (tex) =>
     {
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
             material[valueName] = tex;
             material.needsUpdate = true;
             action();
@@ -450,12 +452,11 @@ function SkySphere(action) {
 
             var a = LoadAsyncTexture("assets/texture/sky/sky_base_low.jpg",(tex) =>{
                 skymaterial["map"] = tex;
-                skymaterial.color = {r:.3, g:.4, b:.5};
+                skymaterial.color = {r:.2, g:.4, b:.4};
                 skymaterial.needsUpdate = true;
 
                 loadApplyTex("assets/texture/sky/sky_base_mid.jpg", skymaterial,"map", () => {
                     loadApplyTex("assets/texture/sky/sky_base_hig.jpg", skymaterial, "map",() => {
-                        console.log("run action...");
                     });
                 });
             });
@@ -606,6 +607,42 @@ function LoadStarDestroyer(action) {
     starDestroyer = LoadGLBMoedl(
         'assets/models/starDestroyer.glb', (file) => {
             starDestroyer = file.scene;
+
+
+            let surfaceMaterial = new THREE.MeshStandardMaterial({
+                color: 0x222222,
+                map: dummy32x32Tex
+            });
+
+            let engineGlow = new THREE.MeshStandardMaterial({
+                color: 0x3333ff,
+                emissive: 0x2222ff,
+                emissiveIntensity: 2
+            });
+
+            
+
+            starDestroyer.traverse((node) => {
+                console.log(node.name);
+                if (node.isMesh) {
+                    if(node.name == "Ship"){
+                        node.material = surfaceMaterial;
+                    }
+
+                    else if(node.name == "Engine"){
+                        node.material = engineGlow;
+                    }
+
+                }
+            });
+
+            LoadAsyncTexture("/docs/assets/texture/starDestroyer/starDestroyer.jpg", (tex) =>{
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                surfaceMaterial.map = tex;
+            });
+
+
             starDestroyer2 = starDestroyer.clone();
             starDestroyer3 = starDestroyer.clone();
 
@@ -673,33 +710,34 @@ async function LoadDeathStar(action) {
             //console.log(deathStarMaterial);
 
             // load albedo
-            LoadAsyncTexture("assets/texture/deathStar/deathstar_albedo.jpg", (tex) =>{
+            LoadAsyncTexture("assets/texture/deathStar/deathstar_albedo_low.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 deathStarMaterial.map = tex;
+                loadApplyTex("assets/texture/deathStar/deathstar_albedo.jpg", deathStarMaterial, "map",() => {
+                });
             });
 
 
             // emission map
-            LoadAsyncTexture("assets/texture/deathStar/deathstar_emi.jpg", (tex) =>{
+            LoadAsyncTexture("assets/texture/deathStar/deathstar_emi_low.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 deathStarMaterial.emissiveMap = tex;
                 deathStarMaterial.emissive = {r:1, g:1, b:1};
+                loadApplyTex("assets/texture/deathStar/deathstar_emi.jpg", deathStarMaterial, "emissiveMap",() => {
+                });
             });
 
             
 
               // normal map
-              LoadAsyncTexture("assets/texture/deathStar/deathstar_normal.jpg", (tex) =>{
+              LoadAsyncTexture("assets/texture/deathStar/deathstar_normal_low.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 deathStarMaterial.normalMap = tex;
-                // loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_mid.jpg", deathStarMaterial, "emissiveMap",() => {
-                //     loadApplyTex("/docs/assets/texture/deathStar/deathstar_emi_hig.jpg", deathStarMaterial, "emissiveMap",() => {
-
-                //     });
-                // });
+                loadApplyTex("assets/texture/deathStar/deathstar_normal.jpg", deathStarMaterial, "normalMap",() => {
+                });
             });
 
 
@@ -765,7 +803,6 @@ function LoadWorldHDRI(onLoad) {
             cubeCamera.update( renderer, scene );
             lightProbe.copy( LightProbeGenerator.fromCubeRenderTarget( renderer, cubeRenderTarget ) );
             scene.add( lightProbe );
-            //scene.add( new LightProbeHelper( lightProbe, 1 ) );
     
             scene.background = null;
             scene.environment = null;
@@ -935,6 +972,8 @@ async function LoadAsyncTexture(path, callback) {
     return new Promise((resolve, reject) => {
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(path, (texture) => {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
             texture.flipY = false;
             if (callback && typeof callback === 'function') {
                 callback(texture);
