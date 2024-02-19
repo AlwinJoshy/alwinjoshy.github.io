@@ -369,6 +369,7 @@ function LoadPlanet(action){
                 if (node.isMesh) {
                     if(node.name == "planet"){
                         planetSurface = node.material;
+                        planetSurface.map = dummy32x32Tex;
                         ///console.log(planetSurface);
                     }
                     else if(node.name == "atmos"){
@@ -436,6 +437,7 @@ function SkySphere(action) {
                 {
                     color: 0x000000, 
                     emissive: {r:0, g:0, b:0},
+                    map: dummy32x32Tex
                 }
             );
 
@@ -617,7 +619,8 @@ function LoadStarDestroyer(action) {
             let engineGlow = new THREE.MeshStandardMaterial({
                 color: 0x3333ff,
                 emissive: 0x2222ff,
-                emissiveIntensity: 2
+                emissiveIntensity: 2,
+                map: dummy32x32Tex
             });
 
             
