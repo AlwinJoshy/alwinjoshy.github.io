@@ -570,7 +570,7 @@ function LoadTie(action){
             });
 
             // albedo
-            LoadAsyncTexture("/docs/assets/texture/ti/tie_albedo.jpg", (tex) =>{
+            LoadAsyncTexture("assets/texture/ti/tie_albedo.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 baseMaterial.map = tex;
@@ -578,7 +578,7 @@ function LoadTie(action){
 
 
             // roughness
-            LoadAsyncTexture("/docs/assets/texture/ti/tie_roughness.jpg", (tex) =>{
+            LoadAsyncTexture("assets/texture/ti/tie_roughness.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 baseMaterial.roughnessMap = tex;
@@ -636,7 +636,7 @@ function LoadStarDestroyer(action) {
                 }
             });
 
-            LoadAsyncTexture("/docs/assets/texture/starDestroyer/starDestroyer.jpg", (tex) =>{
+            LoadAsyncTexture("assets/texture/starDestroyer/starDestroyer.jpg", (tex) =>{
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
                 surfaceMaterial.map = tex;
