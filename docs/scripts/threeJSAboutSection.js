@@ -684,8 +684,8 @@ function LoadStarDestroyer(action) {
             starDestroyer2.rotation.set(0, 2.5, 0);
             starDestroyer3.rotation.set(0, 1, 0);
     
+            //  scene.add(starDestroyer2);
             scene.add(starDestroyer);
-            scene.add(starDestroyer2);
             scene.add(starDestroyer3);
             
             if(action != null || action != undefined){
