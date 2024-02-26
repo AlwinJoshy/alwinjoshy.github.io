@@ -676,7 +676,7 @@ function LoadStarDestroyer(action) {
             starDestroyer3.position.set(-30, -30, -20);
 
             const size = 5;
-            starDestroyer.scale.set(size, size, size);
+            starDestroyer.scale.set(size * .7, size * .7, size * .7);
             starDestroyer2.scale.set(size, size, size);
             starDestroyer3.scale.set(size, size, size);
 
