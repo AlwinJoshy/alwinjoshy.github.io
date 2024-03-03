@@ -358,10 +358,10 @@ function LoadPlanet(action){
             let planetSurface = null;
 
             let planetAtmos = new THREE.MeshStandardMaterial({
-                color: 0xcc3344, 
+                color: 0xff2233, 
                 emissive: {r:0, g:0, b:0},
                 transparent: true,
-                opacity: .025
+                opacity: .028
             })
 
             planet.traverse((node) => {
@@ -454,7 +454,8 @@ function SkySphere(action) {
 
             var a = LoadAsyncTexture("assets/texture/sky/sky_base_low.jpg",(tex) =>{
                 skymaterial["map"] = tex;
-                skymaterial.color = {r:.2, g:.4, b:.4};
+                skymaterial.color = {r:.1, g:.3, b:.2};
+             //   skymaterial.emissive = {r:.003, g:.01, b:.0035};
                 skymaterial.needsUpdate = true;
 
                 loadApplyTex("assets/texture/sky/sky_base_mid.jpg", skymaterial,"map", () => {
@@ -1152,7 +1153,7 @@ function LoadSpaceRocks(action) {
         'assets/models/spaceRock.glb', (file) => {
             spareRock = file.scene;
 
-            let mat = new THREE.MeshStandardMaterial({ color: 0xdddddd, wireframe: false });
+            let mat = new THREE.MeshStandardMaterial({ color: 0x555555, wireframe: false });
 
 
            // scene.add(file.scene);
