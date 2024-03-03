@@ -64,7 +64,7 @@ let h = container.clientHeight;
 const scene = new THREE.Scene();
 
 //#region Camera
-const camera = new THREE.PerspectiveCamera( 60, w / h, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera( 60, w / h, 0.1, 1500);
 camera.position.set(5, 3, 8);
 camera.lookAt(0,0,0);
 //#endregion
@@ -430,7 +430,7 @@ function SkySphere(action) {
         'assets/models/skySphere.glb', (file) => {
             shySphere = file.scene;
             shySphere.position.set(0, 0, 0);
-            shySphere.scale.set(100, 100, 100);
+            shySphere.scale.set(200, 200, 200);
             shySphere.rotation.set(0, -3.1, 0);
     
             let skymaterial = new THREE.MeshBasicMaterial(
@@ -876,11 +876,45 @@ function animate() {
     requestAnimationFrame(animate);
     t += dT;
     mixer?.update(0.003);
-
     composer.render(); // Use the composer for rendering
    
 
     UpdatePostRender()
+}
+
+function UpdateInstanceRotateion(time, allMatrices) {
+    const rotationSpeed = 0.01; // Adjust the speed of rotation
+
+    // Iterate over each matrix and update its rotation
+    for (let i = 0; i < allMatrices.length; i++) {
+        let matrix =  new THREE.Matrix4();
+
+        // Define the axis of rotation (for example, Y-axis)
+        const axis = new THREE.Vector3(0, 1, 0);
+
+        // Define the rotation angle based on time
+        const angle = rotationSpeed * time;
+
+        // Create a quaternion representing the rotation
+        const deltaRotation = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+
+        let currentRotation = new THREE.Quaternion().setFromEuler(allMatrices[i].rot)
+
+        // Combine the current rotation with the delta rotation
+        const newRotation = new THREE.Quaternion();
+        newRotation.multiplyQuaternions(deltaRotation, currentRotation);
+
+        // Apply the new rotation to the matrix
+       // matrix.compose(allMatrices[i].pos, newRotation.multiplyQuaternions(deltaRotation, currentRotation), allMatrices[i].scale);
+
+
+       matrix.compose(new THREE.Vector3(0,0,0), currentRotation, new THREE.Vector3(1,1,1));
+
+
+        instancedMesh.setMatrixAt(i, matrix);
+        
+    }
+
 }
 
 let allUpdates = []
@@ -888,6 +922,7 @@ let allUpdates = []
 function UpdatePostRender() {
     AnimateAricrafts();
     RotatePlanet();
+    //UpdateInstanceRotateion(t, allMatricses);
     Shoot();
     Update();
     ReposCamera(mouseX, mouseY);
@@ -1036,8 +1071,97 @@ function DrawLine(position, direction) {
 
 }
 
+var allMatricses = [];
+let instancedMesh = [];
+
+function DrawInstancedTest(geometry, material) {
+    // Create a cube geometry
+//geometry = new THREE.BoxGeometry(1, 1, 1);
+
+// Create a material for the cube
+material = new THREE.MeshStandardMaterial({ color: 0x775555, roughness:1, metalness: .8 });
+
+// Create an InstancedMesh using the cube geometry and material
+const instanceCount = 3000;
+instancedMesh = new THREE.InstancedMesh(geometry, material, instanceCount);
 
 
+        // Randomly position and scale each instance
+        for (let i = 0; i < instanceCount; i++) {
+            let matrix = new THREE.Matrix4();
+
+            let maxDistance = 500;
+            let spawnOffset = 300;
+            let dist = maxDistance + lerp(-spawnOffset, spawnOffset, Math.random());
+
+            let position = new THREE.Vector3(0,lerp(-20,20, Math.random()),dist);
+
+            const angle = lerp(-5,  .2, Math.random()); // Random angle between 0 and 2π
+
+        // Generate random axis of rotation
+        const axis = new THREE.Vector3(
+            0, // Random X component between -0.5 and 0.5
+            1, // Random Y component between -0.5 and 0.5
+            0  // Random Z component between -0.5 and 0.5
+        ).normalize(); // Normalize to ensure it's a unit vector
+
+        // Create a quaternion representing the rotation
+        let quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+
+        // Apply the rotation to the vector
+
+
+
+        // Random position between -5 and 5 for each axis
+        // let position = new THREE.Vector3(
+        //     Math.random() * 10 - 5,
+        //     Math.random() * 2 - 1,
+        //     Math.random() * 10 - 5
+        //     );
+            position.applyQuaternion(quaternion);
+
+        const offset = new THREE.Vector3(100, -160, -200);
+        position.add(offset);
+
+        // Random rotation angles in radians
+        let rotation = new THREE.Euler(
+            Math.random() * Math.PI * 2,
+            Math.random() * Math.PI * 2,
+            Math.random() * Math.PI * 2
+        );
+
+        let sizScale = lerp(.5, 2, Math.random());
+        // Random scale between 0.5 and 1.5 for each axis
+        let scale = new THREE.Vector3(sizScale,sizScale,sizScale);
+
+        // Set position, rotation, and scale to the matrix
+        matrix.compose(position, new THREE.Quaternion().setFromEuler(rotation), scale);
+
+        allMatricses.push({inst : instancedMesh, mat : matrix, pos : position, rot: rotation, scal: scale});
+            instancedMesh.setMatrixAt(i, matrix);
+        }
+
+    // Add the InstancedMesh to the scene
+    scene.add(instancedMesh);
+
+}
+
+let spareRock = null;
+function LoadSpaceRocks(action) {
+    LoadGLBMoedl(
+        '/docs/assets/models/spaceRock.glb', (file) => {
+            spareRock = file.scene;
+
+            let mat = new THREE.MeshStandardMaterial({ color: 0xdddddd, wireframe: false });
+
+
+           // scene.add(file.scene);
+            if(action != null || action != undefined){
+                action(file.scene.children[0].geometry, mat);
+            }
+        }
+    );
+}
 
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -1051,6 +1175,10 @@ SkySphere(
                 LoadTie(
                     LoadXWing(
                         () => {
+                            LoadSpaceRocks(
+                                (mesh)=>{
+                                DrawInstancedTest(mesh, material);
+                            });
                             console.log("models loaded");
                         }
                     )
