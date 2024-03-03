@@ -1149,7 +1149,7 @@ instancedMesh = new THREE.InstancedMesh(geometry, material, instanceCount);
 let spareRock = null;
 function LoadSpaceRocks(action) {
     LoadGLBMoedl(
-        '/docs/assets/models/spaceRock.glb', (file) => {
+        'assets/models/spaceRock.glb', (file) => {
             spareRock = file.scene;
 
             let mat = new THREE.MeshStandardMaterial({ color: 0xdddddd, wireframe: false });
