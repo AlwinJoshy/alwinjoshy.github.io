@@ -64,7 +64,7 @@ let h = container.clientHeight;
 const scene = new THREE.Scene();
 
 //#region Camera
-const camera = new THREE.PerspectiveCamera( 60, w / h, 0.1, 1500);
+const camera = new THREE.PerspectiveCamera( 60, w / h, 0.1, 30000);
 camera.position.set(5, 3, 8);
 camera.lookAt(0,0,0);
 //#endregion
@@ -430,7 +430,7 @@ function SkySphere(action) {
         'assets/models/skySphere.glb', (file) => {
             shySphere = file.scene;
             shySphere.position.set(0, 0, 0);
-            shySphere.scale.set(200, 200, 200);
+            shySphere.scale.set(500, 500, 500);
             shySphere.rotation.set(0, -3.1, 0);
     
             let skymaterial = new THREE.MeshBasicMaterial(
@@ -454,8 +454,8 @@ function SkySphere(action) {
 
             var a = LoadAsyncTexture("assets/texture/sky/sky_base_low.jpg",(tex) =>{
                 skymaterial["map"] = tex;
-                skymaterial.color = {r:.1, g:.3, b:.2};
-             //   skymaterial.emissive = {r:.003, g:.01, b:.0035};
+                skymaterial.color = {r:.25, g:.6, b:.3};
+               // skymaterial.emissive = {r:.003, g:.02, b:.035};
                 skymaterial.needsUpdate = true;
 
                 loadApplyTex("assets/texture/sky/sky_base_mid.jpg", skymaterial,"map", () => {
@@ -1075,24 +1075,23 @@ function DrawLine(position, direction) {
 var allMatricses = [];
 let instancedMesh = [];
 
-function DrawInstancedTest(geometry, material) {
+function DrawInstancedTest(geometry, count, r, spread, _color, scale_x, scale_y) {
     // Create a cube geometry
 //geometry = new THREE.BoxGeometry(1, 1, 1);
 
 // Create a material for the cube
-material = new THREE.MeshStandardMaterial({ color: 0x775555, roughness:1, metalness: .8 });
+let material = new THREE.MeshStandardMaterial({ color: _color, roughness:1, metalness: .3 });
 
-// Create an InstancedMesh using the cube geometry and material
-const instanceCount = 3000;
-instancedMesh = new THREE.InstancedMesh(geometry, material, instanceCount);
+
+instancedMesh = new THREE.InstancedMesh(geometry, material, count);
 
 
         // Randomly position and scale each instance
-        for (let i = 0; i < instanceCount; i++) {
+        for (let i = 0; i < count; i++) {
             let matrix = new THREE.Matrix4();
 
-            let maxDistance = 500;
-            let spawnOffset = 300;
+            let maxDistance = r;
+            let spawnOffset = spread;
             let dist = maxDistance + lerp(-spawnOffset, spawnOffset, Math.random());
 
             let position = new THREE.Vector3(0,lerp(-20,20, Math.random()),dist);
@@ -1121,7 +1120,7 @@ instancedMesh = new THREE.InstancedMesh(geometry, material, instanceCount);
         //     );
             position.applyQuaternion(quaternion);
 
-        const offset = new THREE.Vector3(100, -160, -200);
+        const offset = new THREE.Vector3(100, -250, -200);
         position.add(offset);
 
         // Random rotation angles in radians
@@ -1131,7 +1130,7 @@ instancedMesh = new THREE.InstancedMesh(geometry, material, instanceCount);
             Math.random() * Math.PI * 2
         );
 
-        let sizScale = lerp(.5, 2, Math.random());
+        let sizScale = lerp(scale_x, scale_y, Math.random());
         // Random scale between 0.5 and 1.5 for each axis
         let scale = new THREE.Vector3(sizScale,sizScale,sizScale);
 
@@ -1178,7 +1177,9 @@ SkySphere(
                         () => {
                             LoadSpaceRocks(
                                 (mesh)=>{
-                                DrawInstancedTest(mesh, material);
+                                DrawInstancedTest(mesh, 900, 500, 100, 0x602f1f, 2, 3);
+                                DrawInstancedTest(mesh, 1000, 1000, 300, 0x9a4c32, 2, 3);
+                                DrawInstancedTest(mesh, 2500, 2500, 800, 0x602f1f, 2, 4);
                             });
                             console.log("models loaded");
                         }
