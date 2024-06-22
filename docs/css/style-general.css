@@ -159,6 +159,14 @@ form .btn2{
     background-color: #2eaa25;
 }
 
+.icon-highlight{
+    color: #ababab;
+}
+
+.icon-dim{
+    color:#262626;
+}
+
 @media only screen and (max-width: 600px){
 
     #header{
@@ -208,4 +216,5 @@ form .btn2{
     .subtitle{
         font-size: 40px;
     }
+
 }
