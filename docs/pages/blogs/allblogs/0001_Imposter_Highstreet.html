@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="../../../images/favicon.ico">
+    <title>Document</title>
+    <link rel="stylesheet" href="../../../css/style-general.css">
+    <link rel="stylesheet" href="../../../css/style-blog.css">
+
+
+    <script src="https://kit.fontawesome.com/a3c67ea782.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- --------------------------------- header bar -->
+    <div id="header"> 
+        <div class="container">
+            <nav>
+                <img src="../../../images/name-symbol.png" alt="name image of Alwin Joshy Joseph" class="logo">
+                <ul id="sidemenu">
+                    <li><a href="../../../index.html#header">HOME</a></li>
+                    <li><a href="../../../index.html#about">ABOUT</a></li>
+                    <li><a href="../../../index.html#services">SERVICES</a></li> 
+                    <li><a href="../../../index.html#portfolio">WORK</a></li>  
+                    <li><a href="../../../index.html#blogs">BLOGS</a></li> 
+                    <li><a href="../../../index.html#contact">CONTACT</a></li>
+                    <i class="fa-solid fa-xmark" onclick='closeNavMenu()'></i>
+                </ul>
+                <i class="fa-solid fa-bars" onclick='openNavMenu()'></i>
+            </nav>
+        </div>
+    </div>
+
+    <div id="intro">
+        <div class="container">
+            <p class="date-small-text">16 June 2024</p>
+            <h1 class="blog-title">
+                Custom Circular View Imposter
+            </h1>
+            <div class="blog-prime-image">
+                <img src="../../../images/blogs/Imposter_2024/Image Sequence_003_0000.jpg" alt="Imposter Article Image">
+            </div>
+        </div>
+    </div>
+        <div class="blog-content">
+            <div class="container">
+                <div class="row">
+                    <div class="blog-content-details"><p>
+                        I was tasked with the performance optimization and rendering budget management for our
+                        highstreet Metaverse VR project. thie project consists of diverse otherwordly looking biomes and 
+                        scenes making the requirement more diverse and therefor needing dynamic solutions. SO to
+                        satisfy such requiremnets I desided to enforce the use of LOD all throught the project for 
+                        all the mesh assets used. Which for the most part keept the performance to playable range of 72-60 fps
+                        but soon we started noticing that the performance rappidly droping once we designe and setup a forest environemnt
+                        with lots of vegitation and folliage. which dropped the performance to around 35-40 fps and sometimes even reduced 
+                        to ~15 fps. which naturally raised concerns in me and I went on researching how to tackle this performance issus
+                        as if we experience this for such a scale, then down the line, rendering the scene will become almost impossible.
+                    </p>
+                    <div class="blog-inline-media-container">
+                        <img src="../../../images/blogs/Imposter_2024/Image-Sequence_007_0000.gif" alt="LOD used for trees">
+                    </div>
+                <p>
+                So I went on researching on how to solve newely faced challange of rendering large number of objects
+                in the VR scene. So in my research I came across many suggestions but most were faling into those things
+                that I have implimented already. things like use of LODs, use of optimized shaders, smaller scenes(not possible in
+                our case as our game is an MMO!!) and use of imposters. So I have suggested the use of Imposters once before and 
+                the team quickly responded to me with the  remark that they have already tried Amplyfy imposter in VR
+                and it wan not performing well and were giving them issues.
+                    </p>
+                    <div class="blog-inline-media-container">
+                        <img src="../../../images/blogs/Imposter_2024/Amplify.gif" alt="Amplify Shader Image">
+                    </div>
+                    
+                    <p>
+                    And at this point where reducing the number of tri count bacame soo crutial there aint much I can do
+                    but too look for ways to do exactly that. So thats where I began researching how to make an imposter system 
+                    myself. The concept is quite simple, what we simply have to do is render images of the mesh from multipple angle
+                    and project in onto a Quad. The method is extremely effect for reducing the poly count and produce a convincing result
+                    expecially while viewed from a further distance and plus as we view it in VR we get to see a much blured out or 
+                    softer verssion from a distance. which works great for my case.
+                    <br>
+                    <br>
+                    I initially started off my making a capture tool that goes around the model and captures the mesh from multipple angle
+                    and save it to a texture.
+                    </p>
+                    <div class="blog-inline-media-container">
+                        <img src="../../../images/blogs/Imposter_2024/capture.gif" alt="Amplify Shader Image">
+                    </div>
+                    
+                    <p>
+                        Once I found the capturing was working I went on look for ways to combine it into one Atlas texture.
+                        combining was straight-forward actually. all you have to do is generate an array of textures and then make
+                        a large texture with the dimensions equal to the quare-root of the number of textures and them multiply it by the
+                        texture width giving you the size of the atlas texture. then using a forloop and draw the render into 
+                        the atlas texture.
+                    </p>
+                    <div class="blog-inline-media-container">
+                        <img src="../../../images/blogs/Imposter_2024/tree_render.gif" alt="Highstreet mmo tree render">
+                    </div>
+                    <div class="blog-inline-media-container">
+                        <img src="../../../images/blogs/Imposter_2024/tree_render_atlas.gif" alt="Highstreet mmo tree render">
+                    </div>
+
+                    <p>
+                        Once combined I passed in into the shader that have created to pick and display the correct
+                        image form the atlas grid based on the viewsing angle and the result will look as follows.
+                    </p>
+                    <div class="blog-inline-media-container">
+                        <iframe width="980" height="595" src="https://www.youtube.com/embed/pVYW_UBMYDo" title="Imposter_Phase_1_test" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+
+                <p>
+                    Once i compleated this phase i further went on improving aspects such as blending the images from one
+                    to the next, making it responsive to directional light. and not to mention the part that I have to improve
+                    the rendering system to render the normals and albedo seprately so that it can be combined later in the shader
+                    appropriately to maintain the illussion of directional lighting and surface carvatures. the finiched result can be seen in the 
+                    video poseted blow.
+                    <br>
+                    <br>
+                    *I am not allowed to share morethan this due to NDA and as its made for the institution I work for*
+                </p>
+                <div class="blog-inline-media-container">
+                    <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:ugcPost:7207471966025310208" height="720" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+                </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="copyright">
+            <p>Copyright © Alwin. Made by Alwin joshy</p>
+        </div>
+    </div>
+    
+    <!-- final load scripts -->
+    <script src="../../../scripts/smallscreennavrops.js"></script>
+</body>
+</html>
