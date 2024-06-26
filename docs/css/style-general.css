@@ -4,7 +4,7 @@
     font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 body{
-    background: #000d02;
+    background: #001704;
     color: #fff;
 }
 
@@ -32,10 +32,10 @@ nav{
     flex-wrap: wrap;
 }
 
-
 .logo{
     width: 140px;
 }
+
 nav ul li{
     display: inline-block;
     list-style: none;
@@ -94,6 +94,7 @@ nav .fa-solid{
     background: #262626;
     font-weight: 300;
     margin-top: 20px;
+    margin-bottom: 0px;
 }
 
 .social-icons{
@@ -167,7 +168,25 @@ form .btn2{
     color:#262626;
 }
 
-@media only screen and (max-width: 600px){
+@media only screen and (max-width: 770px){
+
+    nav ul li{
+        display: inline-block;
+        list-style: none;
+        margin: 10px 10px;
+    }
+
+    nav ul li a{
+        color: #fff;
+        text-decoration: none;
+        font-size: 13px;
+        position: relative;
+    }
+
+
+}
+
+@media only screen and (max-width: 430px){
 
     #header{
         width: 100%;
@@ -179,6 +198,10 @@ form .btn2{
         margin-top: 100%;
         font-size: 16px;
     }
+
+    .hearder-text p{
+        font-size: 20px;
+     }
 
     .hearder-text h1{
        font-size: 30px;
