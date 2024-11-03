@@ -102,6 +102,8 @@ const bokehPass = new BokehPass(scene, camera, {
   });
 //composer.addPass(bokehPass);
 //#endregion
+//        color: { value: new THREE.Color(_color) },
+
 
 
 //#region Add a RenderPass to render the scene
@@ -871,7 +873,6 @@ function LoadWorldHDRI(onLoad) {
 
     let t = 0, dT = 0.001;
 
-
 function animate() {
 
     requestAnimationFrame(animate);
@@ -881,6 +882,13 @@ function animate() {
    
 
     UpdatePostRender()
+    // Check if rockShaderMaterial and its uniforms are defined
+    if (rockShaderMaterial && rockShaderMaterial.uniforms && rockShaderMaterial.uniforms.time) {
+        rockShaderMaterial.uniforms.time.value += dT * 100;  // Increment time
+        console.log("should move");
+    } else {
+        console.log("rockShaderMaterial or time uniform is not defined yet.");
+    }
 }
 
 function UpdateInstanceRotateion(time, allMatrices) {
@@ -1072,19 +1080,38 @@ function DrawLine(position, direction) {
 
 }
 
+async function loadShaderFile(url) {
+    const response = await fetch(url);
+    return await response.text();
+}
+
+
+
+
 var allMatricses = [];
 let instancedMesh = [];
 
-function DrawInstancedTest(geometry, count, r, spread, _color, scale_x, scale_y) {
+
+
+async function DrawInstancedTest(geometry, count, r, spread,  _color, scale_x, scale_y) {
+
+
+    let rotationSpeeds = new Float32Array(count);
     // Create a cube geometry
 //geometry = new THREE.BoxGeometry(1, 1, 1);
 
 // Create a material for the cube
-let material = new THREE.MeshStandardMaterial({ color: _color, roughness:1, metalness: .3 });
+//let rockMat = new THREE.MeshStandardMaterial({ color: _color, roughness:1, metalness: .3 });
 
 
-instancedMesh = new THREE.InstancedMesh(geometry, material, count);
+//instancedMesh = new THREE.InstancedMesh(geometry, material, count);
 
+
+
+let instanceMaterial = await InstancedRockMaterial();
+
+
+instancedMesh = new THREE.InstancedMesh(geometry, instanceMaterial, count);
 
         // Randomly position and scale each instance
         for (let i = 0; i < count; i++) {
@@ -1134,20 +1161,25 @@ instancedMesh = new THREE.InstancedMesh(geometry, material, count);
         // Random scale between 0.5 and 1.5 for each axis
         let scale = new THREE.Vector3(sizScale,sizScale,sizScale);
 
+        rotationSpeeds[i] = ( Math.random() * 2.0) - 1.0;
         // Set position, rotation, and scale to the matrix
         matrix.compose(position, new THREE.Quaternion().setFromEuler(rotation), scale);
 
-        allMatricses.push({inst : instancedMesh, mat : matrix, pos : position, rot: rotation, scal: scale});
             instancedMesh.setMatrixAt(i, matrix);
+            instancedMesh.geometry.setAttribute('rotationSpeed', new THREE.InstancedBufferAttribute(rotationSpeeds, 1));
         }
-
+    /// instancedMesh.setAttribute('rotationSpeed', new THREE.InstancedBufferAttribute(rotationSpeeds, 1));
+      //  rotationSpeeds.push( Math.random() * 2.0 - 1.0);
     // Add the InstancedMesh to the scene
     scene.add(instancedMesh);
 
 }
 
 let spareRock = null;
-function LoadSpaceRocks(action) {
+async function LoadSpaceRocks(action) {
+
+    await InstancedRockMaterial();
+
     LoadGLBMoedl(
         'assets/models/spaceRock.glb', (file) => {
             spareRock = file.scene;
@@ -1157,15 +1189,40 @@ function LoadSpaceRocks(action) {
 
            // scene.add(file.scene);
             if(action != null || action != undefined){
-                action(file.scene.children[0].geometry, mat);
+                action(file.scene.children[0].geometry, rockShaderMaterial);
             }
         }
     );
 }
 
 
+var rockShaderMaterial = null;
+async function InstancedRockMaterial() {
+    if (rockShaderMaterial) {
+        console.log("Reusing existing material");
+        return rockShaderMaterial;
+    }
+
+    console.log("Creating new instance material...");
+    const vertexShader = await loadShaderFile('shaders/rockVertexShader.glsl');
+    const fragmentShader = await loadShaderFile('shaders/rockFragmentShader.glsl');
+
+    // Create the custom shader material
+    rockShaderMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            color: { value: new THREE.Color(0x602f1f) },
+            time: { value: 0.0 }
+        },
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader
+    });
+
+    return rockShaderMaterial;
+}
+
 document.addEventListener("DOMContentLoaded", function() {
  console.log("page_loaded");
+
 
  // load all the modals in order
 SkySphere(
