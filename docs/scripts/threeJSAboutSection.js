@@ -122,6 +122,7 @@ composer.addPass(bloomPass);
 
 //#region resize
 let dynamicPlanetPostion = new THREE.Vector3(-100, -2000, -400);
+let isSmallScreen = false;
 SetScreenSize();
 
 window.addEventListener('resize', () => {
@@ -145,7 +146,9 @@ window.addEventListener('resize', () => {
         bokehPass.setSize(w, h);
         
         if (w < 430) {
+            isSmallScreen = true;
             console.log(w);
+            console.log("SMALL_SCREEN");
             //camera.position.set(10, 15, 3);
             //camera.position.set(10, 15, 3);
             //dynamicPlanetPostion = new THREE.Vector3(-10, -100, -100);
@@ -162,7 +165,7 @@ window.addEventListener('resize', () => {
 let mouseX = 0, mouseY = 0;
 
 window.addEventListener('mousemove', (event) => {
-    console.log("mouse move");
+    // console.log("mouse move");
     // Calculate normalized mouse coordinates
     mouseX = (event.clientX / window.innerWidth) * 2 - 1;
     mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -471,6 +474,7 @@ function SkySphere(action) {
 
 
             scene.add(shySphere);
+
 
             if(action != null || action != undefined){
                 action();
@@ -883,7 +887,7 @@ function animate() {
 
     UpdatePostRender()
     // Check if rockShaderMaterial and its uniforms are defined
-    if (rockShaderMaterial && rockShaderMaterial.uniforms && rockShaderMaterial.uniforms.time) {
+    if (isSmallScreen != true && rockShaderMaterial && rockShaderMaterial.uniforms && rockShaderMaterial.uniforms.time) {
         rockShaderMaterial.uniforms.time.value += dT * 100;  // Increment time
         console.log("should move");
     } else {
@@ -1226,6 +1230,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
  // load all the modals in order
 SkySphere(
+    () =>{
+        if(isSmallScreen == false){
+            LoadAllModels();
+        }
+    }
+    );
+
+async function LoadAllModels() {
     LoadPlanet(
         LoadDeathStar(
             LoadStarDestroyer(
@@ -1245,9 +1257,7 @@ SkySphere(
             )
         )
     )
-    );
-
-
+}
 
  animate();
 });
