@@ -1214,7 +1214,8 @@ async function InstancedRockMaterial() {
     // Create the custom shader material
     rockShaderMaterial = new THREE.ShaderMaterial({
         uniforms: {
-            color: { value: new THREE.Color(0x602f1f) },
+            color_a: { value: new THREE.Color(0x4a403f) },
+            color_b: { value: new THREE.Color(0x3b352b) },
             time: { value: 0.0 }
         },
         vertexShader: vertexShader,

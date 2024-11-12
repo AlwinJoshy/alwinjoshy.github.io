@@ -2,9 +2,10 @@ uniform float time;
 attribute float rotationSpeed; // New attribute for rotation speed
 varying vec3 vPosition;
 varying float vLighting; // Pass lighting intensity to fragment shader
+varying float randomColor;
 
 void main() {
-    vec3 lightDirection = vec3(0, 1, 0);
+    vec3 lightDirection = vec3(0.2, 1, -1);
 
     vPosition = position;  // Pass position to the fragment shader
 
@@ -23,7 +24,7 @@ void main() {
     vec4 modelPosition = instanceMatrix * rotationMatrix * vec4(position, 1.0);
 
     vec4 wObjPos = instanceMatrix * vec4(0.0,0.0,0.0,1.0);
-    modelPosition.y += sin(time * .2 + wObjPos.y * rotationSpeed);
+    modelPosition.y += sin(time * .2 + wObjPos.y * rotationSpeed) * 2.2;
 
     // Transform the normal to world space
     vec3 transformedNormal = normalize((instanceMatrix * rotationMatrix * vec4(normal, 0.0)).xyz);
@@ -33,7 +34,7 @@ void main() {
 
     // Pass the diffuse lighting value to the fragment shader
     vLighting = diffuse;
-
+    randomColor = sin(wObjPos.x) * 0.5 + 0.5;
     // Final position calculations
     vec4 viewPosition = viewMatrix * modelPosition;
     vec4 projectedPosition = projectionMatrix * viewPosition;

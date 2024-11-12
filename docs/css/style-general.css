@@ -4,7 +4,12 @@
     font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 body{
-    background: #001704;
+    background: rgb(0,0,0);
+    background: rgb(0,0,0);
+    background: -moz-linear-gradient(32deg, rgba(0,0,0,1) 0%, rgba(32,65,3,1) 48%, rgba(0,75,19,1) 100%);
+    background: -webkit-linear-gradient(32deg, rgba(0,0,0,1) 0%, rgba(32,65,3,1) 48%, rgba(0,75,19,1) 100%);
+    background: linear-gradient(32deg, rgba(0,0,0,1) 0%, rgba(32,65,3,1) 48%, rgba(0,75,19,1) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#000000",endColorstr="#004b13",GradientType=1);
     color: #fff;
 }
 
