@@ -9,7 +9,7 @@
 
 #intro{
     background-color: #000701;
-    background: url('/docs/assets/texture/dummy_32x32.png'); /* Path to your texture file */
+    background: url('/../../../assets/texture/dummy_32x32.png'); /* Path to your texture file */
     background-repeat: repeat; /* Repeats the texture */
     background-size: auto; /* Default, keeps the original texture size */
 }
