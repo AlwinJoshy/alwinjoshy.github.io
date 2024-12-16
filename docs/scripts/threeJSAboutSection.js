@@ -53,7 +53,7 @@ class Bullet {
 
 //#endregion
 
-const dummy32x32Tex = LoadTexture("assets/texture/dummy_32x32.jpg");
+const dummy32x32Tex = LoadTexture("assets/texture/dummy_32x32.png");
 
 // Get the container div
 const container = document.getElementById('show-screen');
@@ -1214,8 +1214,8 @@ async function InstancedRockMaterial() {
     // Create the custom shader material
     rockShaderMaterial = new THREE.ShaderMaterial({
         uniforms: {
-            color_a: { value: new THREE.Color(0x4a403f) },
-            color_b: { value: new THREE.Color(0x3b352b) },
+            color_a: { value: new THREE.Color(0x473c39) },
+            color_b: { value: new THREE.Color(0xa12c0e) },
             time: { value: 0.0 }
         },
         vertexShader: vertexShader,
