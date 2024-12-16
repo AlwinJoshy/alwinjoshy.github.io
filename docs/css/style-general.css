@@ -6,7 +6,7 @@
 body{
     background: rgb(119, 244, 119);
     color: #fff;
-    background: url('/docs/assets/texture/dummy_32x32_green.png'); /* Path to your texture file */
+    background: url('/../../../assets/texture/dummy_32x32_green.png'); /* Path to your texture file */
     background-repeat: repeat; /* Repeats the texture */
     background-size: auto; /* Default, keeps the original texture size */
 }
