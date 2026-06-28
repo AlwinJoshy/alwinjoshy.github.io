@@ -258,6 +258,12 @@
     display: none;
 }
 
+.work-layer h3{
+    margin-bottom: 20px;
+    font-weight: 500;
+    text-shadow: 2px 2px 5px black;
+}
+
 .work-show{
     display: block;
 }
@@ -269,54 +275,48 @@
     transition: transform 0.5s;
 }
 
+/* --- Carousel System --- */
 
-.work-layer{
-    height: 0%;
-    background: linear-gradient(rgba(0,0,0,0.5), #2eaa25);
-    position: absolute;
-    border-radius: 15px;
-    left: 0;
-    bottom: 0;
-    overflow:hidden;
+/* Carousel Container */
+.carousel-wrapper {
     display: flex;
     align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    padding: 0 40px;
-    text-align: center;
-    transition: height 0.5s;
-}
-.work:hover .work-layer{
-    height: 100%;
+    gap: 20px;
+    width: 100%;
+    margin-top: 0px;
 }
 
-.work:hover img{
-    transform: scale(1.1);
+.carousel-viewport {
+    overflow: hidden;
+    width: 100%;
+    /* Masking for the fade effect */
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
 }
 
-.work-layer h3{
-    margin-bottom: 20px;
-    font-weight: 500;
-    text-shadow: 2px 2px 5px black;
+.work-list {
+    display: flex;
+    gap: 20px;
+    transition: transform 0.5s ease-in-out;
 }
 
-.work-layer p{
-    margin-bottom: 20px;
-    font-weight: 500;
-    text-shadow: 2px 2px 5px black;
+/* Ensure each card takes up 1/3 of the width minus the gap */
+.work, .blog-display {
+    /* 3 items per view: (100% / 3) minus gap compensation */
+    flex: 0 0 calc(33.33% - 14px);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    display: block !important;
 }
 
-.work-layer a{
-    margin-top: 20px;
-    color: #2eaa25;
-    text-decoration: none;
-    font-size: 18px;
-    line-height: 60px;
-    background: #fff;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    text-align: center;
+.carousel-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 30px;
+    cursor: pointer;
+    z-index: 10;
 }
 
 

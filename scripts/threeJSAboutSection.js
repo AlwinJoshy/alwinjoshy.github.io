@@ -889,7 +889,7 @@ function animate() {
     // Check if rockShaderMaterial and its uniforms are defined
     if (isSmallScreen != true && rockShaderMaterial && rockShaderMaterial.uniforms && rockShaderMaterial.uniforms.time) {
         rockShaderMaterial.uniforms.time.value += dT * 100;  // Increment time
-        console.log("should move");
+       // console.log("should move");
     } else {
         console.log("rockShaderMaterial or time uniform is not defined yet.");
     }

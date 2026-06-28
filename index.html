@@ -558,7 +558,13 @@
     <div id="portfolio">
         <div class="container">
             <h1 class="subtitle">Portfolio</h1>
-            <div class="work-list">
+
+            <div class="carousel-wrapper">
+            <button class="carousel-btn" id="prevBtn"><i class="fa-solid fa-chevron-left"></i></button>
+            
+            <div class="carousel-viewport">
+
+            <div class="work-list" id="portfolioTrack">
 
                 <div class="work">
                     <img src="images/work/highstreet.gif" alt="Highstreet metaverse image">
@@ -632,7 +638,9 @@
                 </div>
 
             </div>
-            <a class="btn" id="showWorkBtn" onclick='HandleWorkImages()'> See More</a>
+            </div>
+            <button class="carousel-btn" id="nextBtn"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
         </div>
     </div>
  
