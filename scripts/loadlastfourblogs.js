@@ -17,9 +17,9 @@ function DisplayElements() {
             genHTML += GetBlock(allContentTextArray[index]);
     }
 
-    console.log("Content : " + genHTML);
+    //console.log("Content : " + genHTML);
     blogContainer.innerHTML += genHTML;
-    console.log(genHTML);
+    //console.log(genHTML);
 }
 
 function GetBlock(dataObject) {
@@ -79,9 +79,9 @@ function ExtractImageUrl(htmlString, startTag, id) {
         // Get the src attribute of the image
         srcUrl = blogPrimeImage.src;
         // blogString = blogString.replace("{{placeholder_img_url}}", srcUrl);
-        console.log('Source URL of the blog prime image:', srcUrl);
+        // console.log('Source URL of the blog prime image:', srcUrl);
     } else {
-        console.log('Blog prime image not found.');
+        // console.log('Blog prime image not found.');
     }
     return srcUrl;
 }

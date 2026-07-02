@@ -2,30 +2,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const track = document.getElementById('portfolioTrack');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
-    let workItems = document.querySelectorAll('.work, .blog-display');
+    
+    if (!track) return;
 
-    if (!track || workItems.length === 0) return;
+    // 1. Remove any stale clones from the previous run/reload first
+    const existingClones = track.querySelectorAll('.carousel-clone');
+    existingClones.forEach(clone => clone.remove());
 
-    // 1. Clone cards to create a seamless infinite track loop
+    // 2. Select only true, original items now that track is clean
+    let workItems = track.querySelectorAll('.work, .blog-display');
+    if (workItems.length === 0) return;
+
     const visibleItems = 3; 
     
-    // Clone the first few items and append them to the end
+    // 3. Clone the first 3 items and mark them with a class name
     for (let i = 0; i < visibleItems; i++) {
+        if (!workItems[i]) break;
         const clone = workItems[i].cloneNode(true);
+        clone.classList.add('carousel-clone'); // Explicitly flag it as a clone
         track.appendChild(clone);
     }
     
-    // Re-select work items to include the new clones
-    workItems = document.querySelectorAll('.work, .blog-display');
+    // 4. Re-select everything to calculate the final infinite track length
+    workItems = track.querySelectorAll('.work, .blog-display');
     
     let currentIndex = 0;
-    const totalItems = workItems.length - visibleItems; // original items count
+    const totalItems = workItems.length - visibleItems; // This will now consistently equal your true original count
     let autoPlayTimer = null;
     let isTransitioning = false;
 
     function updateCarousel(immediate = false) {
         const itemWidth = workItems[0].getBoundingClientRect().width;
-        const gap = 20; 
+        const gap = 40; 
         const moveAmount = (itemWidth + gap) * currentIndex;
         
         if (immediate) {
@@ -41,39 +49,33 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isTransitioning) return;
         isTransitioning = true;
         currentIndex++;
-       
-        
+        updateCarousel();
 
-        // If we reach the clone, seamlessly jump back to the true start after the slide animation finishes
-        if (currentIndex >= totalItems - (visibleItems + 1)) {
+        if (currentIndex >= totalItems) {
             setTimeout(() => {
                 currentIndex = 0;
-                updateCarousel(true); // Jump instantly with no transition animation
-                // isTransitioning = false;
-            }, 500); // Matches the 0.5s CSS transition time
+                updateCarousel(true);
+                isTransitioning = false;
+            }, 500);
+        } else {
+            setTimeout(() => { isTransitioning = false; }, 500);
         }
-        
-        updateCarousel();
-        setTimeout(() => { isTransitioning = false; }, 500);
-        
     }
 
     function handlePrev() {
         if (isTransitioning) return;
         isTransitioning = true;
 
-         console.log("moved id : " + currentIndex.toString());
-
         if (currentIndex <= 0) {
-            // Instantly jump to the end clone position, then slide backwards to the last real item
-            currentIndex = totalItems - visibleItems - 1;
+            currentIndex = totalItems;
             updateCarousel(true);
-            // Small timeout allows the browser to register the instant jump before animating
             setTimeout(() => {
-                currentIndex--;
                 updateCarousel();
                 setTimeout(() => { isTransitioning = false; }, 500);
             }, 20);
+            
+            currentIndex = totalItems - 1;
+            updateCarousel();
         } else {
             currentIndex--;
             updateCarousel();
@@ -103,7 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
     track.addEventListener('mouseenter', stopAutoPlay);
     track.addEventListener('mouseleave', startAutoPlay);
 
-    // Initialize layout setup
     updateCarousel();
     startAutoPlay();
 });

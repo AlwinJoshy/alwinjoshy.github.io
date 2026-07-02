@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WWII Aerial Combat Environment</title>
+    <style>
+        /* Force reset of margins and paddings */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Prevents unwanted browser scrolling behavior */
+            background-color: #050505;
+            font-family: sans-serif;
+        }
+
+        /* Container element that matches document.getElementById('show-screen') */
+        #show-screen {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Ensure the canvas element generated inside the container handles mouse clicks correctly */
+        #show-screen canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            pointer-events: auto !important; /* CRITICAL: Ensures the canvas accepts drag/click events */
+        }
+
+        /* Optional minimal HUD style overlay that won't block mouse interactions */
+        .hud-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ffffff;
+            z-index: 10;
+            pointer-events: none; /* Passes mouse clicks straight through to the 3D scene below */
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="show-screen">
+        <div class="hud-overlay">
+            <h2>Spitfire Flight Arena</h2>
+            <p>Left Click + Drag to Orbit | Scroll to Zoom</p>
+        </div>
+    </div>
+
+    <script src="scripts/threeJS_WWII.js"  type="module" ></script>
+
+</body>
+</html>
