@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 
 // ADD DISTANCE FOG HERE:
 // Using a cool sky-blue/gray tint that matches your ambientAO fill light
-scene.fog = new THREE.FogExp2(0x9ab4bd, 0.0014);
+scene.fog = new THREE.FogExp2(0x959999, 0.0014);
 
 const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 30000);
 camera.position.set(-20, 100, -100); // Initial offset position relative to the plane height
@@ -28,7 +28,7 @@ camera.position.set(-20, 100, -100); // Initial offset position relative to the 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.46;
+renderer.toneMappingExposure = 0.56;
 renderer.setSize(w, h);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 container.appendChild(renderer.domElement);
@@ -53,7 +53,7 @@ const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
 
 const hdriLoader = new RGBELoader();
-hdriLoader.load('assets/texture/hdri/wasteland_clouds_puresky_2k_02.hdr', (texture) => {
+hdriLoader.load('assets/texture/hdri/modified_SKY.hdr', (texture) => {
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
     scene.environment = envMap;      // Reflection probe for PBR materials
     scene.background = envMap;       // Skybox background
@@ -136,7 +136,7 @@ gltfLoader.load('assets/models/trees.glb', (gltf) => {
             
             child.material = new THREE.MeshBasicMaterial({
                 color: 0x333333,    
-                map: LoadTexture('assets/texture/tree_01.png'),
+                map: LoadTexture('assets/texture/tree_02.png'),
                 
                 // 1. Render both sides of the flat plane geometry
                 side: THREE.DoubleSide,
