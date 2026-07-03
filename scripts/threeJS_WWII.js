@@ -68,9 +68,9 @@ composer.addPass(renderPass);
 
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(w, h),
-    0.1,  // Bloom Strength
+    0.2,  // Bloom Strength
     2.5,  // Radius
-    0.1  // Threshold (only bright sunset glints/emissives pop)
+    0.1  // Threshold 
 );
 composer.addPass(bloomPass);
 
