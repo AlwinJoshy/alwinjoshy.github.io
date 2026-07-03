@@ -90,7 +90,7 @@ const aircraftHeight = 80.0; // Fixed elevation above 0,0,0 coordinate platform
 
 // tiling handler
 let terrainTiler = new TerrainTiler(scene, {
-    tileSize: 1040, // 5km matching your mesh size
+    tileSize: 1042, // 5km matching your mesh size
     gridSize: 4     // 3x3 tile grid context matrix
 });
 
