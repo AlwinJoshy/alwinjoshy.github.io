@@ -4,10 +4,10 @@ import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examp
 import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/RGBELoader.js';
-import { FlightController } from './scripts/FlightController.js';
-import { TerrainTiler } from './scripts/TerrainTiler.js';
-import { DynamicCameraController } from './scripts/CameraController.js';
-import { TrailRenderer } from './scripts/TrailRenderer.js';
+import { FlightController } from './flightcontroller.js';
+import { TerrainTiler } from './TerrainTiler.js';
+import { DynamicCameraController } from './CameraController.js';
+import { TrailRenderer } from './TrailRenderer.js';
 
 // --- Scene Setup ---
 const container = document.getElementById('show-screen');
