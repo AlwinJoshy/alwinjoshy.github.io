@@ -290,7 +290,7 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
             //console.log("Spitfire Child name : " + child.name);
 
             if(child.name == 'trail_l' || child.name == 'trail_r'){
-                CreateTrail(child, 0.08);
+                CreateTrail(child, 0.1);
             }
         }
     });
@@ -333,9 +333,38 @@ window.addEventListener('resize', () => {
 // --- Main Engine Loop ---
 let clock = new THREE.Clock();
 
+
+let isPaused = false;
+
+// Create the observer
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        isPaused = !entry.isIntersecting;
+        
+        if (!isPaused) {
+            // FIX: This forces the clock to ignore the time gap
+            clock.stop();
+            clock.start(); 
+            
+            // Re-sync the renderer to prevent black-screen
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            composer.setSize(container.clientWidth, container.clientHeight);
+        }
+    });
+}, { threshold: 0.1 });
+
+
 function animate() {
+
+    
     requestAnimationFrame(animate);
-    const deltaTime = clock.getDelta();
+
+    if (isPaused) {
+        return; 
+    }
+
+    let deltaTime = clock.getDelta();
+    if (deltaTime > 0.1) deltaTime = 0.1;
 
 
     // Execute automated aircraft guidance routing pipeline processing
