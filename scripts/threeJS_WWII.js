@@ -302,7 +302,7 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
     scene.add(spitfire);
 
     flightController = new FlightController(spitfire, {
-        minY: 100, 
+        minY: 1000, 
         maxY: 500,
         baseSpeed: 50.0 
     });

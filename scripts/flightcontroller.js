@@ -6,12 +6,12 @@ export class FlightController {
 
         // --- Flight Boundaries ---
         this.bounds = {
-            minX: config.minX || -2000,
-            maxX: config.maxX || 2000,
-            minZ: config.minZ || -2000,
-            maxZ: config.maxZ || 2000,
-            minY: config.minY || 50,    // Hard floor
-            maxY: config.maxY || 400    // Flight ceiling
+            minX: config.minX || -20000,
+            maxX: config.maxX || 20000,
+            minZ: config.minZ || -20000,
+            maxZ: config.maxZ || 20000,
+            minY: config.minY || 30,    // Hard floor
+            maxY: config.maxY || 1000    // Flight ceiling
         };
 
         this.speed = config.baseSpeed || 50.0; 
