@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 
 // ADD DISTANCE FOG HERE:
 // Using a cool sky-blue/gray tint that matches your ambientAO fill light
-scene.fog = new THREE.FogExp2(0x959999, 0.0014);
+scene.fog = new THREE.FogExp2(0x959999, 0.0008);
 
 const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 30000);
 camera.position.set(-20, 100, -100); // Initial offset position relative to the plane height
@@ -104,37 +104,19 @@ function checkAssetsReady() {
     }
 }
 
-// Load Terrain Mesh
-gltfLoader.load('assets/models/land.glb', (gltf) => {
-    landModel = gltf.scene;
-    landModel.position.set(0, 0, 0);
 
-    landModel.traverse((child) => {
-        if (child.isMesh && child.material) {
-            const oldMat = child.material;
-            child.material = new THREE.MeshBasicMaterial({
+
+
+// --- Load Terrain & Trees ---
+gltfLoader.load('assets/models/land.glb', (gltf) => {
+    const terrainScene = gltf.scene;
+
+        let landMaterial = new THREE.MeshBasicMaterial({
                 color: 0xaaaaaa,    
                 map: LoadTexture('assets/texture/land_combined.png')   
             });
-            oldMat.dispose(); 
-        }
-    });
 
-    checkAssetsReady();
-
-    //scene.add(landModel);
-});
-
-// load static trees
-gltfLoader.load('assets/models/trees.glb', (gltf) => {
-    treesModel = gltf.scene;
-    treesModel.position.set(0, 0, 0);
-
-    treesModel.traverse((child) => {
-        if (child.isMesh && child.material) {
-            const oldMat = child.material;
-            
-            child.material = new THREE.MeshBasicMaterial({
+            let treeMaterial = new THREE.MeshBasicMaterial({
                 color: 0x333333,    
                 map: LoadTexture('assets/texture/tree_02.png'),
                 
@@ -150,13 +132,82 @@ gltfLoader.load('assets/models/trees.glb', (gltf) => {
                 depthTest: true
             });
             
-            oldMat.dispose(); 
+
+    // Array to temporarily collect our 5 levels in correct order
+    const landLODs = new Array(5);
+    let rawTreesMesh = null;
+
+    terrainScene.traverse((child) => {
+        if (child.isMesh) {
+            const meshName = child.name;
+            console.log("Terrain Child name : " + meshName);
+
+
+              if (meshName.startsWith('Landscape_LOD')) {
+                    const oldMat = child.material;
+                    child.material = landMaterial;
+             }
+             else if (meshName.includes('Trees')) {
+                    const oldMat = child.material;
+                    child.material = treeMaterial;
+             }
+
+            // Sort out our land LOD variations dynamically by name matching
+            if (meshName === 'Landscape_LOD0') landLODs[0] = child;
+            else if (meshName === 'Landscape_LOD1') landLODs[1] = child;
+            else if (meshName === 'Landscape_LOD2') landLODs[2] = child;
+            else if (meshName === 'Landscape_LOD3') landLODs[3] = child;
+            else if (meshName === 'Landscape_LOD4') landLODs[4] = child;
+            
+            // Capture the shared scatter element
+            else if (meshName.includes('Trees')) {
+                rawTreesMesh = child;
+            }
         }
     });
 
-    checkAssetsReady();
-    //scene.add(treesModel);
+    // Check to ensure your pipeline didn't miss a variation level
+    if (landLODs.includes(undefined) || !rawTreesMesh) {
+        console.error("LOD Setup Error: Missing one of the 5 Land levels or Trees mesh in GLTF structural layout!");
+        return;
+    }
+
+    // Pass the ordered LOD array to the rebuilt terrain manager system
+    terrainTiler.init(landLODs, rawTreesMesh);
 });
+
+// // load static trees
+// gltfLoader.load('assets/models/trees.glb', (gltf) => {
+//     treesModel = gltf.scene;
+//     treesModel.position.set(0, 0, 0);
+
+//     treesModel.traverse((child) => {
+//         if (child.isMesh && child.material) {
+//             const oldMat = child.material;
+            
+//             child.material = new THREE.MeshBasicMaterial({
+//                 color: 0x333333,    
+//                 map: LoadTexture('assets/texture/tree_02.png'),
+                
+//                 // 1. Render both sides of the flat plane geometry
+//                 side: THREE.DoubleSide,
+                
+//                 // 2. Enable Alpha Clipping (drops pixels below 0.5 opacity)
+//                 alphaTest: 0.5,
+                
+//                 // 3. Ensure it writes into the depth buffer cleanly 
+//                 // to prevent background objects leaking through
+//                 depthWrite: true,
+//                 depthTest: true
+//             });
+            
+//             oldMat.dispose(); 
+//         }
+//     });
+
+//     checkAssetsReady();
+//     //scene.add(treesModel);
+// });
 
 
 function createPropellerShader() {
@@ -376,7 +427,7 @@ function animate() {
         // Keeps camera focus tracking anchored smoothly to the model coordinate space
         // controls.target.copy(spitfire.position);
         // Feeds the aircraft position coordinates into the grid recalculator
-        terrainTiler.update(spitfire.position);
+        terrainTiler.update(spitfire.position, camera);
     }
 
     if (cameraController) cameraController.update(deltaTime);

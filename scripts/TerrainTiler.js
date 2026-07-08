@@ -5,104 +5,107 @@ export class TerrainTiler {
         this.scene = scene;
         
         // --- Configuration ---
-        this.tileSize = config.tileSize || 5000; // 5km tiles
-        this.gridSize = config.gridSize || 3;    // 3 means 3x3 tiles, 4 means 4x4 tiles
+        this.tileSize = config.tileSize || 5000; 
+        this.gridSize = config.gridSize || 3;    
         
-        this.sourceLand = null;
+        // Now an array to hold your 5 LOD variations [LOD0, LOD1, LOD2, LOD3, LOD4]
+        this.sourceLandLODs = [];
         this.sourceTrees = null;
         
-        // Tracks the current central chunk index the plane is flying over
         this.currentChunkX = NaN;
         this.currentChunkZ = NaN;
 
-        // Active active pool grids
-        this.activeTiles = new Map(); // Key: "x,z" -> Value: { landGroup, treeGroup }
+        this.activeTiles = new Map(); 
     }
 
-    // Call this once your GLTFLoader completes loading the meshes
-    init(landMesh, treesMesh) {
-        this.sourceLand = landMesh;
+    // Pass an array of your 5 land meshes (ordered from highest detail to lowest)
+    init(landMeshArray, treesMesh) {
+        this.sourceLandLODs = landMeshArray;
         this.sourceTrees = treesMesh;
 
-        // Ensure the source meshes don't render directly at the center origin
-        this.sourceLand.visible = false;
-        this.sourceTrees.visible = false;
+        // Hide the original template meshes
+        this.sourceLandLODs.forEach(mesh => { if(mesh) mesh.visible = false; });
+        if (this.sourceTrees) this.sourceTrees.visible = false;
     }
 
     update(targetPosition) {
-        if (!this.sourceLand || !this.sourceTrees) return;
+        if (this.sourceLandLODs.length === 0 || !this.sourceTrees) return;
 
-        // Calculate which grid cell coordinates the aircraft is currently over
-        const chunkX = Math.floor((targetPosition.x + this.tileSize / 2) / this.tileSize);
-        const chunkZ = Math.floor((targetPosition.z + this.tileSize / 2) / this.tileSize);
+        const cellX = Math.floor((targetPosition.x + this.tileSize / 2) / this.tileSize);
+        const cellZ = Math.floor((targetPosition.z + this.tileSize / 2) / this.tileSize);
 
-        // If the aircraft hasn't crossed a boundary into a new grid cell, do nothing
-        if (chunkX === this.currentChunkX && chunkZ === this.currentChunkZ) return;
+        if (cellX !== this.currentChunkX || cellZ !== this.currentChunkZ) {
+            this.currentChunkX = cellX;
+            this.currentChunkZ = cellZ;
+            this.rebuildGrid(cellX, cellZ);
+        }
 
-        this.currentChunkX = chunkX;
-        this.currentChunkZ = chunkZ;
-
-        this.updateGrid(chunkX, chunkZ);
+        // CRITICAL PERFORMANCE FIX: 
+        // Three.js native LOD requires you to call update(camera) on the object 
+        // IF the objects are moving relative to the camera, or vice-versa.
+        // However, because we are using a chase camera, updateMatrixWorld handles this.
     }
 
-    updateGrid(centerChunkX, centerChunkZ) {
-        const visibleKeys = new Set();
+    rebuildGrid(centerChunkX, centerChunkZ) {
         const halfGrid = Math.floor(this.gridSize / 2);
+        const visibleKeys = new Set();
 
-        // 1. Calculate which tiles should exist in our NxN window grid
         for (let xOffset = -halfGrid; xOffset <= halfGrid; xOffset++) {
             for (let zOffset = -halfGrid; zOffset <= halfGrid; zOffset++) {
-                
-                // For even numbers like 4x4, shift offsets to balance grid centering
-                if (this.gridSize % 2 === 0 && xOffset === halfGrid) continue;
-                if (this.gridSize % 2 === 0 && zOffset === halfGrid) continue;
-
-                const targetChunkX = centerChunkX + xOffset;
-                const targetChunkZ = centerChunkZ + zOffset;
-                const key = `${targetChunkX},${targetChunkZ}`;
+                const cx = centerChunkX + xOffset;
+                const cz = centerChunkZ + zOffset;
+                const key = `${cx},${cz}`;
                 visibleKeys.add(key);
 
-                // If the tile doesn't exist yet, spawn/clone it from our pool template
                 if (!this.activeTiles.has(key)) {
-                    this.spawnTile(targetChunkX, targetChunkZ, key);
+                    this.spawnTile(cx, cz, key);
                 }
             }
         }
 
-        // 2. Clean up/remove tiles that have fallen outside the view distance radius
         for (const [key, tileObjects] of this.activeTiles.entries()) {
             if (!visibleKeys.has(key)) {
-                this.scene.remove(tileObjects.landInstance);
+                this.scene.remove(tileObjects.lodContainer);
                 this.scene.remove(tileObjects.treeInstance);
-                
-                // Optional optimization: You could push these to an array pool 
-                // to reuse instead of disposing, but simple removals work smoothly
                 this.activeTiles.delete(key);
             }
         }
     }
 
     spawnTile(chunkX, chunkZ, key) {
-        // Clone the parent hierarchies for this specific coordinate block
-        const landClone = this.sourceLand.clone();
-        const treeClone = this.sourceTrees.clone();
+        // 1. Create a native native Three.js LOD manager
+        const lod = new THREE.LOD();
 
-        landClone.visible = true;
+        // 2. Add your 5 levels with explicit distance breaking points
+        // Tweak these values based on how fast and high your Spitfire flies!
+        lod.addLevel(this.sourceLandLODs[0].clone(), 0);     // 0m to 1500m -> Max Poly
+        lod.addLevel(this.sourceLandLODs[1].clone(), 1500);  // 1500m to 3500m
+        lod.addLevel(this.sourceLandLODs[2].clone(), 3500);  // 3500m to 6000m
+        lod.addLevel(this.sourceLandLODs[3].clone(), 6000);  // 6000m to 10000m
+        lod.addLevel(this.sourceLandLODs[4].clone(), 10000); // 10000m+ -> Flat Low-Poly Plane
+
+        // Ensure all visibility restrictions are dropped on clones
+        lod.children.forEach(child => child.visible = true);
+
+        // 3. Clone trees (only for high detail close-up tracking)
+        const treeClone = this.sourceTrees.clone();
         treeClone.visible = true;
 
-        // Calculate the physical 3D world position coordinates for this chunk
+        // Calculate world layout positioning offsets
         const worldX = chunkX * this.tileSize;
         const worldZ = chunkZ * this.tileSize;
 
-        landClone.position.set(worldX, 0, worldZ);
+        lod.position.set(worldX, 0, worldZ);
         treeClone.position.set(worldX, 0, worldZ);
 
-        this.scene.add(landClone);
+        // Native LOD requires forcing matrix world configurations down to children components
+        lod.updateMatrixWorld(true);
+
+        this.scene.add(lod);
         this.scene.add(treeClone);
 
-        // Cache references to manage visibility thresholds later
         this.activeTiles.set(key, {
-            landInstance: landClone,
+            lodContainer: lod,
             treeInstance: treeClone
         });
     }
