@@ -176,38 +176,6 @@ gltfLoader.load('assets/models/land.glb', (gltf) => {
     terrainTiler.init(landLODs, rawTreesMesh);
 });
 
-// // load static trees
-// gltfLoader.load('assets/models/trees.glb', (gltf) => {
-//     treesModel = gltf.scene;
-//     treesModel.position.set(0, 0, 0);
-
-//     treesModel.traverse((child) => {
-//         if (child.isMesh && child.material) {
-//             const oldMat = child.material;
-            
-//             child.material = new THREE.MeshBasicMaterial({
-//                 color: 0x333333,    
-//                 map: LoadTexture('assets/texture/tree_02.png'),
-                
-//                 // 1. Render both sides of the flat plane geometry
-//                 side: THREE.DoubleSide,
-                
-//                 // 2. Enable Alpha Clipping (drops pixels below 0.5 opacity)
-//                 alphaTest: 0.5,
-                
-//                 // 3. Ensure it writes into the depth buffer cleanly 
-//                 // to prevent background objects leaking through
-//                 depthWrite: true,
-//                 depthTest: true
-//             });
-            
-//             oldMat.dispose(); 
-//         }
-//     });
-
-//     checkAssetsReady();
-//     //scene.add(treesModel);
-// });
 
 
 function createPropellerShader() {
@@ -305,7 +273,7 @@ function CreateTrail(trailTarget = null, width = 0.2) {
     trail.material = trailMaterial;
 
     // specify length of trail
-    const trailLength = 10;
+    const trailLength = 30;
 
     // initialize the trail
     trail.initialize( trailMaterial, trailLength, false, 0, trailHeadGeometry, trailTarget );
@@ -341,7 +309,7 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
             //console.log("Spitfire Child name : " + child.name);
 
             if(child.name == 'trail_l' || child.name == 'trail_r'){
-                CreateTrail(child, 0.1);
+                CreateTrail(child, 0.2);
             }
         }
     });
@@ -359,7 +327,7 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
     });
 
     cameraController = new DynamicCameraController(camera, spitfire, flightController, {
-        baseOffset: new THREE.Vector3(2, 2.55, -2), 
+        baseOffset: new THREE.Vector3(2, 4.55, -2), 
         posLerp: 20.0 
     });
 
