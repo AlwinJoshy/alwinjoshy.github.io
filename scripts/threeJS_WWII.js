@@ -113,7 +113,7 @@ gltfLoader.load('assets/models/land.glb', (gltf) => {
 
         let landMaterial = new THREE.MeshBasicMaterial({
                 color: 0xaaaaaa,    
-                map: LoadTexture('assets/texture/land_combined.png')   
+                map: LoadTexture('assets/texture/land_combined_03.png')   
             });
 
             let treeMaterial = new THREE.MeshBasicMaterial({
@@ -327,7 +327,7 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
     });
 
     cameraController = new DynamicCameraController(camera, spitfire, flightController, {
-        baseOffset: new THREE.Vector3(2, 4.55, -2), 
+        baseOffset: new THREE.Vector3(2, 2.55, -5), 
         posLerp: 20.0 
     });
 

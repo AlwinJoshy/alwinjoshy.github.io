@@ -133,6 +133,6 @@ export class FlightController {
         this.currentRoll += (targetRoll - this.currentRoll) * 0.5 * deltaTime;
 
         // Apply localized roll (Z-axis rotation)
-        this.mesh.rotateZ(this.currentRoll * 2);
+        this.mesh.rotateZ(this.currentRoll * 3);
     }
 }

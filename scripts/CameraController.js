@@ -6,19 +6,20 @@ export class DynamicCameraController {
         this.mesh = aircraftMesh;
         this.flight = flightController; 
 
-        this.posLerp = 5.0;     
-        this.lookLerp = config.lookLerp || 5.0; // Slowed down lookAhead vector tracking
-        
-        // NEW: Controls the lag speed of the camera's rotation/horizon banking
-        // Lower values (e.g., 2.0 - 4.0) give a heavy, delayed cinematic feel.
-        this.lookRotationLerp = config.lookRotationLerp || 1.5;   
+        // --- Core Physics Interpolation Speeds ---
+        this.posLerp = config.posLerp || 3.5;       // Speed at which camera physically catches up to the plane
+        this.lookLerp = config.lookLerp || 4.0;     // Lag speed of the focal look-ahead point
+        this.rotationLerp = config.rotationLerp || 2.8; // Heavy cinematic lag for the camera's horizon tilt
 
-        // --- CAMERA DISTANCE & HEIGHT CONTROLS ---
-        this.baseOffset = config.baseOffset || new THREE.Vector3(0, 0, -2); 
+        // --- Base Spatial Tuning ---
+        // X = Horizontal center offset, Y = Height above plane cockpit, Z = Distance behind tail
+        this.baseOffset = config.baseOffset || new THREE.Vector3(0, 1.2, -7.0); 
         
-        this.turnOffsetIntensity = 5.0; 
-        this.zoomOutIntensity = 1.0;    
-        this.lookAheadDistance = 50.0;   
+        // --- Dynamic Mechanics Parameters ---
+        this.lookAheadDistance = 25.0; // How far in front of the nose the camera focuses
+        this.turnCentrifugalDrag = 8.0; // How much the camera "swings wide" horizontally during tight banking
+        this.turnCompressionZ = 4.0;    // How much G-force compresses the camera closer to the tail during turns
+        this.pitchUpRiseY = 3.0;        // How much the camera sinks/rises when climbing or diving
 
         this.currentLookAt = new THREE.Vector3();
         this.isInitialized = false;
@@ -27,45 +28,57 @@ export class DynamicCameraController {
     update(deltaTime) {
         if (!this.mesh || !this.flight || deltaTime <= 0) return;
 
-        const roll = this.flight.currentRoll; 
-        const turnMagnitude = Math.abs(roll); 
-        const heading = this.flight.velocity.clone().normalize();
+        const roll = this.flight.currentRoll; // Negative value = Banking Right, Positive = Banking Left
+        const forwardDirection = this.flight.velocity.clone().normalize();
 
-        const dynamicZ = this.baseOffset.z - (turnMagnitude * this.zoomOutIntensity);
-        const dynamicX = this.baseOffset.x + (roll * this.turnOffsetIntensity);
+        // 1. --- CALCULATE COMPOSITE SHIFT FACTOR (WORLD HORIZON COMPLIANT) ---
+        // Compute structural offsets dynamically based on G-forces and velocity orientations
+        const dynamicZOffset = this.baseOffset.z + (Math.abs(roll) * this.turnCompressionZ); 
+        const dynamicXOffset = this.baseOffset.x - (roll * this.turnCentrifugalDrag);
+        
+        // Detect if climbing or diving using the world up direction vector projection
+        const verticalPitchStrength = forwardDirection.dot(new THREE.Vector3(0, 1, 0)); 
+        const dynamicYOffset = this.baseOffset.y - (verticalPitchStrength * this.pitchUpRiseY);
 
-        const idealLocalOffset = new THREE.Vector3(dynamicX, this.baseOffset.y, dynamicZ);
-        const idealWorldPosition = idealLocalOffset.applyQuaternion(this.mesh.quaternion).add(this.mesh.position);
-        const idealLookAt = this.mesh.position.clone().add(heading.multiplyScalar(this.lookAheadDistance));
+        // 2. --- ESTABLISH THE IDEAL FOLLOW POSITION (IN WORLD COORDINATES) ---
+        // We find the flat directional tracking footprint along the ground to prevent wing tilting from pushing us into the sky
+        const flatForward = new THREE.Vector3(forwardDirection.x, 0, forwardDirection.z).normalize();
+        const worldRight = new THREE.Vector3(0, 1, 0).cross(flatForward).normalize();
+        
+        const idealWorldPosition = this.mesh.position.clone()
+            .addScaledVector(flatForward, dynamicZOffset)  // Backwards trail anchor
+            .addScaledVector(worldRight, dynamicXOffset)    // Wide centrifugal side drift
+            .add(new THREE.Vector3(0, dynamicYOffset, 0)); // Pure altitude height stabilization
 
+        // 3. --- COMPUTE DYNAMIC LOOK-AHEAD TARGET ---
+        // Instead of targeting the plane, focus deep along its forward vector path trajectory
+        const idealLookAt = this.mesh.position.clone().addScaledVector(forwardDirection, this.lookAheadDistance);
+
+        // 4. --- FIRST-FRAME INITIALIZATION LOCK ---
         if (!this.isInitialized) {
             this.camera.position.copy(idealWorldPosition);
             this.currentLookAt.copy(idealLookAt);
-            
-            // Initial snap orientation setup
             this.camera.lookAt(this.currentLookAt);
             this.isInitialized = true;
-        } else {
-            // 1. Lerp position smoothly
-            this.camera.position.lerp(idealWorldPosition, this.posLerp * deltaTime);
-            
-            // 2. Lerp the look-at target vector
-            this.currentLookAt.lerp(idealLookAt, this.lookLerp * deltaTime);
-
-            // 3. NEW CRITICAL ROTATION LERP:
-            // Calculate what the ideal camera rotation matrix would be right now
-            const targetRotationMatrix = new THREE.Matrix4();
-            
-            // Up vector matches the aircraft world up, allowing the camera to follow the bank roll
-            const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(this.mesh.quaternion);
-            targetRotationMatrix.lookAt(this.camera.position, this.currentLookAt, cameraUp);
-
-            // Convert that target orientation matrix into a Quaternion target
-            const targetQuaternion = new THREE.Quaternion().setFromRotationMatrix(targetRotationMatrix);
-
-            // Slerp (Spherical Linear Interpolation) smoothly blends the camera's 
-            // current rotation toward the target rotation using our custom speed multiplier
-            this.camera.quaternion.slerp(targetQuaternion, this.lookRotationLerp * deltaTime);
+            return;
         }
+
+        // 5. --- APPLY POSITION & LOOK-AHEAD LERP DRAG ---
+        this.camera.position.lerp(idealWorldPosition, this.posLerp * deltaTime);
+        this.currentLookAt.lerp(idealLookAt, this.lookLerp * deltaTime);
+
+        // 6. --- CINEMATIC ROLLING HORIZON SLERP ---
+        // Construct an ideal target rotation matrix factoring plane banking profiles
+        const targetRotationMatrix = new THREE.Matrix4();
+        
+        // Extract aircraft world rotation up vector, then soften it slightly to create an elastic camera tilt lag
+        const planeUp = new THREE.Vector3(0, 1, 0).applyQuaternion(this.mesh.quaternion);
+        const smoothCameraUp = new THREE.Vector3(0, 1, 0).lerp(planeUp, 0.4); 
+
+        targetRotationMatrix.lookAt(this.camera.position, this.currentLookAt, smoothCameraUp);
+        const targetQuaternion = new THREE.Quaternion().setFromRotationMatrix(targetRotationMatrix);
+
+        // Spherical linear interpolation smooths the camera orientation frame by frame
+        this.camera.quaternion.slerp(targetQuaternion, this.rotationLerp * deltaTime);
     }
 }
