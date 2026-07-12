@@ -28,7 +28,7 @@ camera.position.set(-20, 100, -100); // Initial offset position relative to the 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.56;
+renderer.toneMappingExposure = 0.46;
 renderer.setSize(w, h);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 container.appendChild(renderer.domElement);
@@ -113,7 +113,7 @@ gltfLoader.load('assets/models/land.glb', (gltf) => {
 
         let landMaterial = new THREE.MeshBasicMaterial({
                 color: 0xaaaaaa,    
-                map: LoadTexture('assets/texture/land_combined_03.png')   
+                map: LoadTexture('assets/texture/land_combined.png')   
             });
 
             let treeMaterial = new THREE.MeshBasicMaterial({
