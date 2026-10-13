@@ -303,6 +303,7 @@ flightController = new FlightController(spitfire, {
     altSpeed: 10.5,     // how often it dips and climbs
     pitchResponse: 8.8, // how quickly it noses up or down
     rollResponse: 6.0,  // how quickly it banks left or right
+    turnFrequency: 1.0,  // how often it changes direction
 });
 
     cameraController = new DynamicCameraController(camera, spitfire, flightController, {
@@ -379,6 +380,7 @@ function requestStillFrame() {
 
         sunFlare.update(camera);
         composer.render();
+        sunFlare.render(renderer);
     });
 }
 
@@ -447,6 +449,7 @@ if (vapourTrails.length > 0 && flightController) {
     
     sunFlare.update(camera);
     composer.render();
+    sunFlare.render(renderer);
 }
 
 animate();

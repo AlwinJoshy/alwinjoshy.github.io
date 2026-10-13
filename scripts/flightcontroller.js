@@ -29,11 +29,13 @@ export class FlightController {
         };
 
         this.speed = config.baseSpeed ?? 50.0;
-        this.maxTurnRate = config.maxTurnRate ?? 0.35;   // rad/s of heading change (~20 deg/s)
-        this.turnResponse = config.turnResponse ?? 0.8;  // how quickly the turn rate eases in and out
+        this.maxTurnRate = config.maxTurnRate ?? 0.35;   // rad/s of heading change; higher = sharper turns
+        this.turnResponse = config.turnResponse ?? 0.8;  // higher = rolls into and out of turns faster
+        this.turnFrequency = config.turnFrequency ?? 1.0; // higher = changes direction more often
+        this.maxBank = config.maxBank ?? 1.3;            // bank limit in radians (~75 deg), stops it flipping
         this.maxClimb = config.maxClimb ?? 0.18;         // max pitch, in radians
         this.edgeMargin = config.edgeMargin ?? 3000;     // start turning home this far from the edge
-        this.timeScale = config.timeScale ?? 1.0;        // > 1 makes it maneuver more often
+        this.timeScale = config.timeScale ?? 1.0;        // > 1 speeds up all maneuvering (turns and altitude)
 
         this.heading = Math.random() * Math.PI * 2;
         this.pitch = 0;
@@ -56,7 +58,7 @@ export class FlightController {
         const b = this.bounds;
 
         // 1. Desired turn rate: smooth noise plus a gentle pull home near the edges
-        let desiredTurn = this.turnNoise(this.time) * this.maxTurnRate;
+        let desiredTurn = this.turnNoise(this.time * this.turnFrequency) * this.maxTurnRate;
         const cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2;
         const edge = Math.max(
             (this.edgeMargin - Math.min(pos.x - b.minX, b.maxX - pos.x)) / this.edgeMargin,
@@ -89,8 +91,8 @@ export class FlightController {
         _look.copy(pos).add(this.velocity);
         this.mesh.up.copy(_up);
         this.mesh.lookAt(_look);
-        const targetBank = -Math.atan((this.speed * this.turnRate) / 9.81);
-        this.bank += (targetBank - this.bank) * Math.min(1, 2.0 * dt);
+        const targetBank = THREE.MathUtils.clamp(-Math.atan((this.speed * this.turnRate) / 9.81), -this.maxBank, this.maxBank);
+        this.bank += (targetBank - this.bank) * Math.min(1, (1.2 + this.turnResponse) * dt);
         this.mesh.rotateZ(this.bank);
         this.currentRoll = this.bank / 3;
     }
