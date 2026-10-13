@@ -3,29 +3,45 @@ const form = document.forms['submit-to-google-sheet'];
 const feedbackMessage = document.getElementById("msg");
 
 
-form.addEventListener('submit', e => {
+const submitButton = form.querySelector('button[type="submit"]');
+let clearMsgTimer = null;
 
-    var formData = new FormData(form);
+function ShowMsg(text, isError){
+    clearTimeout(clearMsgTimer);
+    feedbackMessage.textContent = text;
+    feedbackMessage.style.color = isError ? "#ff6b6b" : "";
+    clearMsgTimer = setTimeout(() => {
+        feedbackMessage.textContent = "";
+    }, isError ? 8000 : 5000);
+}
+
+form.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
     formData.append("Date", GetDate());
     formData.append("Time", GetTime());
-    e.preventDefault()
-    fetch(scriptURL, { method: 'POST', body: formData})
-    .then(
-        response => {
-            console.log('Success!', response);
-            feedbackMessage.innerHTML = "Message sent succesfully.";
-            ClearMsg();
-    }
-    )
-    .catch(error => console.error('Error!', error.message))
-})
 
-function ClearMsg(){
-    form.reset();
-    setTimeout(() =>{
-        feedbackMessage.innerHTML = "";
-    }, 5000);
-}
+    submitButton.disabled = true;
+    submitButton.setAttribute("aria-busy", "true");
+    feedbackMessage.style.color = "";
+    feedbackMessage.textContent = "Sending...";
+
+    fetch(scriptURL, { method: 'POST', body: formData })
+        .then(response => {
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            form.reset();
+            ShowMsg("Message sent successfully.", false);
+        })
+        .catch(() => {
+            // Keep the user's text in the form so they can retry.
+            ShowMsg("Sorry, your message could not be sent. Please try again or email me directly.", true);
+        })
+        .finally(() => {
+            submitButton.disabled = false;
+            submitButton.removeAttribute("aria-busy");
+        });
+});
 
 function GetDate(){
     const today = new Date();

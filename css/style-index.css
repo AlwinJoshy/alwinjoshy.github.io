@@ -595,3 +595,11 @@
     }
 }
 
+
+/* Small-viewport height: avoids the hero jumping when the mobile URL bar shows/hides */
+@supports (height: 100svh){
+    #header,
+    #show-screen{
+        height: 100svh;
+    }
+}

@@ -29,8 +29,13 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.46;
+// Lower DPR cap on touch devices to keep phones cool.
+const IS_COARSE_POINTER = window.matchMedia('(pointer: coarse)').matches;
+const MAX_DPR = IS_COARSE_POINTER ? 1.25 : 2;
+const reduceMotionMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+function currentDPR() { return Math.min(window.devicePixelRatio || 1, MAX_DPR); }
+renderer.setPixelRatio(currentDPR());
 renderer.setSize(w, h);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 container.appendChild(renderer.domElement);
 
 // --- Orbit Controls ---
@@ -59,6 +64,7 @@ hdriLoader.load('assets/texture/hdri/modified_SKY.hdr', (texture) => {
     scene.background = envMap;       // Skybox background
     texture.dispose();
     pmremGenerator.dispose();
+    requestStillFrame();
 });
 
 // --- Post Processing Stack (Bloom) ---
@@ -75,10 +81,12 @@ const bloomPass = new UnrealBloomPass(
 composer.addPass(bloomPass);
 
 
-function LoadTexture(path){
-    const textureLoader = new THREE.TextureLoader();
-    const texture = textureLoader.load(path);
+const textureLoader = new THREE.TextureLoader();
+// Color (albedo) textures are authored in sRGB; pass isColor=false for data maps.
+function LoadTexture(path, isColor = true){
+    const texture = textureLoader.load(path, requestStillFrame);
     texture.flipY = false;
+    if (isColor) texture.encoding = THREE.sRGBEncoding;
     return texture;
 }
 
@@ -113,7 +121,7 @@ gltfLoader.load('assets/models/land.glb', (gltf) => {
 
         let landMaterial = new THREE.MeshBasicMaterial({
                 color: 0xaaaaaa,    
-                map: LoadTexture('assets/texture/land_combined.png')   
+                map: LoadTexture('assets/texture/land_combined.png', false)   
             });
 
             let treeMaterial = new THREE.MeshBasicMaterial({
@@ -140,7 +148,6 @@ gltfLoader.load('assets/models/land.glb', (gltf) => {
     terrainScene.traverse((child) => {
         if (child.isMesh) {
             const meshName = child.name;
-            console.log("Terrain Child name : " + meshName);
 
 
               if (meshName.startsWith('Landscape_LOD')) {
@@ -174,6 +181,7 @@ gltfLoader.load('assets/models/land.glb', (gltf) => {
 
     // Pass the ordered LOD array to the rebuilt terrain manager system
     terrainTiler.init(landLODs, rawTreesMesh);
+    requestStillFrame();
 });
 
 
@@ -306,7 +314,6 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
             propellerMesh = child;                  // 3. Save the mesh reference
         }
         else{
-            //console.log("Spitfire Child name : " + child.name);
 
             if(child.name == 'trail_l' || child.name == 'trail_r'){
                 CreateTrail(child, 0.2);
@@ -332,6 +339,7 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
     });
 
     //CreateTrail(spitfire);
+    requestStillFrame();
 });
 
 // Setup Trail
@@ -340,42 +348,72 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
 
 
 // --- Responsiveness ---
-window.addEventListener('resize', () => {
-     w = container.clientWidth;
-     h = container.clientHeight;
-     camera.aspect = w / h;
-     camera.updateProjectionMatrix();
-     renderer.setSize(w, h);
-     composer.setSize(w, h);
-});
+function applySize() {
+    w = Math.max(1, container.clientWidth);
+    h = Math.max(1, container.clientHeight);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    const dpr = currentDPR();
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(w, h);
+    if (composer.setPixelRatio) composer.setPixelRatio(dpr);
+    composer.setSize(w, h);
+    requestStillFrame();
+}
+// ResizeObserver covers container size changes; resize also catches DPR changes (zoom / monitor moves).
+new ResizeObserver(applySize).observe(container);
+window.addEventListener('resize', applySize);
 
 // --- Main Engine Loop ---
 let clock = new THREE.Clock();
 
-
+let inView = true;
 let isPaused = false;
 
-// Create the observer
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        isPaused = !entry.isIntersecting;
-        
-        if (!isPaused) {
-            // FIX: This forces the clock to ignore the time gap
-            clock.stop();
-            clock.start(); 
-            
-            // Re-sync the renderer to prevent black-screen
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            composer.setSize(container.clientWidth, container.clientHeight);
-        }
-    });
-}, { threshold: 0.1 });
+function updatePaused() {
+    const wasPaused = isPaused;
+    isPaused = !inView || document.hidden || reduceMotionMQ.matches;
+    if (wasPaused && !isPaused) {
+        // Ignore the time gap while paused
+        clock.getDelta();
+    }
+}
 
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { inView = entry.isIntersecting; });
+    updatePaused();
+}, { threshold: 0.1 });
+observer.observe(container);
+
+document.addEventListener('visibilitychange', updatePaused);
+if (reduceMotionMQ.addEventListener) {
+    reduceMotionMQ.addEventListener('change', () => { updatePaused(); requestStillFrame(); });
+}
+updatePaused();
+
+// Reduced motion / paused: render a single still frame on demand (after loads and resizes).
+let stillFrameQueued = false;
+function requestStillFrame() {
+    if (stillFrameQueued) return;
+    stillFrameQueued = true;
+    requestAnimationFrame(() => {
+        stillFrameQueued = false;
+        if (!isPaused) return; // the main loop is already drawing
+        if (spitfire) {
+            terrainTiler.update(spitfire.position, camera);
+            // Let the chase camera settle behind the aircraft (no flight motion)
+            if (cameraController) for (let i = 0; i < 60; i++) cameraController.update(1 / 60);
+        }
+        composer.render();
+    });
+}
+
+// Per-frame temporaries (reused, no allocation in the loop)
+const _worldSunDir = new THREE.Vector3();
+const _propRotation = new THREE.Quaternion();
 
 function animate() {
 
-    
     requestAnimationFrame(animate);
 
     if (isPaused) {
@@ -405,10 +443,10 @@ function animate() {
 if (propellerMesh && propMaterial && sunLight) {
         
         // 1. Get the vector pointing directly TOWARD the sun
-        const worldSunDir = sunLight.position.clone().normalize();
+        const worldSunDir = _worldSunDir.copy(sunLight.position).normalize();
         
         // 2. Grab the propeller's absolute world rotation
-        const propRotation = new THREE.Quaternion();
+        const propRotation = _propRotation;
         propellerMesh.getWorldQuaternion(propRotation);
         
         // 3. Invert that rotation to convert from World Space to Local Space
@@ -438,4 +476,3 @@ if (vapourTrails.length > 0) {
 }
 
 animate();
-// Stray bracket removed successfully

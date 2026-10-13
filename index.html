@@ -7,68 +7,83 @@
     <meta name="description" content="Hello World! I'm Alwin, a Technical Artist and Network Programmer driven by a deep curiosity for the boundaries of science and digital innovation. My journey spans diverse realms of research and development, where I dive into the wonders of our multidimensional reality to uncover insights and craft immersive experiences. With each project, I strive not only to push technical limits but also to bring a touch of artistry and discovery to the worlds I help create. My pursuit is endless, fueled by a passion for learning and the mysteries that await in the interplay of technology and imagination." />
     <meta name="keywords" content="Technical Artist, Network Programmer, Research and Development, Digital Technology, Science, Multidimensional Reality, Immersive Experiences, Digital Art, Programming, Innovation, 3D Art, Visual Effects, Game Development, Interactive Media, Alwin Portfolio" />
     <meta name="author" content="Alwin - Technical Artist and Network Programmer" />
+    <meta name="theme-color" content="#2eaa25">
+    <link rel="canonical" href="https://alwinjoshy.github.io/">
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://alwinjoshy.github.io/">
+    <meta property="og:title" content="Alwin Joseph - Technical Artist & Network Programmer">
+    <meta property="og:description" content="Technical Artist specializing in optimization, shader development and rapid prototyping, plus Unity3D, networking and R&amp;D.">
+    <!-- TODO: replace with a dedicated 1200x630 share image (e.g. images/og-card.jpg) -->
+    <meta property="og:image" content="https://alwinjoshy.github.io/images/Alwin_Joshy_Joseph.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Alwin Joseph - Technical Artist & Network Programmer">
+    <meta name="twitter:description" content="Technical Artist specializing in optimization, shader development and rapid prototyping, plus Unity3D, networking and R&amp;D.">
+    <meta name="twitter:image" content="https://alwinjoshy.github.io/images/Alwin_Joshy_Joseph.jpg">
 
     
     
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
     <link rel="stylesheet" href="css/style-general.css">
     <link rel="stylesheet" href="css/style-index.css">
-    <lisk rel="stylesheet" href="css/style-blog-archives.css">
 
 
-    <script src="https://kit.fontawesome.com/a3c67ea782.js" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/a3c67ea782.js" crossorigin="anonymous" defer></script>
 
-     <script src="scripts/textFileLoader.js"></script>
-     <script src="scripts/josnFileLoader.js"></script>
+     <script src="scripts/textFileLoader.js" defer></script>
+     <script src="scripts/josnFileLoader.js" defer></script>
      <script src="scripts/threeJS_WWII.js"  type="module" ></script>
    
 </head>
 <body>
     <!-- header -->
-    <div id="header">
-        <div id="show-screen"></div>
+    <header id="header">
+        <div id="show-screen" aria-hidden="true"></div>
         <div class="container">
 
 
             <nav id="main-nav">
-                <img src="images/name-symbol.png" alt="name image of Alwin Joseph Joseph" class="logo">
+                <img src="images/name-symbol.png" alt="Alwin Joseph logo" class="logo">
                 <ul id="sidemenu">
                     <li class="active-page-marker"><a href="#header">HOME</a></li>
                     <li><a href="#about">ABOUT</a></li>
                     <li><a href="#portfolio">WORK</a></li>  
                     <li><a href="blogArchive.html">BLOGS</a></li> 
                     <li><a href="#contact">CONTACT</a></li>
-                    <i class="fa-solid fa-xmark" onclick='closeNavMenu()'></i>
+                    <button type="button" class="fa-solid fa-xmark icon-button" onclick='closeNavMenu()' aria-label="Close menu"></button>
                 </ul>
-                <i class="fa-solid fa-bars" onclick='openNavMenu()'></i>
+                <button type="button" class="fa-solid fa-bars icon-button" onclick='openNavMenu()' aria-label="Open menu" aria-controls="sidemenu"></button>
             </nav>
             
 
             <div class="hearder-text">
-                <p>Graphics Programer & Network Engineer</p>
+                <p>Graphics Programmer & Network Engineer</p>
                 <h1>I am <span>Alwin Joseph</span>,<br> Welcome to my Portfolio</h1>
             </div>
 
         </div>
-    </div>
+    </header>
 
+    <main>
     <!-- about -->
     <div id="about">
         <div class="container">
             <div class="row">
                 <div class="about-col-1">
-                    <img src="images/AlwinJoshyJeoeph_lite.gif" alt="">
+                    <img src="images/AlwinJoshyJeoeph_lite.gif" alt="Alwin Joseph" loading="lazy" decoding="async">
                 </div>
                 <div class="about-col-2">
-                    <h1 class="subtitle">About</h1>
+                    <h2 class="subtitle">About</h2>
                         <p class="about-description">
                             Technical Artist specializing in optimization, shader development, and rapid prototyping. I enjoy breaking down complex profiling data, finding efficient approximations, and repurposing techniques in unexpected ways to solve performance challenges. My focus is building practical tools and scalable systems while preserving the artistic vision, atmosphere without loosing the intent that make an experience feel immersive.
+                        </p>
                 
                     <div class="tab-titles">
-                        <p class="tab-links active-link" onclick="openAboutSectionTab('tab-skill')">SKILLS</p>
-                        <p class="tab-links" onclick="openAboutSectionTab('tab-history')">HISTORY</p>
-                        <p class="tab-links" onclick="openAboutSectionTab('tab-education')">EDUCATION</p>
-                        <p class="tab-links" onclick="openAboutSectionTab('tab-achievements')">ACHIEVEMENTS</p>
+                        <button type="button" class="tab-links active-link" onclick="openAboutSectionTab('tab-skill')">SKILLS</button>
+                        <button type="button" class="tab-links" onclick="openAboutSectionTab('tab-history')">HISTORY</button>
+                        <button type="button" class="tab-links" onclick="openAboutSectionTab('tab-education')">EDUCATION</button>
+                        <button type="button" class="tab-links" onclick="openAboutSectionTab('tab-achievements')">ACHIEVEMENTS</button>
                     </div>
                     <!-- Skills -->
                     <div class="tab-contents active-tab" id="tab-skill">
@@ -79,11 +94,11 @@
                                         <span>Technical Art</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                                
@@ -94,11 +109,11 @@
                                         <span>Shader Development</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -108,11 +123,11 @@
                                         <span>Unity3D</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -122,11 +137,11 @@
                                         <span>C#</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -136,11 +151,11 @@
                                         <span>HLSL</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -150,11 +165,11 @@
                                         <span>Unreal Engine</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -164,11 +179,11 @@
                                         <span>Threejs/WebGL</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -178,11 +193,11 @@
                                         <span>Git</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -192,11 +207,11 @@
                                         <span>C++/C</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -206,11 +221,11 @@
                                         <span>Network Programming</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -220,11 +235,11 @@
                                         <span>Javascript</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -234,11 +249,11 @@
                                         <span>HTML</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -248,11 +263,11 @@
                                         <span>React Native</span>
                                     </p>
                                     <div class="rating-stars">
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-solid fa-star icon-highlight"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
-                                        <i class="fa-regular fa-star icon-dim"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-solid fa-star icon-highlight" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
+                                        <i class="fa-regular fa-star icon-dim" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </li>
@@ -512,10 +527,10 @@
     <!-- services -->
     <div id="services">
         <div class="container">
-            <h1 class="subtitle">Services</h1>
+            <h2 class="subtitle">Services</h2>
             <div class="service-list">
                 <div>
-                    <i class="fa-brands fa-unity"></i>
+                    <i class="fa-brands fa-unity" aria-hidden="true"></i>
                     <h2>Unity3D</h2>
                     <p>
                         Unlock unparalleled gaming experiences with our specialized Game Development service. 
@@ -523,20 +538,20 @@
                         and captivating VFX. Elevate your project with our proven expertise and 
                         deliver visually stunning, high-performance games
                     </p>
-                    <a href="">learn more</a>
+                    <!-- TODO: link this card to a project or blog post --><a href="">learn more</a>
                 </div>
                 <div>
-                    <i class="fa-solid fa-wand-sparkles"></i>
+                    <i class="fa-solid fa-wand-sparkles" aria-hidden="true"></i>
                     <h2>Technical Art</h2>
                     <p>
                         Elevate your digital project with my cutting-edge Technical Art services. 
                         Our expertise spans advanced shaders, captivating VFX, and immersive visual experiences, 
                         ensuring optimal performance and aesthetic brilliance. Explore the possibilities!
                     </p>
-                    <a href="">learn more</a>
+                    <!-- TODO: link this card to a project or blog post --><a href="">learn more</a>
                 </div>
                 <div>
-                    <i class="fa-solid fa-network-wired"></i>
+                    <i class="fa-solid fa-network-wired" aria-hidden="true"></i>
                     <h2>Networking</h2>
                     <p>
                         Empower your project with expert Network Programming solutions. 
@@ -544,17 +559,17 @@
                         and ensure seamless communication, delivering robust and scalable 
                         networking solutions tailored to your digital ambitions.
                     </p>
-                    <a href="">learn more</a>
+                    <!-- TODO: link this card to a project or blog post --><a href="">learn more</a>
                 </div>
                 <div>
-                    <i class="fa-solid fa-lightbulb"></i>
+                    <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
                     <h2>R&D</h2>
                     <p>
                         Elevate innovation with our R&D services, fueled by scientific thinking and problem-solving prowess. 
                         I navigate complexities, conduct in-depth research, and pioneer solutions, 
                         pushing the boundaries of possibility in every project
                     </p>
-                    <a href="">learn more</a>
+                    <!-- TODO: link this card to a project or blog post --><a href="">learn more</a>
                 </div>
             </div>
         </div>
@@ -563,105 +578,105 @@
     <!-- Portfolio -->
     <div id="portfolio">
         <div class="container">
-            <h1 class="subtitle">Previous Work</h1>
+            <h2 class="subtitle">Previous Work</h2>
 
             <div class="carousel-wrapper">
-            <button class="carousel-btn" id="prevBtn"><i class="fa-solid fa-chevron-left"></i></button>
+            <button type="button" class="carousel-btn" id="prevBtn" aria-label="Previous project"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
             
             <div class="carousel-viewport">
 
             <div class="work-list" id="portfolioTrack">
 
                 <div class="work">
-                    <img src="images/work/highstreet.gif" alt="Highstreet metaverse image">
+                    <img src="images/work/highstreet.gif" alt="Highstreet metaverse image" loading="lazy" decoding="async">
                     <div class="work-layer">
                         <h3>Highstreet Market</h3>
                         <p>Highstreet blends retail with gaming, paving the way for meta-lifestyles and new experiences in a multifaceted metaverse.
                         </p>
-                        <a href="https://www.highstreet.market" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square"  target="_blank" rel="noopener noreferrer"></i></a>
+                        <a aria-label="Open Highstreet Market (opens in a new tab)" href="https://www.highstreet.market" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i></a>
                     </div>
                 </div>
                 <div class="work">
-                    <img src="images/work/oxr.gif" alt="outreal xr holofair project">
+                    <img src="images/work/oxr.gif" alt="outreal xr holofair project" loading="lazy" decoding="async">
                     <div class="work-layer">
                         <h3>HoloFair</h3>
                         <p>HoloFair was the first metaverse and virtual even project make in the MENA region.</p>
-                        <a href="https://www.holofair.io/platform" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square"></i></a>
+                        <a aria-label="Open HoloFair (opens in a new tab)" href="https://www.holofair.io/platform" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i></a>
                     </div>
                 </div>
 
                 <div class="work">
-                    <img src="images/work/blackSky.gif" alt="blacksky steam game">
+                    <img src="images/work/blackSky.gif" alt="blacksky steam game" loading="lazy" decoding="async">
                     <div class="work-layer">
                         <h3>BlackSky</h3>
                         <p>Turnbased space combat game sith funny and comical secrets and lores hidden all over it</p>
-                        <a href="https://store.steampowered.com/app/1687120/BlackSky/" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square"></i></a>
+                        <a aria-label="Open BlackSky (opens in a new tab)" href="https://store.steampowered.com/app/1687120/BlackSky/" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i></a>
                     </div>
                 </div>
 
 
                 <div class="work">
-                    <img src="images/work/dreamtopia.gif" alt="dreamtopia steam game">
+                    <img src="images/work/dreamtopia.gif" alt="dreamtopia steam game" loading="lazy" decoding="async">
                     <div class="work-layer">
                         <h3>Dreamtopia</h3>
                         <p>Surrealistic game with mind bending puzzles and beautiful visuals made in collaboration with SAE
                         </p>
-                        <a href="https://store.steampowered.com/app/1229200/Dreamtopia/" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square"></i></a>
+                        <a aria-label="Open Dreamtopia (opens in a new tab)" href="https://store.steampowered.com/app/1229200/Dreamtopia/" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i></a>
                     </div>
                 </div>
                 <div class="work">
-                    <img src="images/work/baa.gif" alt="SAE Dubai Baa-Phomet!! roguelite game">
+                    <img src="images/work/baa.gif" alt="SAE Dubai Baa-Phomet!! roguelite game" loading="lazy" decoding="async">
                     <div class="work-layer">
 
                         <h3>Baa-Phomet!!</h3>
                         <p>An Isometric action fast paced, rogue like game where you have to fight off goat-spawns 
                             that are overrunning planet earth.
                         </p>
-                        <a href="https://flamencoman.itch.io/baa-phomet"  target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square"></i></a>
+                        <a aria-label="Open Baa-Phomet!! (opens in a new tab)" href="https://flamencoman.itch.io/baa-phomet"  target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i></a>
                     </div>
                 </div>
 
                 <div class="work">
-                    <img src="images/work/pablo.gif" alt="Steam game Pable Let's Go Bar">
+                    <img src="images/work/pablo.gif" alt="Steam game Pable Let's Go Bar" loading="lazy" decoding="async">
                     <div class="work-layer">
                         <h3>Pablo Lets Go Bar</h3>
                         <p>Multiplayer rogue like PvE game where the players fight waves of 
                             enimes while exploring while play as the latin heartthrob.
                         </p>
-                        <a href="https://store.steampowered.com/app/1676180/Pablo_Lets_Go_Bar/" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square"></i></a>
+                        <a aria-label="Open Pablo Lets Go Bar (opens in a new tab)" href="https://store.steampowered.com/app/1676180/Pablo_Lets_Go_Bar/" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i></a>
                     </div>
                 </div>
 
                 <div class="work">
-                    <img src="images/work/hcali.png" alt="SAE Dubai game Hotel California">
+                    <img src="images/work/hcali.png" alt="SAE Dubai game Hotel California" loading="lazy" decoding="async">
                     <div class="work-layer">
                         <h3>Hotel California</h3>
                         <p>Unique Multiplayer PvP escape room game with unique puzzles and player 
                             mechsnics were the player has to escape the Hotel before its too late.</p>
-                        <a href="https://flamencoman.itch.io/hotel-california" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square"></i></a>
+                        <a aria-label="Open Hotel California (opens in a new tab)" href="https://flamencoman.itch.io/hotel-california" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i></a>
                     </div>
                 </div>
 
                 <div class="work">
-                    <img src="images/work/7battles.gif" alt="SAE Dubai game Seven Battles">
+                    <img src="images/work/7battles.gif" alt="SAE Dubai game Seven Battles" loading="lazy" decoding="async">
                     <div class="work-layer">
                         <h3>Project ABC</h3>
                         <p>WebGL game made as a marketting project for SAE Institute
                         </p>
-                        <a href="https://flamencoman.itch.io/sevenbattles" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square"></i></a>
+                        <a aria-label="Open Project ABC (opens in a new tab)" href="https://flamencoman.itch.io/sevenbattles" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i></a>
                     </div>
                 </div>
 
             </div>
             </div>
-            <button class="carousel-btn" id="nextBtn"><i class="fa-solid fa-chevron-right"></i></button>
+            <button type="button" class="carousel-btn" id="nextBtn" aria-label="Next project"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
         </div>
         </div>
     </div>
  
     <div id="blogs">
         <div class="container">
-            <h1 class="subtitle" id="blog-section-title">Blogs</h1>
+            <h2 class="subtitle" id="blog-section-title">Blogs</h2>
             <div id="all-blogs-list">
                 
             </div>
@@ -672,46 +687,52 @@
         <div class="container">
             <div class="row">
                 <div class="contact-left">
-                    <h1 class="subtitle">Contact</h1>
-                    <p><i class="fa-solid fa-paper-plane"></i>ajoshy300@gmail.com</p>
-                    <p><i class="fa-solid fa-phone"></i>+971-585-494-806</p>
+                    <h2 class="subtitle">Contact</h2>
+                    <p><i class="fa-solid fa-paper-plane" aria-hidden="true"></i>ajoshy300@gmail.com</p>
+                    <p><i class="fa-solid fa-phone" aria-hidden="true"></i>+971-585-494-806</p>
                     <div class="social-icons">
-                        <a href="https://www.linkedin.com/in/dgth2356/"><i class="fa-brands fa-linkedin"></i></a>
-                        <a href="https://www.youtube.com/channel/UCW2AJMvusd2DPFJxQlYu3pg"><i class="fa-brands fa-youtube"></i></a>
-                        <a href="https://flamencoman.itch.io"><i class="fa-brands fa-itch-io"></i></a>
-                        <a href="https://github.com/AlwinJoshy"><i class="fa-brands fa-github"></i></a>
-                        <a href="https://store.steampowered.com/app/1229200/Dreamtopia/"><i class="fa-brands fa-steam"></i></a>
-                        <a href=""><i class="fa-brands fa-x-twitter"></i></a>
-                        <a href=""><i class="fa-brands fa-instagram"></i></a>
+                        <a aria-label="LinkedIn" href="https://www.linkedin.com/in/dgth2356/"><i class="fa-brands fa-linkedin" aria-hidden="true"></i></a>
+                        <a aria-label="YouTube" href="https://www.youtube.com/channel/UCW2AJMvusd2DPFJxQlYu3pg"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
+                        <a aria-label="itch.io" href="https://flamencoman.itch.io"><i class="fa-brands fa-itch-io" aria-hidden="true"></i></a>
+                        <a aria-label="GitHub" href="https://github.com/AlwinJoshy"><i class="fa-brands fa-github" aria-hidden="true"></i></a>
+                        <a aria-label="Steam" href="https://store.steampowered.com/app/1229200/Dreamtopia/"><i class="fa-brands fa-steam" aria-hidden="true"></i></a>
+                        <!-- TODO: add X/Twitter profile URL (empty href reloads the page) -->
+                        <a aria-label="X (Twitter)" href=""><i class="fa-brands fa-x-twitter" aria-hidden="true"></i></a>
+                        <!-- TODO: add Instagram profile URL (empty href reloads the page) -->
+                        <a aria-label="Instagram" href=""><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
                     </div>
                     <a href="downloadables/AlwinJoshyCV.pdf" class="btn btn2" download>Download CV</a>
                 </div>
                 <div class="contact-right">
                     <form name="submit-to-google-sheet">
-                        <input type="text" name="Name" placeholder="Your Name" required>
-                        <input type="email" name="Email" placeholder="Your E-mail" required>
-                        <textarea type="Message" name="Message" rows="6" placeholder="Your Message"></textarea>
+                        <label for="contact-name" class="sr-only">Your name</label>
+                        <input type="text" id="contact-name" name="Name" placeholder="Your Name" autocomplete="name" required>
+                        <label for="contact-email" class="sr-only">Your e-mail</label>
+                        <input type="email" id="contact-email" name="Email" placeholder="Your E-mail" autocomplete="email" required>
+                        <label for="contact-message" class="sr-only">Your message</label>
+                        <textarea id="contact-message" name="Message" rows="6" placeholder="Your Message"></textarea>
                         <button type="submit" class="btn btn2">Submit</button>
                     </form>
-                    <span id="msg"></span>
+                    <span id="msg" role="status" aria-live="polite"></span>
                 </div>
             </div>
         </div>
-        <div class="copyright">
+        <footer class="copyright">
             <p>Copyright © Alwin. Made by Alwin Joseph</p>
-        </div>
+        </footer>
     </div>
+    </main>
 
     <!-- final load scripts -->
 
     
 
-    <script src="scripts/loadlastfourblogs.js"></script>
-    <script src="scripts/aboutops.js"></script>
-    <script src="scripts/smallscreennavrops.js"></script>
-    <script src="scripts/sendcontactrequestops.js"></script>
-    <script src="scripts/myworkops.js"></script>
-    <script src="scripts/openPageLink.js"></script>
+    <script src="scripts/loadlastfourblogs.js" defer></script>
+    <script src="scripts/aboutops.js" defer></script>
+    <script src="scripts/smallscreennavrops.js" defer></script>
+    <script src="scripts/sendcontactrequestops.js" defer></script>
+    <script src="scripts/myworkops.js" defer></script>
+    <script src="scripts/openPageLink.js" defer></script>
 
 
 </body>
