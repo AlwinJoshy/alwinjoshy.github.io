@@ -6,7 +6,7 @@ import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/exam
 import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/RGBELoader.js';
 import { TerrainTiler } from './TerrainTiler.js';
 import { DynamicCameraController } from './CameraController.js';
-import { TrailRenderer } from './TrailRenderer.js';
+import { WingtipTrail } from './WingtipTrail.js';
 import { FlightController } from './flightcontroller.js';
 
 // --- Scene Setup ---
@@ -252,45 +252,9 @@ function createPropellerShader() {
 
 let vapourTrails = [];
 
-function CreateTrail(trailTarget = null, width = 0.2) {
-
-    // specify points to create planar trail-head geometry
-    let trailHeadGeometry = [];
-    trailHeadGeometry.push( 
-    new THREE.Vector3( -width, 0.0, 0.0 ), 
-    new THREE.Vector3( 0.0, 0.0, 0.0 ), 
-    new THREE.Vector3( width, 0.0, 0.0 ) 
-    );
-
-    // create the trail renderer object
-    let trail = new TrailRenderer( scene, false );
-
-    vapourTrails.push(trail);
-
-    // set how often a new trail node will be added and existing nodes will be updated
-    trail.setAdvanceFrequency(15);
-
-// create material for the trail renderer
-    const trailMaterial = TrailRenderer.createBaseMaterial();	
-    
-    // FIX 1: Set colors to White, but initialize alpha to 0.0 (Invisible)
-    trailMaterial.uniforms.headColor.value.set(1.0, 1.0, 1.0, 0.5);
-    trailMaterial.uniforms.tailColor.value.set(1.0, 1.0, 1.0, 0.5);
-
-    // Store the material inside the trail object so the animate loop can find it
-    trail.material = trailMaterial;
-
-    // specify length of trail
-    const trailLength = 30;
-
-    // initialize the trail
-    trail.initialize( trailMaterial, trailLength, false, 0, trailHeadGeometry, trailTarget );
-
-    // activate the trail
-    trail.activate();
-    trail.mesh.frustumCulled = false; // <--- ADD THIS
-
-    
+// Wingtip vapour: camera-facing ribbon from a fixed ring buffer (see WingtipTrail.js)
+function CreateTrail(trailTarget, width = 0.09) {
+    vapourTrails.push(new WingtipTrail(scene, trailTarget, { width, maxPoints: 40, segmentLength: 1.5 }));
 }
 
 
@@ -316,7 +280,7 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
         else{
 
             if(child.name == 'trail_l' || child.name == 'trail_r'){
-                CreateTrail(child, 0.2);
+                CreateTrail(child, 0.09);
             }
         }
     });
@@ -459,17 +423,15 @@ if (propellerMesh && propMaterial && sunLight) {
         propMaterial.uniforms.uLightDir.value.set(localSunDir.x, localSunDir.y).normalize();
     }
 
-if (vapourTrails.length > 0) {
-        vapourTrails.forEach(trail => {
-            // Update material alpha for turn-intensity
-            let turnIntensity = (Math.abs(flightController.currentRoll) * 1.0) - 0.1;
-            let alpha = Math.max(0.0, Math.min(turnIntensity, 0.6));
-            trail.material.uniforms.headColor.value.set(1.0, 1.0, 1.0, alpha);
-            trail.material.uniforms.tailColor.value.set(1.0, 1.0, 1.0, alpha);
-            
-            // Advance the trail geometry
-            trail.advance(); 
-        });
+if (vapourTrails.length > 0 && flightController) {
+        // Vapour only shows while banking (same rule as before)
+        const turnIntensity = Math.abs(flightController.currentRoll) - 0.1;
+        const alpha = Math.max(0.0, Math.min(turnIntensity, 0.6));
+        camera.updateMatrixWorld();
+        for (let i = 0; i < vapourTrails.length; i++) {
+            vapourTrails[i].opacity = alpha;
+            vapourTrails[i].update(camera);
+        }
     }
 
     composer.render();
