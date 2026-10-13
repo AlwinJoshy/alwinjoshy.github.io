@@ -58,7 +58,7 @@ const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
 
 const hdriLoader = new RGBELoader();
-hdriLoader.load('assets/texture/hdri/modified_SKY.hdr', (texture) => {
+hdriLoader.load('assets/texture/hdri/modified_SKY_lite_ultra.hdr', (texture) => {
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
     scene.environment = envMap;      // Reflection probe for PBR materials
     scene.background = envMap;       // Skybox background
@@ -120,7 +120,7 @@ gltfLoader.load('assets/models/land.glb', (gltf) => {
     const terrainScene = gltf.scene;
 
         let landMaterial = new THREE.MeshBasicMaterial({
-                color: 0xaaaaaa,    
+                color: 0x777777,
                 map: LoadTexture('assets/texture/land_combined.png', false)   
             });
 
