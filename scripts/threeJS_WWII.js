@@ -48,7 +48,7 @@ container.appendChild(renderer.domElement);
 
 // --- Lighting & Environment Probe ---
 const sunLight = new THREE.DirectionalLight(0xfffaed, 2.0); // Warm sunset sun color
-sunLight.position.set(100, 40, -100); 
+sunLight.position.set(100, 15, 100);
 scene.add(sunLight);
 
 // --- Sun Flare ---
@@ -444,7 +444,7 @@ if (vapourTrails.length > 0 && flightController) {
     }
 
     
-
+    sunFlare.update(camera);
     composer.render();
 }
 
