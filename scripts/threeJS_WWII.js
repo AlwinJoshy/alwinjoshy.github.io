@@ -116,7 +116,7 @@ function checkAssetsReady() {
 
 
 // --- Load Terrain & Trees ---
-gltfLoader.load('assets/models/land.glb', (gltf) => {
+gltfLoader.load('assets/models/land_02.glb', (gltf) => {
     const terrainScene = gltf.scene;
 
         let landMaterial = new THREE.MeshBasicMaterial({
