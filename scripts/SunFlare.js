@@ -6,7 +6,7 @@ import { Lensflare, LensflareElement } from 'https://cdn.jsdelivr.net/npm/three@
 //   const sunFlare = new SunFlare(scene, sunLight, { distance: 5000 });
 //   // each frame, before rendering:
 //   sunFlare.update(camera);
-const CDN = 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/textures/lensflare/';
+const CDN = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r117/examples/textures/lensflare/';
 const _dir = new THREE.Vector3();
 
 export class SunFlare {

@@ -48,7 +48,7 @@ container.appendChild(renderer.domElement);
 
 // --- Lighting & Environment Probe ---
 const sunLight = new THREE.DirectionalLight(0xfffaed, 2.0); // Warm sunset sun color
-sunLight.position.set(100, 15, 100);
+sunLight.position.set(100, 30, 100);
 scene.add(sunLight);
 
 // --- Sun Flare ---
@@ -78,7 +78,7 @@ composer.addPass(renderPass);
 
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(w, h),
-    0.2,  // Bloom Strength
+    0.23,  // Bloom Strength
     2.5,  // Radius
     0.1  // Threshold 
 );
@@ -296,16 +296,17 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
     scene.add(spitfire);
 
 flightController = new FlightController(spitfire, {
-    minY: 30,          // keep above the ~70 m peaks
+    minY: 50,          // keep above the ~70 m peaks
     maxY: 260,
     baseSpeed: 50.0,
     maxClimb: 0.7,    // steeper dives and climbs (about 26°)
-    altSpeed: 5.5,     // how often it dips and climbs
-    pitchResponse: 3.8 // how quickly it noses up or down
+    altSpeed: 10.5,     // how often it dips and climbs
+    pitchResponse: 8.8, // how quickly it noses up or down
+    rollResponse: 6.0,  // how quickly it banks left or right
 });
 
     cameraController = new DynamicCameraController(camera, spitfire, flightController, {
-        baseOffset: new THREE.Vector3(4, 1.55, -10), 
+        baseOffset: new THREE.Vector3(4, 3.55, -10), 
         posLerp: 20.0 
     });
 
