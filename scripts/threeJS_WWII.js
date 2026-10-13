@@ -8,6 +8,7 @@ import { TerrainTiler } from './TerrainTiler.js';
 import { DynamicCameraController } from './CameraController.js';
 import { WingtipTrail } from './WingtipTrail.js';
 import { FlightController } from './flightcontroller.js';
+import { SunFlare } from './SunFlare.js';
 
 // --- Scene Setup ---
 const container = document.getElementById('show-screen');
@@ -49,6 +50,9 @@ container.appendChild(renderer.domElement);
 const sunLight = new THREE.DirectionalLight(0xfffaed, 2.0); // Warm sunset sun color
 sunLight.position.set(100, 40, -100); 
 scene.add(sunLight);
+
+// --- Sun Flare ---
+const sunFlare = new SunFlare(scene, sunLight, { distance: 5000, size: 500 });
 
 // Ambient light to act as uniform Ambient Occlusion fill across shadowed areas
 const ambientAO = new THREE.AmbientLight(0x93dcf5, 2.4); // Cool sky tint for fill shadows
@@ -291,14 +295,17 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
     spitfire.scale.set(scale, scale, scale);
     scene.add(spitfire);
 
-    flightController = new FlightController(spitfire, {
-        minY: 1000, 
-        maxY: 500,
-        baseSpeed: 50.0 
-    });
+flightController = new FlightController(spitfire, {
+    minY: 30,          // keep above the ~70 m peaks
+    maxY: 260,
+    baseSpeed: 50.0,
+    maxClimb: 0.7,    // steeper dives and climbs (about 26°)
+    altSpeed: 5.5,     // how often it dips and climbs
+    pitchResponse: 3.8 // how quickly it noses up or down
+});
 
     cameraController = new DynamicCameraController(camera, spitfire, flightController, {
-        baseOffset: new THREE.Vector3(2, 2.55, -5), 
+        baseOffset: new THREE.Vector3(4, 1.55, -10), 
         posLerp: 20.0 
     });
 
@@ -368,6 +375,8 @@ function requestStillFrame() {
             // Let the chase camera settle behind the aircraft (no flight motion)
             if (cameraController) for (let i = 0; i < 60; i++) cameraController.update(1 / 60);
         }
+
+        sunFlare.update(camera);
         composer.render();
     });
 }
@@ -433,6 +442,8 @@ if (vapourTrails.length > 0 && flightController) {
             vapourTrails[i].update(camera);
         }
     }
+
+    
 
     composer.render();
 }
