@@ -9,6 +9,7 @@ import { DynamicCameraController } from './CameraController.js';
 import { WingtipTrail } from './WingtipTrail.js';
 import { FlightController } from './flightcontroller.js';
 import { SunFlare } from './SunFlare.js';
+import { DRACOLoader } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/DRACOLoader.js';
 
 // --- Scene Setup ---
 const container = document.getElementById('show-screen');
@@ -96,6 +97,9 @@ function LoadTexture(path, isColor = true){
 
 // --- GLTF Asset Asset Loading ---
 const gltfLoader = new GLTFLoader();
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.117.1/examples/js/libs/draco/gltf/');
+gltfLoader.setDRACOLoader(dracoLoader);
 let spitfire = null;
 const aircraftHeight = 80.0; // Fixed elevation above 0,0,0 coordinate platform
 
@@ -120,7 +124,7 @@ function checkAssetsReady() {
 
 
 // --- Load Terrain & Trees ---
-gltfLoader.load('assets/models/land_02.glb', (gltf) => {
+gltfLoader.load('assets/models/land_02_draco.glb', (gltf) => {
     const terrainScene = gltf.scene;
 
         let landMaterial = new THREE.MeshBasicMaterial({
@@ -267,6 +271,7 @@ let cameraController = null;
 let propMaterial = null;
 let propellerMesh = null;
 
+const spitfireAlbedo = LoadTexture('assets/texture/spitfire_albedo_01.gif', false);
 // Load Aircraft Mesh
 gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
     spitfire = gltf.scene;
@@ -281,9 +286,14 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
             child.material = propMaterial;          // 2. Assign to the mesh
             propellerMesh = child;                  // 3. Save the mesh reference
         }
-        else{
-
-            if(child.name == 'trail_l' || child.name == 'trail_r'){
+        else {
+            if (child.isMesh) {
+                // body: keep the model's material, just give it the texture back
+                child.material.map = spitfireAlbedo;
+                child.material.color.set(0xffffff);   // so the texture isn't tinted
+                child.material.needsUpdate = true;
+            }
+            if (child.name == 'trail_l' || child.name == 'trail_r') {
                 CreateTrail(child, 0.09);
             }
         }
