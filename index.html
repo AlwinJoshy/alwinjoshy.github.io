@@ -33,7 +33,25 @@
 
      <script src="scripts/textFileLoader.js" defer></script>
      <script src="scripts/josnFileLoader.js" defer></script>
-     <script src="scripts/threeJS_WWII.js"  type="module" ></script>
+     <script>
+    // Start the 3D scene only after the page has loaded and gone idle, or on the first interaction,
+    // so the text and layout paint instantly and the heavy WebGL work never blocks the first load.
+    (function () {
+        var started = false, evts = ['pointermove', 'pointerdown', 'scroll', 'keydown', 'touchstart'];
+        function start() {
+            if (started) return; started = true;
+            evts.forEach(function (e) { removeEventListener(e, start); });
+            var s = document.createElement('script');
+            s.type = 'module'; s.src = 'scripts/threeJS_WWII.js';
+            document.head.appendChild(s);
+        }
+        evts.forEach(function (e) { addEventListener(e, start, { once: true, passive: true }); });
+        addEventListener('load', function () {
+            var idle = window.requestIdleCallback || function (cb) { setTimeout(cb, 1); };
+            setTimeout(function () { idle(start, { timeout: 2000 }); }, 2500);
+        });
+    })();
+    </script>
    
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Person","name":"Alwin Joseph","jobTitle":"Technical Artist & Network Programmer","url":"https://alwinjoshy.github.io/","image":"https://alwinjoshy.github.io/images/Alwin_Joshy_Joseph.jpg","sameAs":["https://github.com/AlwinJoshy","https://www.linkedin.com/in/dgth2356/","https://www.youtube.com/channel/UCW2AJMvusd2DPFJxQlYu3pg","https://flamencoman.itch.io"]}

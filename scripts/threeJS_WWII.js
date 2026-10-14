@@ -326,7 +326,7 @@ function applySize() {
     h = Math.max(1, container.clientHeight);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    const dpr = currentDPR();
+    const dpr = perf.level >= 1 ? 1 : currentDPR();
     renderer.setPixelRatio(dpr);
     renderer.setSize(w, h);
     if (composer.setPixelRatio) composer.setPixelRatio(dpr);
@@ -388,7 +388,21 @@ function requestStillFrame() {
 const _worldSunDir = new THREE.Vector3();
 const _propRotation = new THREE.Quaternion();
 
-function animate() {
+// --- Adaptive quality: on slow devices drop pixel ratio, then bloom, then cap at 30 fps ---
+const perf = { level: 0, frames: 0, time: 0, fpsCap: 0, lastDraw: 0, settle: 5 }  // first window is longer so asset loading hitches are ignored;
+function adaptQuality(dt) {
+    perf.frames++; perf.time += dt;
+    if (perf.time < perf.settle) return;              // average over ~2 s windows
+    const fps = perf.frames / perf.time;
+    perf.frames = 0; perf.time = 0; perf.settle = 2;
+    if (fps >= 45 || perf.level >= 3) return;
+    perf.level++;
+    if (perf.level === 1) { renderer.setPixelRatio(1); if (composer.setPixelRatio) composer.setPixelRatio(1); composer.setSize(w, h); }
+    else if (perf.level === 2) bloomPass.enabled = false;
+    else if (perf.level === 3) perf.fpsCap = 30;
+}
+
+function animate(now) {
 
     requestAnimationFrame(animate);
 
@@ -396,7 +410,12 @@ function animate() {
         return; 
     }
 
+    // 30 fps cap once the device has proven slow
+    if (perf.fpsCap && now - perf.lastDraw < 1000 / perf.fpsCap - 2) return;
+    perf.lastDraw = now;
+
     let deltaTime = clock.getDelta();
+    if (spitfire) adaptQuality(deltaTime);
     if (deltaTime > 0.1) deltaTime = 0.1;
 
 
@@ -452,4 +471,4 @@ if (vapourTrails.length > 0 && flightController) {
     sunFlare.render(renderer);
 }
 
-animate();
+requestAnimationFrame(animate);
