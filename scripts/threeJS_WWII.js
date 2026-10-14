@@ -129,7 +129,7 @@ gltfLoader.load('assets/models/land_02_draco.glb', (gltf) => {
 
         let landMaterial = new THREE.MeshBasicMaterial({
                 color: 0x777777,
-                map: LoadTexture('assets/texture/land_combined_01.gif', false)   
+                map: LoadTexture('assets/texture/land_combined_01.jpg', false)   
             });
 
             let treeMaterial = new THREE.MeshBasicMaterial({
