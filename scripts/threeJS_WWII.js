@@ -11,7 +11,6 @@ import { FlightController } from './flightcontroller.js';
 import { SunFlare } from './SunFlare.js';
 import { LowClouds } from './LowClouds.js';
 import { GodRays } from './GodRays.js';
-import { Dogfight } from './Dogfight.js';
 import { DRACOLoader } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/DRACOLoader.js';
 
 // --- Scene Setup ---
@@ -58,7 +57,6 @@ scene.add(sunLight);
 // --- Sun Flare ---
 const sunFlare = new SunFlare(scene, sunLight, { distance: 5000, size: 500 });
 const lowClouds = new LowClouds(scene, { count: 220, minY: 90, maxY: 220, radius: 900, sunDir: sunLight.position });
-let dogfight = null;
 
 // Ambient light to act as uniform Ambient Occlusion fill across shadowed areas
 const ambientAO = new THREE.AmbientLight(0x93dcf5, 2.4); // Cool sky tint for fill shadows
@@ -329,7 +327,6 @@ flightController = new FlightController(spitfire, {
         posLerp: 20.0 
     });
 
-    dogfight = new Dogfight(scene, spitfire, spitfire, { count: 3, fireCone: 8, range: 380, playerController: flightController });
 
     //CreateTrail(spitfire);
     requestStillFrame();
@@ -454,7 +451,6 @@ function animate(now) {
     }
 
     if (cameraController) cameraController.update(deltaTime);
-    if (dogfight) dogfight.update(deltaTime, camera);
     lowClouds.update(camera, deltaTime);
 
     // controls.update(); // Resolves smooth lerped damping physics

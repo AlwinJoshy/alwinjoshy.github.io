@@ -47,10 +47,6 @@ export class FlightController {
         this.turnNoise = makeNoise();
         this.altNoise = makeNoise();
 
-        // External steering (e.g. Dogfight AI). When steer.active, it replaces the noise turn/altitude.
-        // turn: desired turn rate (rad/s, +left like heading), y: target altitude, response: turn easing rate.
-        this.steer = { active: false, turn: 0, y: 0, response: 2.5, pitchResponse: 2.0 };
-
         this.velocity = new THREE.Vector3(Math.sin(this.heading), 0, Math.cos(this.heading)).multiplyScalar(this.speed);
     }
 
@@ -74,18 +70,15 @@ export class FlightController {
             desiredTurn = THREE.MathUtils.lerp(desiredTurn, Math.sign(diff) * this.maxTurnRate, Math.min(edge, 1));
         }
 
-        const st = this.steer;
-        if (st.active && edge <= 0) desiredTurn = st.turn;
-
         // 2. Ease the turn rate (no sudden direction changes)
-        this.turnRate += (desiredTurn - this.turnRate) * Math.min(1, (st.active ? st.response : this.turnResponse) * dt);
+        this.turnRate += (desiredTurn - this.turnRate) * Math.min(1, this.turnResponse * dt);
         this.heading += this.turnRate * dt;
 
         // 3. Altitude: drift smoothly between the bounds, then pitch toward it
         const midY = (b.minY + b.maxY) / 2, halfY = (b.maxY - b.minY) / 2;
-        const targetY = st.active ? THREE.MathUtils.clamp(st.y, b.minY, b.maxY) : midY + this.altNoise(this.time * 0.6) * halfY;
+        const targetY = midY + this.altNoise(this.time * 0.6) * halfY;
         const desiredPitch = THREE.MathUtils.clamp((targetY - pos.y) * 0.004, -this.maxClimb, this.maxClimb);
-        this.pitch += (desiredPitch - this.pitch) * Math.min(1, (st.active ? st.pitchResponse : 0.6) * dt);
+        this.pitch += (desiredPitch - this.pitch) * Math.min(1, 0.6 * dt);
 
         // 4. Move
         const cp = Math.cos(this.pitch);

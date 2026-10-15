@@ -9,15 +9,15 @@ export class LowClouds {
             count: 220,          // number of puffs
             minY: 90, maxY: 220, // altitude band
             radius: 900,         // half-size of the wrap box around the camera (xz)
-            minSize: 70, maxSize: 200,
+            minSize: 80, maxSize: 200,
             opacity: 0.5,       // halved (was 0.5)
-            fresnelPower: 3,   // extra pow() on the smoothstepped fresnel; higher = thinner, denser core
-            edgeSoftness: 1.1,   // width of the smoothstep fade on dot(N,V) (~1 = fade spans the whole puff)
-            noiseScale: 1.0,     // noise cycles across a puff (radius units); higher = finer billows
-            noiseStrength: 1.8,  // 0..1 how much noise eats into alpha / breaks up shading and silhouette
+            fresnelPower: 1.0,   // extra pow() on the smoothstepped fresnel; higher = thinner, denser core
+            edgeSoftness: 3.0,   // width of the smoothstep fade on dot(N,V) (~1 = fade spans the whole puff)
+            noiseScale: 1.5,     // noise cycles across a puff (radius units); higher = finer billows
+            noiseStrength: 1.5,  // 0..1 how much noise eats into alpha / breaks up shading and silhouette
             rimShade: 0.35,      // 0..1 darken colour toward shadeColor at the rim (cheap volume cue)
             detail: 1,           // IcosahedronBufferGeometry detail (1 = 80 tris)
-            squash: [0.55, 0.8], // vertical scale range (flattened puffs)
+            squash: [0.55, 0.9], // vertical scale range (flattened puffs)
             nearFade: [6, 60],   // fully transparent at <6 units, full at >60 (soft fly-through)
             color: 0xe4e4e0,     // lit cloud colour
             shadeColor: 0x9aa3a8,// underside / shaded colour
