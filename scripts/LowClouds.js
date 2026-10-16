@@ -8,7 +8,8 @@ export class LowClouds {
         const o = Object.assign({
             count: 220,          // number of puffs
             minY: 90, maxY: 220, // altitude band
-            radius: 900,         // half-size of the wrap box around the camera (xz)
+            radius: 900,         // half-size of the wrap box (xz)
+            aheadFactor: 0,      // wrap box centre = camera + horizontal view dir * radius * aheadFactor (puffs stay in view)
             minSize: 100, maxSize: 200,
             opacity: 0.25,       // halved (was 0.5)
             fresnelPower: 3.2,   // extra pow() on the smoothstepped fresnel; higher = thinner, denser core
@@ -51,6 +52,7 @@ export class LowClouds {
 
         this.uniforms = {
             uCam: { value: new THREE.Vector3() },
+            uWrapC: { value: new THREE.Vector3() },
             uRadius: { value: o.radius },
             uOpacity: { value: o.opacity },
             uFresnel: { value: o.fresnelPower },
@@ -79,7 +81,10 @@ export class LowClouds {
         this.scene = scene;
     }
     update(camera, dt = 0) {
-        this.uniforms.uCam.value.setFromMatrixPosition(camera.matrixWorld);
+        const cam = this.uniforms.uCam.value.setFromMatrixPosition(camera.matrixWorld);
+        const e = camera.matrixWorld.elements, wc = this.uniforms.uWrapC.value;   // view dir = -Z column
+        wc.set(-e[8], 0, -e[10]); const l = Math.hypot(wc.x, wc.z) || 1;
+        wc.multiplyScalar(this.opts.radius * this.opts.aheadFactor / l).add(cam);
         const w = this.uniforms.uWindOff.value, r2 = 2 * this.opts.radius;
         w.x = (w.x + this.opts.wind.x * dt) % r2; w.y = (w.y + this.opts.wind.y * dt) % r2; // keep small (float precision)
     }
@@ -106,13 +111,13 @@ function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let 
 //  rimShade blend reads as volume; true subtractive blending looked like dirty holes against sky.)
 const VS = /* glsl */`
 attribute vec4 aPuff; attribute float aSquash;
-uniform vec3 uCam; uniform float uRadius; uniform vec2 uNear; uniform float uNoiseScale; uniform vec2 uWindOff;
+uniform vec3 uCam, uWrapC; uniform float uRadius; uniform vec2 uNear; uniform float uNoiseScale; uniform vec2 uWindOff;
 varying float vFade; varying vec3 vWorld; varying vec3 vN; varying float vUp; varying vec3 vLocal;
 void main() {
     vec3 c = aPuff.xyz;
     c.xz += uWindOff;
-    c.xz = uCam.xz + mod(c.xz - uCam.xz + uRadius, 2.0 * uRadius) - uRadius;   // wrap around camera
-    float edge = 1.0 - smoothstep(0.7, 1.0, max(abs(c.x - uCam.x), abs(c.z - uCam.z)) / uRadius);
+    c.xz = uWrapC.xz + mod(c.xz - uWrapC.xz + uRadius, 2.0 * uRadius) - uRadius;   // wrap around a point ahead of the camera
+    float edge = 1.0 - smoothstep(0.7, 1.0, max(abs(c.x - uWrapC.x), abs(c.z - uWrapC.z)) / uRadius);
     float d = length(c - uCam);
     vFade = edge * smoothstep(uNear.x, uNear.y, d - aPuff.w);
     vec3 sc = vec3(aPuff.w, aPuff.w * aSquash, aPuff.w);

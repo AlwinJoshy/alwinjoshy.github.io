@@ -390,10 +390,10 @@
     margin-top: 50px;
 }
 
+#blogs.bg-in{ background-image: url("../images/blog-section-image.gif"); } /* set lazily (index.html) */
 #blogs{
     padding: 50px 0;
     width: 100%;
-    background-image: url("../images/blog-section-image.gif");
     background-size: cover;
     background-position: center;
 }

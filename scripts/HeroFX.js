@@ -11,7 +11,10 @@ export function createGradePass(opts = {}) {
         contrast: 1.04,
         saturation: 1.05,
         vignette: 0.25,       // 0..1 darkening at the corners
-        vignetteSoftness: 0.55
+        vignetteSoftness: 0.55,
+        lift: 0.0,            // shadow lift (raises the black point toward the cool tint)
+        sunGlow: 0.0,         // 0..1 broad warm glow toward the sun's screen position (setSun each frame)
+        sunGlowColor: 0xff9850
     }, opts);
     const pass = new ShaderPass({
         uniforms: {
@@ -19,11 +22,13 @@ export function createGradePass(opts = {}) {
             uWarm: { value: new THREE.Color(o.warm) }, uCool: { value: new THREE.Color(o.cool) },
             uSplit: { value: o.split }, uContrast: { value: o.contrast }, uSat: { value: o.saturation },
             uVig: { value: o.vignette }, uVigSoft: { value: o.vignetteSoftness },
-            uAspect: { value: 1 }
+            uAspect: { value: 1 },
+            uLift: { value: o.lift }, uSunGlow: { value: o.sunGlow }, uSunCol: { value: new THREE.Color(o.sunGlowColor) },
+            uSun: { value: new THREE.Vector3(0.5, 0.5, 0) }   // xy = sun uv, z = 1 if in front of camera
         },
         vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
         fragmentShader: `
-uniform sampler2D tDiffuse; uniform vec3 uWarm, uCool; uniform float uSplit, uContrast, uSat, uVig, uVigSoft, uAspect;
+uniform sampler2D tDiffuse; uniform vec3 uWarm, uCool, uSunCol, uSun; uniform float uSplit, uContrast, uSat, uVig, uVigSoft, uAspect, uLift, uSunGlow;
 varying vec2 vUv;
 void main() {
     vec4 t = texture2D(tDiffuse, vUv);
@@ -35,7 +40,11 @@ void main() {
     float l2 = dot(c, vec3(0.2126, 0.7152, 0.0722));
     c = mix(vec3(l2), c, uSat);
     c = (c - 0.35) * uContrast + 0.35;                        // pivot below mid-grey keeps darks from crushing
-    vec2 p = (vUv - 0.5) * vec2(uAspect, 1.0);
+    c += uLift * uCool * (1.0 - smoothstep(0.0, 0.35, l));        // lifted, slightly cool shadows
+    // sunset: broad warm glow around the sun (screen space; fades when the sun is behind the camera / far off-screen)
+    vec2 sd = (vUv - uSun.xy) * vec2(uAspect, 1.0);
+    float g = exp(-dot(sd, sd) * 1.6) * uSun.z * uSunGlow;
+    c = mix(c, c * uSunCol * 1.6 + uSunCol * 0.04, g);    vec2 p = (vUv - 0.5) * vec2(uAspect, 1.0);
     float v = smoothstep(0.85, 0.85 - uVigSoft, length(p) * (1.0 / max(uAspect, 1.0)) * 1.25);
     c *= mix(1.0 - uVig, 1.0, v);
     gl_FragColor = linearToOutputTexel(vec4(max(c, 0.0), t.a));
@@ -45,6 +54,7 @@ void main() {
 }`
     });
     pass.setAspect = (a) => { pass.uniforms.uAspect.value = a; };
+    pass.setSun = (x, y, vis) => { pass.uniforms.uSun.value.set(x, y, vis); };
     return pass;
 }
 
@@ -187,4 +197,38 @@ void main() {
     const mesh = new THREE.Mesh(g, m);
     mesh.frustumCulled = false; mesh.renderOrder = -1000; mesh.raycast = () => {};
     return mesh;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Near-camera terrain detail: one channel-packed tiling texture (R = snow, G = rock, B = grass luminance
+// detail, 0.5 = neutral). Weights: bright base texel -> snow, steep world normal -> rock, else grass.
+// Applied as a luminance modulation of the base map so the base colours dominate; fades out by distance.
+// Cost: 1 texture lookup + a few ALU ops per terrain pixel. Chains any existing onBeforeCompile.
+export function addTerrainDetail(material, texture, opts = {}) {
+    const o = Object.assign({ scale: 1 / 18, near: 700, far: 1400, strength: 1.0, snow: [0.62, 0.82], rock: [0.86, 0.62] }, opts);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.anisotropy = 4;
+    const u = {
+        uDtTex: { value: texture }, uDtScale: { value: o.scale }, uDtStr: { value: o.strength },
+        uDtFade: { value: new THREE.Vector2(o.near, o.far) },
+        uDtSnow: { value: new THREE.Vector2(o.snow[0], o.snow[1]) }, uDtRock: { value: new THREE.Vector2(o.rock[0], o.rock[1]) }
+    };
+    const prev = material.onBeforeCompile;
+    material.onBeforeCompile = (sh, r) => {
+        if (prev) prev(sh, r);
+        Object.assign(sh.uniforms, u);
+        sh.vertexShader = 'varying vec3 vDtW; varying float vDtNy;\n' + sh.vertexShader.replace('#include <project_vertex>',
+            '#include <project_vertex>\n    vDtW = (modelMatrix * vec4(transformed, 1.0)).xyz; vDtNy = normalize(mat3(modelMatrix) * normal).y;');
+        sh.fragmentShader = 'varying vec3 vDtW; varying float vDtNy; uniform sampler2D uDtTex; uniform float uDtScale, uDtStr; uniform vec2 uDtFade, uDtSnow, uDtRock;\n' +
+            sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+    {
+        float dFade = 1.0 - smoothstep(uDtFade.x, uDtFade.y, distance(vDtW, cameraPosition));
+        vec3 dt = texture2D(uDtTex, vDtW.xz * uDtScale).rgb * 2.0 - 1.0;
+        float wS = smoothstep(uDtSnow.x, uDtSnow.y, dot(texelColor.rgb, vec3(0.299, 0.587, 0.114)));
+        float wR = (1.0 - wS) * smoothstep(uDtRock.x, uDtRock.y, vDtNy);
+        float d = dt.r * wS + dt.g * wR + dt.b * (1.0 - wS - wR);
+        diffuseColor.rgb *= 1.0 + d * uDtStr * dFade;
+    }`);
+    };
+    return u;
 }

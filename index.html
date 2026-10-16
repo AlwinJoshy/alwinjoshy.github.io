@@ -41,11 +41,32 @@
         function start() {
             if (started) return; started = true;
             evts.forEach(function (e) { removeEventListener(e, start); });
+            // Flatten the module/asset waterfall: hint every module + the scene assets at once, at scene start
+            // (i.e. after load/idle or first interaction, so they never compete with the page's LCP).
+            var C = 'https://cdn.jsdelivr.net/npm/three@0.117.1/', small = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
+            var mods = ['build/three.module.js', 'examples/jsm/loaders/GLTFLoader.js', 'examples/jsm/loaders/DRACOLoader.js', 'examples/jsm/loaders/RGBELoader.js',
+                'examples/jsm/postprocessing/EffectComposer.js', 'examples/jsm/postprocessing/RenderPass.js', 'examples/jsm/postprocessing/UnrealBloomPass.js',
+                'examples/jsm/postprocessing/ShaderPass.js', 'examples/jsm/postprocessing/MaskPass.js', 'examples/jsm/shaders/CopyShader.js', 'examples/jsm/shaders/LuminosityHighPassShader.js']
+                .map(function (m) { return C + m; }).concat(['TerrainTiler', 'CalmCamera', 'HeroFX', 'WingtipTrail', 'flightcontroller', 'SunFlare', 'LowClouds']
+                .map(function (m) { return 'scripts/' + m + '.js'; }));
+            var assets = [['assets/models/land_02_draco.glb', 'fetch'], ['assets/texture/land_combined_01_2k.jpg', 'image'], ['assets/models/spitfire.glb', 'fetch'],
+                ['assets/texture/spitfire_albedo_01.gif', 'image'], [small ? 'assets/texture/hdri/modified_SKY_lite_ultra.hdr' : 'assets/texture/hdri/modified_SKY_lite.hdr', 'fetch'],
+                [C + 'examples/js/libs/draco/gltf/draco_wasm_wrapper.js', 'fetch'], [C + 'examples/js/libs/draco/gltf/draco_decoder.wasm', 'fetch']];
+            function hint(rel, href, as) { var l = document.createElement('link'); l.rel = rel; l.href = href; if (as) l.as = as; l.crossOrigin = 'anonymous'; document.head.appendChild(l); }
+            mods.forEach(function (m) { hint('modulepreload', m); });
+            assets.forEach(function (x) { hint('preload', x[0], x[1]); });
             var s = document.createElement('script');
             s.type = 'module'; s.src = 'scripts/threeJS_WWII.js';
             document.head.appendChild(s);
         }
         evts.forEach(function (e) { addEventListener(e, start, { once: true, passive: true }); });
+        // Blogs section background GIF: only fetch it when the section approaches the viewport
+        addEventListener('DOMContentLoaded', function () {
+            var el = document.getElementById('blogs'); if (!el) return;
+            if (!('IntersectionObserver' in window)) { el.classList.add('bg-in'); return; }
+            var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { el.classList.add('bg-in'); io.disconnect(); } }, { rootMargin: '800px' });
+            io.observe(el);
+        });
         addEventListener('load', function () {
             var idle = window.requestIdleCallback || function (cb) { setTimeout(cb, 1); };
             setTimeout(function () { idle(start, { timeout: 2000 }); }, 2500);

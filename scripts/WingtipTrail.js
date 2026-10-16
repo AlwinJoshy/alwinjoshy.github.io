@@ -72,8 +72,9 @@ export class WingtipTrail {
                 varying float vSide;
                 void main() {
                     float tail = 1.0 - clamp(vAlong, 0.0, 1.0);
-                    float edge = 1.0 - vSide * vSide;           // soft ribbon edges
-                    float a = uOpacity * tail * tail * edge;
+                    float head = smoothstep(0.0, 0.08, vAlong);  // soft start at the wingtip
+                    float edge = 1.0 - vSide * vSide; edge *= edge; // wide soft falloff: misty, not a hard wire
+                    float a = uOpacity * tail * tail * tail * head * edge;
                     if (a < 0.003) discard;
                     gl_FragColor = vec4(uColor, a);
                 }`,

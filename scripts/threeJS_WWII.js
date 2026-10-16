@@ -6,7 +6,7 @@ import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/exam
 import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/RGBELoader.js';
 import { TerrainTiler } from './TerrainTiler.js';
 import { CalmCamera } from './CalmCamera.js';
-import { createGradePass, sampleHorizon, addCloudShadows, toneMapACES, addSkyFog, createSkyMesh } from './HeroFX.js';
+import { createGradePass, sampleHorizon, addCloudShadows, toneMapACES, addSkyFog, createSkyMesh, addTerrainDetail } from './HeroFX.js';
 import { WingtipTrail } from './WingtipTrail.js';
 import { FlightController } from './flightcontroller.js';
 import { SunFlare } from './SunFlare.js';
@@ -60,13 +60,15 @@ container.appendChild(renderer.domElement);
 // controls.minDistance = 3;
 
 // --- Lighting & Environment Probe ---
-const sunLight = new THREE.DirectionalLight(0xfffaed, 2.0); // Warm sunset sun color
+const sunLight = new THREE.DirectionalLight(0xffc98f, 2.2); // warm golden sunset sun (lights the Spitfire)
 sunLight.position.set(100, 30, 100);
 scene.add(sunLight);
 
 // --- Sun Flare ---
 const sunFlare = new SunFlare(scene, sunLight, { distance: 5000, size: 500 });
-const lowClouds = new LowClouds(scene, { count: IS_LOW_TIER ? 100 : 220, minY: 90, maxY: 220, radius: 900, sunDir: sunLight.position, fogNear: FOG_NEAR, fogFar: FOG_FAR });
+// Fewer, bigger, denser puffs, wrapped around a point AHEAD of the camera so nearly all of them are in view.
+const lowClouds = new LowClouds(scene, { count: IS_LOW_TIER ? 35 : 60, minY: 110, maxY: 230, radius: 700, aheadFactor: 0.6,
+    minSize: 180, maxSize: 340, opacity: 0.38, sunDir: sunLight.position, fogNear: FOG_NEAR, fogFar: FOG_FAR });
 
 // Ambient light to act as uniform Ambient Occlusion fill across shadowed areas
 const ambientAO = new THREE.AmbientLight(0x93dcf5, 2.4); // Cool sky tint for fill shadows
@@ -117,14 +119,19 @@ composer.addPass(renderPass);
 
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(w, h),
-    0.23,  // Bloom Strength
-    2.5,  // Radius
-    0.1  // Threshold 
+    0.15,  // strength
+    0.5,   // radius: tight glow, no whole-frame veil
+    0.62   // threshold (tone-mapped luminance): only the sunlit cloud rims / highlights glow
 );
+// Bloom tint (warm red-orange sunset glow): UnrealBloomPass multiplies each mip by bloomTintColors[i] in its
+// composite shader (uniform values only, zero extra cost).
+const bloomTint = new THREE.Color(0xff7a5a);
+for (let i = 0; i < bloomPass.bloomTintColors.length; i++) bloomPass.bloomTintColors[i].set(bloomTint.r, bloomTint.g, bloomTint.b);
 composer.addPass(bloomPass);
 
 // Final pass: golden-hour grade + vignette (single full-screen pass)
-const gradePass = createGradePass({ split: 0.15, contrast: 1.04, saturation: 1.05, vignette: 0.25 });
+const gradePass = createGradePass({ warm: 0xffb27a, split: 0.3, contrast: 1.06, saturation: 1.1, lift: 0.025, vignette: 0.25,
+    sunGlow: 0.35, sunGlowColor: 0xff9850 });   // warm sunset grade + broad golden glow toward the sun
 gradePass.setAspect(w / h);
 composer.addPass(gradePass);
 
@@ -180,13 +187,15 @@ gltfLoader.load('assets/models/land_02_draco.glb', (gltf) => {
     const terrainScene = gltf.scene;
 
         let landMaterial = new THREE.MeshBasicMaterial({
-                color: 0x666666,
+                color: 0x888888,   // brighter land (MeshBasic: this is the exposure of the terrain)
                 map: landMap   
             });
 
         // scrolling cloud shadows, drifting with the LowClouds wind
         addCloudShadows(landMaterial, { windOffset: lowClouds.uniforms.uWindOff.value, scale: 1 / 900, strength: 0.25 });
         addSkyFog(landMaterial, skyTexUniform, skyReadyUniform);
+        // near-camera snow / rock / grass detail (one channel-packed 256px texture, 1 lookup); skipped on the low tier
+        if (!IS_LOW_TIER) addTerrainDetail(landMaterial, LoadTexture('assets/texture/detail/terrain_detail_pack.jpg', false), { scale: 1 / 30, near: 700, far: 1400, strength: 1.0 }); // terrain is ~500-1000 units from the camera
 
             let treeMaterial = new THREE.MeshBasicMaterial({
                 color: 0x333333,    
@@ -319,7 +328,7 @@ let vapourTrails = [];
 
 // Wingtip vapour: camera-facing ribbon from a fixed ring buffer (see WingtipTrail.js)
 function CreateTrail(trailTarget, width = 0.09) {
-    vapourTrails.push(new WingtipTrail(scene, trailTarget, { width, maxPoints: 40, segmentLength: 1.5 }));
+    vapourTrails.push(new WingtipTrail(scene, trailTarget, { width, maxPoints: 22, segmentLength: 1.3 })); // ~28 m, fades out
 }
 
 
@@ -351,7 +360,7 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
                 child.material.needsUpdate = true;
             }
             if (child.name == 'trail_l' || child.name == 'trail_r') {
-                CreateTrail(child, 0.09);
+                CreateTrail(child, 0.12);
             }
         }
     });
@@ -448,6 +457,7 @@ function requestStillFrame() {
 
         sunFlare.update(camera);
         lowClouds.update(camera);
+        updateSunScreen();
         composer.render();
         sunFlare.render(renderer);
     });
@@ -456,6 +466,12 @@ function requestStillFrame() {
 // Per-frame temporaries (reused, no allocation in the loop)
 const _worldSunDir = new THREE.Vector3();
 const _propRotation = new THREE.Quaternion();
+const _sunScr = new THREE.Vector3();
+// Screen position of the sun for the grade's warm glow (no allocation)
+function updateSunScreen() {
+    _sunScr.copy(sunLight.position).normalize().multiplyScalar(1000).add(camera.position).project(camera);
+    gradePass.setSun(_sunScr.x * 0.5 + 0.5, _sunScr.y * 0.5 + 0.5, _sunScr.z < 1 ? 1 : 0);
+}
 
 // --- Adaptive quality: on slow devices drop pixel ratio, then bloom, then cap at 30 fps ---
 const perf = { level: 0, frames: 0, time: 0, fpsCap: 0, lastDraw: 0, settle: 5 }  // first window is longer so asset loading hitches are ignored;
@@ -527,7 +543,7 @@ if (propellerMesh && propMaterial && sunLight) {
 if (vapourTrails.length > 0 && flightController) {
         // Vapour only shows while banking (same rule as before)
         const turnIntensity = Math.abs(flightController.currentRoll) - 0.1;
-        const alpha = Math.max(0.0, Math.min(turnIntensity, 0.6));
+        const alpha = Math.max(0.0, Math.min(turnIntensity * 0.8, 0.45));
         camera.updateMatrixWorld();
         for (let i = 0; i < vapourTrails.length; i++) {
             vapourTrails[i].opacity = alpha;
@@ -537,6 +553,7 @@ if (vapourTrails.length > 0 && flightController) {
 
     
     sunFlare.update(camera);
+    updateSunScreen();
     composer.render();
     sunFlare.render(renderer);
 }
