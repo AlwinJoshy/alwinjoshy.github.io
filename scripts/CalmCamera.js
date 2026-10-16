@@ -21,7 +21,7 @@ export class CalmCamera {
             rollDamp: 1.0,
             drift: 0.9, driftSpeed: 0.11, // very slow positional drift (units, rad/s)
             frame: [0.68, 0.5],          // landscape: plane at x 68%, y 72% (from top) = lower-right third
-            frameNarrow: [0.5, 0.76]      // portrait / narrow: bottom centre
+            frameNarrow: [0.5, 0.86]      // portrait / narrow: bottom centre
         }, opts);
         this.camera = camera; this.mesh = aircraft; this.flight = flight;
         this.fwd = new THREE.Vector3(0, 0, 1); this.off = new THREE.Vector3(); this.lookOff = new THREE.Vector3();

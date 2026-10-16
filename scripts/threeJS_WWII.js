@@ -11,7 +11,6 @@ import { WingtipTrail } from './WingtipTrail.js';
 import { FlightController } from './flightcontroller.js';
 import { SunFlare } from './SunFlare.js';
 import { LowClouds } from './LowClouds.js';
-import { GodRays } from './GodRays.js';
 import { DRACOLoader } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/DRACOLoader.js';
 
 // --- Scene Setup ---
@@ -22,7 +21,7 @@ let h = container.clientHeight;
 
 const scene = new THREE.Scene();
 
-// Device tier: phones / small screens / low memory get fewer clouds, no god rays, DPR 1.
+// Device tier: phones / small screens / low memory get fewer clouds, DPR 1.
 const IS_COARSE_POINTER = window.matchMedia('(pointer: coarse)').matches;
 const IS_LOW_TIER = IS_COARSE_POINTER || Math.min(window.innerWidth, window.innerHeight) < 600 ||
     (navigator.deviceMemory !== undefined && navigator.deviceMemory <= 4);
@@ -115,9 +114,6 @@ const composer = halfOK
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
-const godRays = new GodRays(sunLight, { intensity: 0.35, resolutionScale: 0.25, samples: 28 });
-composer.addPass(godRays.pass);
-if (IS_LOW_TIER) godRays.setEnabled(false);
 
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(w, h),
@@ -184,7 +180,7 @@ gltfLoader.load('assets/models/land_02_draco.glb', (gltf) => {
     const terrainScene = gltf.scene;
 
         let landMaterial = new THREE.MeshBasicMaterial({
-                color: 0x777777,
+                color: 0x666666,
                 map: landMap   
             });
 
@@ -452,7 +448,6 @@ function requestStillFrame() {
 
         sunFlare.update(camera);
         lowClouds.update(camera);
-        godRays.update(camera);
         composer.render();
         sunFlare.render(renderer);
     });
@@ -472,7 +467,7 @@ function adaptQuality(dt) {
     if (fps >= 45 || perf.level >= 3) return;
     perf.level++;
     if (perf.level === 1) { renderer.setPixelRatio(1); if (composer.setPixelRatio) composer.setPixelRatio(1); composer.setSize(w, h); }
-    else if (perf.level === 2) { bloomPass.enabled = false; godRays.setEnabled(false); }
+    else if (perf.level === 2) { bloomPass.enabled = false; }
     else if (perf.level === 3) { perf.fpsCap = 30; lowClouds.setVisible(false); }
 }
 
@@ -542,7 +537,6 @@ if (vapourTrails.length > 0 && flightController) {
 
     
     sunFlare.update(camera);
-    godRays.update(camera);
     composer.render();
     sunFlare.render(renderer);
 }
