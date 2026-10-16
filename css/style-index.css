@@ -20,6 +20,20 @@
     /* background-color: #404040; */
 }
 
+/* Subtle scrim behind the hero headline (left side) for readability; canvas stays untouched */
+#show-screen::after{
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.16) 38%, rgba(0,0,0,0) 62%);
+}
+@media only screen and (max-width: 600px){
+    #show-screen::after{
+        background: linear-gradient(180deg, rgba(0,0,0,0) 15%, rgba(0,0,0,0.22) 40%, rgba(0,0,0,0) 70%);
+    }
+}
+
 
 /* navigation */
 

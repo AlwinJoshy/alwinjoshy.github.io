@@ -5,7 +5,8 @@ import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/
 import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/RGBELoader.js';
 import { TerrainTiler } from './TerrainTiler.js';
-import { DynamicCameraController } from './CameraController.js';
+import { CalmCamera } from './CalmCamera.js';
+import { createGradePass, sampleHorizon, addCloudShadows, toneMapACES, addSkyFog, createSkyMesh } from './HeroFX.js';
 import { WingtipTrail } from './WingtipTrail.js';
 import { FlightController } from './flightcontroller.js';
 import { SunFlare } from './SunFlare.js';
@@ -21,11 +22,22 @@ let h = container.clientHeight;
 
 const scene = new THREE.Scene();
 
-// ADD DISTANCE FOG HERE:
-// Using a cool sky-blue/gray tint that matches your ambientAO fill light
-scene.fog = new THREE.FogExp2(0x959999, 0.0008);
+// Device tier: phones / small screens / low memory get fewer clouds, no god rays, DPR 1.
+const IS_COARSE_POINTER = window.matchMedia('(pointer: coarse)').matches;
+const IS_LOW_TIER = IS_COARSE_POINTER || Math.min(window.innerWidth, window.innerHeight) < 600 ||
+    (navigator.deviceMemory !== undefined && navigator.deviceMemory <= 4);
 
-const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 30000);
+// Sky-matched linear haze: colour is replaced by the HDR's horizon colour once the sky loads.
+// The far plane sits just past FOG_FAR (everything beyond is fully hazed anyway) to cut draw cost.
+// Terrain tiles (5x5 x 1042) are spawned/removed as the plane crosses cells; the nearest newly spawned
+// edge can be ~2080 units away in ANY direction, so the haze must be fully opaque before that radius.
+const FOG_NEAR = 300, FOG_FAR = 1700;
+// r117 fog uses view depth (-mvPosition.z), which is much smaller than the true distance toward the sides of a
+// wide / off-centre (setViewOffset) frustum, so side tiles popped in un-fogged. Use radial distance instead.
+THREE.ShaderChunk.fog_vertex = '#ifdef USE_FOG\n\tfogDepth = length( mvPosition.xyz );\n#endif';
+scene.fog = new THREE.Fog(0x959999, FOG_NEAR, FOG_FAR);
+
+const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, FOG_FAR * 1.45); // well past full haze; sky background is never clipped
 camera.position.set(-20, 100, -100); // Initial offset position relative to the plane height
 
 
@@ -33,9 +45,8 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.46;
-// Lower DPR cap on touch devices to keep phones cool.
-const IS_COARSE_POINTER = window.matchMedia('(pointer: coarse)').matches;
-const MAX_DPR = IS_COARSE_POINTER ? 1.25 : 2;
+// Lower DPR cap on low-tier devices to keep phones cool.
+const MAX_DPR = IS_LOW_TIER ? 1 : 2;
 const reduceMotionMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
 function currentDPR() { return Math.min(window.devicePixelRatio || 1, MAX_DPR); }
 renderer.setPixelRatio(currentDPR());
@@ -56,7 +67,7 @@ scene.add(sunLight);
 
 // --- Sun Flare ---
 const sunFlare = new SunFlare(scene, sunLight, { distance: 5000, size: 500 });
-const lowClouds = new LowClouds(scene, { count: 220, minY: 90, maxY: 220, radius: 900, sunDir: sunLight.position });
+const lowClouds = new LowClouds(scene, { count: IS_LOW_TIER ? 100 : 220, minY: 90, maxY: 220, radius: 900, sunDir: sunLight.position, fogNear: FOG_NEAR, fogFar: FOG_FAR });
 
 // Ambient light to act as uniform Ambient Occlusion fill across shadowed areas
 const ambientAO = new THREE.AmbientLight(0x93dcf5, 2.4); // Cool sky tint for fill shadows
@@ -65,23 +76,48 @@ scene.add(ambientAO);
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
 
-const hdriLoader = new RGBELoader();
-hdriLoader.load('assets/texture/hdri/modified_SKY_lite_ultra.hdr', (texture) => {
+// Sky shared with the per-pixel sky fog (terrain + trees)
+const skyTexUniform = { value: null }, skyReadyUniform = { value: 0 };
+// HalfFloat (linear) instead of RGBE bytes: RGBE cannot be filtered/interpolated, which made the
+// PMREM-as-background sky render as hard faceted triangles of different colours.
+const hdriLoader = new RGBELoader().setDataType(THREE.HalfFloatType);
+// Sky resolution: 1024x512 on desktop (sharp sky), 512x256 on the low tier.
+const SKY_HDR = IS_LOW_TIER ? 'assets/texture/hdri/modified_SKY_lite_ultra.hdr' : 'assets/texture/hdri/modified_SKY_lite.hdr';
+hdriLoader.load(SKY_HDR, (texture) => {
+    // match fog to the sky's horizon colour (linear, same tone mapping as the sky)
+    // (r117 applies fog after tone mapping, so tone-map the sampled HDR colour the same way the sky is)
+    if (sampleHorizon(texture, scene.fog.color)) {
+        toneMapACES(scene.fog.color, renderer.toneMappingExposure);
+        lowClouds.setFog(scene.fog.color, FOG_NEAR, FOG_FAR);
+    }
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
     scene.environment = envMap;      // Reflection probe for PBR materials
-    scene.background = envMap;       // Skybox background
-    texture.dispose();
+    // Sky: the equirect itself, bilinear-filtered at full source resolution (no cube conversion / resampling),
+    // shared by the sky mesh and the per-pixel sky fog. Kept alive (not disposed).
+    texture.minFilter = THREE.LinearFilter; texture.magFilter = THREE.LinearFilter; texture.generateMipmaps = false;
+    texture.wrapS = THREE.RepeatWrapping;   // no seam at the azimuth wrap
+    texture.needsUpdate = true;
+    skyTexUniform.value = texture; skyReadyUniform.value = 1;
+    scene.add(createSkyMesh(camera, skyTexUniform));   // drawn first; replaces scene.background
     pmremGenerator.dispose();
     requestStillFrame();
 });
 
 // --- Post Processing Stack (Bloom) ---
-const composer = new EffectComposer(renderer);
+// Composer targets: HalfFloat where renderable (desktop), so the linear-light intermediate image doesn't band
+// in the darks; 8-bit on the low tier. The final grade pass adds dither either way.
+const gl2 = renderer.capabilities.isWebGL2;
+const halfOK = !IS_LOW_TIER && (gl2 ? !!renderer.extensions.get('EXT_color_buffer_float') : !!renderer.extensions.get('EXT_color_buffer_half_float'));
+const composer = halfOK
+    ? new EffectComposer(renderer, new THREE.WebGLRenderTarget(w * currentDPR(), h * currentDPR(), {
+        minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type: THREE.HalfFloatType, stencilBuffer: false }))
+    : new EffectComposer(renderer);
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
 const godRays = new GodRays(sunLight, { intensity: 0.35, resolutionScale: 0.25, samples: 28 });
 composer.addPass(godRays.pass);
+if (IS_LOW_TIER) godRays.setEnabled(false);
 
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(w, h),
@@ -90,6 +126,11 @@ const bloomPass = new UnrealBloomPass(
     0.1  // Threshold 
 );
 composer.addPass(bloomPass);
+
+// Final pass: golden-hour grade + vignette (single full-screen pass)
+const gradePass = createGradePass({ split: 0.15, contrast: 1.04, saturation: 1.05, vignette: 0.25 });
+gradePass.setAspect(w / h);
+composer.addPass(gradePass);
 
 
 const textureLoader = new THREE.TextureLoader();
@@ -112,8 +153,8 @@ const aircraftHeight = 80.0; // Fixed elevation above 0,0,0 coordinate platform
 
 // tiling handler
 let terrainTiler = new TerrainTiler(scene, {
-    tileSize: 1042, // 5km matching your mesh size
-    gridSize: 4     // 3x3 tile grid context matrix
+    tileSize: 1042, // matches the terrain mesh size
+    gridSize: 4     // 4 -> 5x5 tile pool (2 tiles each side of the plane's cell)
 });
 
 let landModel = null;
@@ -129,14 +170,27 @@ function checkAssetsReady() {
 
 
 
+// Terrain is only shown once BOTH the glb and its texture are ready (avoids an untextured-grey frame then a pop).
+let landMapReady = false, pendingTerrain = null;
+const landMap = textureLoader.load('assets/texture/land_combined_01_2k.jpg', () => {
+    landMapReady = true;
+    if (pendingTerrain) { terrainTiler.init(pendingTerrain[0], pendingTerrain[1]); pendingTerrain = null; }
+    requestStillFrame();
+});
+landMap.flipY = false;
+
 // --- Load Terrain & Trees ---
 gltfLoader.load('assets/models/land_02_draco.glb', (gltf) => {
     const terrainScene = gltf.scene;
 
         let landMaterial = new THREE.MeshBasicMaterial({
                 color: 0x777777,
-                map: LoadTexture('assets/texture/land_combined_01.jpg', false)   
+                map: landMap   
             });
+
+        // scrolling cloud shadows, drifting with the LowClouds wind
+        addCloudShadows(landMaterial, { windOffset: lowClouds.uniforms.uWindOff.value, scale: 1 / 900, strength: 0.25 });
+        addSkyFog(landMaterial, skyTexUniform, skyReadyUniform);
 
             let treeMaterial = new THREE.MeshBasicMaterial({
                 color: 0x333333,    
@@ -153,6 +207,7 @@ gltfLoader.load('assets/models/land_02_draco.glb', (gltf) => {
                 depthWrite: true,
                 depthTest: true
             });
+            addSkyFog(treeMaterial, skyTexUniform, skyReadyUniform);
             
 
     // Array to temporarily collect our 5 levels in correct order
@@ -194,7 +249,7 @@ gltfLoader.load('assets/models/land_02_draco.glb', (gltf) => {
     }
 
     // Pass the ordered LOD array to the rebuilt terrain manager system
-    terrainTiler.init(landLODs, rawTreesMesh);
+    if (landMapReady) terrainTiler.init(landLODs, rawTreesMesh); else pendingTerrain = [landLODs, rawTreesMesh];
     requestStillFrame();
 });
 
@@ -322,10 +377,8 @@ flightController = new FlightController(spitfire, {
     turnFrequency: 1.0,  // how often it changes direction
 });
 
-    cameraController = new DynamicCameraController(camera, spitfire, flightController, {
-        baseOffset: new THREE.Vector3(4, 3.55, -10), 
-        posLerp: 20.0 
-    });
+    cameraController = new CalmCamera(camera, spitfire, flightController);
+    cameraController.setFrame(w, h);
 
 
     //CreateTrail(spitfire);
@@ -342,7 +395,9 @@ function applySize() {
     w = Math.max(1, container.clientWidth);
     h = Math.max(1, container.clientHeight);
     camera.aspect = w / h;
+    if (cameraController) cameraController.setFrame(w, h); // also updates the projection
     camera.updateProjectionMatrix();
+    gradePass.setAspect(w / h);
     const dpr = perf.level >= 1 ? 1 : currentDPR();
     renderer.setPixelRatio(dpr);
     renderer.setSize(w, h);
