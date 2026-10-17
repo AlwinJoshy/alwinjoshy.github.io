@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="../../../images/favicon.ico">
+    <title>Turning a Mesh into a Signed Distance Field in Unity | Alwin Joshy</title>
+    <meta name="twitter:image" content="https://alwinjoshy.github.io/images/blogs/SDF_2026/cover.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://alwinjoshy.github.io/images/blogs/SDF_2026/cover.jpg">
+    <meta property="og:url" content="https://alwinjoshy.github.io/pages/blogs/allblogs/0005_Mesh_To_SDF_Unity.html">
+    <meta property="og:description" content="How I turned an ordinary palm tree mesh into a signed distance field in Unity and rendered it with ray marching, from brute force to three tiny 3D textures.">
+    <meta property="og:title" content="Turning a Mesh into a Signed Distance Field in Unity | Alwin Joshy">
+    <meta property="og:type" content="article">
+    <meta name="description" content="How I turned an ordinary palm tree mesh into a signed distance field in Unity and rendered it with ray marching, from brute force to three tiny 3D textures.">
+    <meta name="post-summary" content="How I turned an ordinary palm tree mesh into a signed distance field in Unity and rendered it with ray marching, from brute force to three tiny 3D textures.">
+    <meta name="post-tags" content="Unity, Shaders, SDF, Ray Marching, R&amp;D">
+    <link rel="stylesheet" href="../../../css/style-general.css">
+    <link rel="stylesheet" href="../../../css/style-blog.css">
+
+
+    <script src="https://kit.fontawesome.com/a3c67ea782.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- --------------------------------- header bar -->
+    <div id="header"> 
+        <div class="container">
+            <nav>
+                <a href="../../../index.html#header" class="brand" aria-label="Alwin Joshy, home">Alwin Joshy</a>
+                <ul id="sidemenu">
+                    <li><a href="../../../index.html#header">HOME</a></li>
+                    <li><a href="../../../index.html#portfolio">WORK</a></li>
+                    <li><a href="../../../index.html#about">ABOUT</a></li>
+                    <li><a href="../../../index.html#services">SERVICES</a></li>
+                    <li class="active-page-marker"><a href="../../../blogArchive.html">BLOG</a></li>
+                    <li><a href="../../../index.html#contact">CONTACT</a></li>
+                    <i class="fa-solid fa-xmark" onclick='closeNavMenu()'></i>
+                </ul>
+                <i class="fa-solid fa-bars" onclick='openNavMenu()'></i>
+            </nav>
+        </div>
+    </div>
+
+    <div id="intro">
+        <div class="container">
+            <p class="date-small-text">17 October 2026</p>
+            <h1 class="blog-title">Turning a Mesh into a Signed Distance Field in Unity</h1>
+            <div class="blog-prime-image">
+                <img src="../../../images/blogs/SDF_2026/cover.webp" alt="Several ray-marched palm trees in the Unity scene view" width="1200" height="675">
+            </div>
+        </div>
+    </div>
+        <div class="blog-content">
+            <div class="container">
+                <div class="row">
+                    <div class="blog-content-details">
+                    <p>
+                        This one started as a thought rather than a task. I'd been playing with ray-marching shaders, where everything on screen is described by maths instead of
+                        triangles, and I kept coming back to the same question: what if the shape didn't come from a formula at all? Could I take an ordinary mesh, a little palm
+                        tree in my case, turn it into a signed distance field, and then draw it with a ray marcher like any other SDF?
+                    </p>
+                    <p>
+                        A quick word on the two ideas, because the rest of the post leans on them. A signed distance field stores, for any point in space, how far that point is from
+                        the nearest surface: positive outside, negative inside, zero right on the skin. Ray marching uses that number to walk a ray through the scene. At each step
+                        the field tells you how far you can safely jump without hitting anything, so the ray takes big strides through empty space and small careful ones near the
+                        surface, until it lands on it. Spheres and boxes have neat formulas for this. A palm tree doesn't, so I had to build the field myself.
+                    </p>
+
+                    <h2>Brute force first</h2>
+                    <p>
+                        I started with the simplest thing that could possibly work. The tool puts a box around the mesh, splits that box into a grid of cells, and for each cell
+                        measures the distance from its centre to every single triangle in the mesh, keeping the smallest. It isn't clever, but for a small mesh it's honest and easy
+                        to trust.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/SDF_2026/mesh-bounds.webp" alt="Palm tree mesh inside a green bounding box in the Unity scene view" width="977" height="650" loading="lazy" decoding="async">
+                        <figcaption>The palm tree sitting inside the bounds of the sampler.</figcaption>
+                    </figure>
+                    <p>
+                        The tree is tiny by game standards. The tool pulled 668 triangles out of it, which matched the mesh preview exactly: 550 vertices and 668 triangles. Seeing
+                        those two numbers agree was a small but satisfying moment, because it meant I was reading the whole mesh and not missing a sub-mesh somewhere.
+                    </p>
+                    <div class="compare">
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/SDF_2026/console-log.webp" alt="Unity console message: Generated 668 triangles from 1 objects" width="438" height="60" loading="lazy" decoding="async">
+                        <figcaption>Every triangle accounted for.</figcaption>
+                    </figure>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/SDF_2026/mesh-preview.webp" alt="Mesh preview of the palm tree: 550 vertices, 668 triangles" width="535" height="605" loading="lazy" decoding="async">
+                        <figcaption>The mesh preview agrees: 550 vertices, 668 triangles.</figcaption>
+                    </figure>
+                    </div>
+                    <p>
+                        To see whether the distances made sense, I drew a debug point in every cell that came out close to the surface. When the red points wrapped the trunk and
+                        traced every leaf, I knew the maths was right, and I could move on to actually drawing something.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/SDF_2026/debug-cells.webp" alt="Red debug points covering the palm tree's trunk and leaves" width="982" height="652" loading="lazy" decoding="async">
+                        <figcaption>Debug cells near the surface, outlining the tree in red.</figcaption>
+                    </figure>
+
+                    <h2>The first texture didn't work</h2>
+                    <p>
+                        The shader needs to read the field, so the obvious next step was to write the distances into a texture and sample them back on the GPU. My first attempt
+                        didn't go to plan. Instead of a palm tree, I got stacked purple slices floating in the box. Somewhere between writing the data and reading it back, the
+                        shape got lost, and it took some untangling before the two sides agreed.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/SDF_2026/texture-fail.mp4" poster="../../../images/blogs/SDF_2026/texture-fail-poster.jpg" width="640" height="424" muted loop playsinline preload="none" aria-label="Purple slices floating in the bounding box instead of a tree"></video>
+                        <figcaption>My first try at writing and reading the field: slices instead of a tree.</figcaption>
+                    </figure>
+
+                    <h2>Smooth normals and light</h2>
+                    <p>
+                        Once the reading and writing lined up, the tree appeared. Lighting a ray-marched shape needs a surface normal, and you get it from the field itself: sample
+                        the distance a tiny step away in each direction and see which way it grows. Done naively on a grid, that looks blocky, because each sample snaps to one
+                        cell. So I blended the eight surrounding cells with trilinear interpolation, which turns the stepped grid into a smooth slope. With smooth normals in place,
+                        simple lighting finally made it look like a solid object.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/SDF_2026/trilinear-normals.mp4" poster="../../../images/blogs/SDF_2026/trilinear-normals-poster.jpg" width="640" height="422" muted loop playsinline preload="none" aria-label="White ray-marched palm tree with smooth lighting"></video>
+                        <figcaption>Trilinear blending gives smooth normals, and the tree finally takes the light.</figcaption>
+                    </figure>
+                    <p>
+                        Colour came next. Alongside the distance, I stored the mesh's colour in each cell and blended it with the same trilinear maths, so the brown trunk fades
+                        into the green leaves instead of switching in hard blocks.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/SDF_2026/colour-sampling.mp4" poster="../../../images/blogs/SDF_2026/colour-sampling-poster.jpg" width="640" height="406" muted loop playsinline preload="none" aria-label="Ray-marched palm tree with a brown trunk and green leaves"></video>
+                        <figcaption>Colour sampled from the mesh and blended the same way.</figcaption>
+                    </figure>
+
+                    <h2>How far can I push it?</h2>
+                    <p>
+                        With everything working, I wanted to know how cheap the shader could get. I stripped it back hard, cutting out work to see what survived. The result is
+                        recognisably the tree, but it turns into chunky blocks. It was a useful lesson in where the quality actually comes from: the smooth blending isn't a luxury,
+                        it's what makes a coarse grid look like a real shape.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/SDF_2026/optimised.mp4" poster="../../../images/blogs/SDF_2026/optimised-poster.jpg" width="640" height="410" muted loop playsinline preload="none" aria-label="Blocky, low-detail version of the palm tree"></video>
+                        <figcaption>Pushing the optimisation too far: fast, but blocky.</figcaption>
+                    </figure>
+                    <p>
+                        I also took a detour just for fun. I tried to make the volume look like a thermal camera image, with the tree glowing
+                        through the box in hot purples and yellows. It wasn't the goal, but it's a nice reminder that a distance field holds a lot
+                        more than a surface.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/SDF_2026/thermal.mp4" poster="../../../images/blogs/SDF_2026/thermal-poster.jpg" width="640" height="408" muted loop playsinline preload="none" aria-label="Glowing purple and yellow thermal-style view of the tree inside its box"></video>
+                        <figcaption>A detour: the same data rendered like a thermal camera.</figcaption>
+                    </figure>
+
+                    <h2>Letting the hardware do the blending</h2>
+                    <p>
+                        The big step forward was switching to 3D textures. Up to then, I'd been doing the trilinear blending myself in the shader. A 3D texture gives you that for
+                        free: the GPU's own filtering blends between neighbouring texels in all three directions in hardware. So the generator now saves the field straight into a
+                        3D texture, and the shader simply samples it. Less code, less maths per step, and smoother results.
+                    </p>
+                    <p>
+                        That also made it easy to experiment with the look. One material is a soft, gel-like version with controls for the surface cutoff, edge softness, how far
+                        to offset the normal samples, the step size and number of steps, wrap lighting, a touch of subsurface, and ambient occlusion.
+                    </p>
+                    <figure class="blog-inline-media-container narrow-wide">
+                        <img src="../../../images/blogs/SDF_2026/gel-material.webp" alt="Material settings for the gel-style SDF shader" width="537" height="597" loading="lazy" decoding="async">
+                        <figcaption>The gel material's controls: edge softness, wrap lighting, subsurface and AO.</figcaption>
+                    </figure>
+
+                    <h2>Three small textures per object</h2>
+                    <p>
+                        The final setup bakes three 3D textures for each object: the distance field, the colour and the normals. Baking the normals means the shader no longer has
+                        to work them out every frame, so the standard material is lean, with just a cutoff, the step size, a maximum step count and a little noise to break up banding.
+                    </p>
+                    <figure class="blog-inline-media-container narrow-wide">
+                        <img src="../../../images/blogs/SDF_2026/standard-material.webp" alt="Material settings for the standard SDF shader with distance, colour and normal textures" width="536" height="555" loading="lazy" decoding="async">
+                        <figcaption>The standard material reads three textures: distance, colour and normal.</figcaption>
+                    </figure>
+                    <p>
+                        What surprised me most was how little memory it all takes. Each of the three textures is about 31 KB, so a whole object comes in under 100 KB.
+                    </p>
+                    <figure class="blog-inline-media-container narrow-wide">
+                        <img src="../../../images/blogs/SDF_2026/three-textures.webp" alt="Three generated 3D textures: colour, normal and distance" width="420" height="202" loading="lazy" decoding="async">
+                        <figcaption>Colour, normal and distance: about 31 KB each.</figcaption>
+                    </figure>
+
+                    <h2>A small forest</h2>
+                    <p>
+                        The real test was putting lots of them in a scene. Each tree is just a box with the material on it, so I can move, rotate and scale every copy on its own,
+                        and they all render without any trouble. Watching a little grove of ray-marched palm trees that started life as an ordinary mesh was the moment the idea
+                        felt real.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/SDF_2026/many-instances.mp4" poster="../../../images/blogs/SDF_2026/many-instances-poster.jpg" width="640" height="354" muted loop playsinline preload="none" aria-label="Several ray-marched palm trees being moved and scaled in the Unity scene"></video>
+                        <figcaption>A small grove, each tree moved and scaled on its own.</figcaption>
+                    </figure>
+                    <p>
+                        What I like about this approach is how it bridges two worlds: artists keep working with normal meshes, and the shader gets a compact field it can march
+                        through, blend, soften or light however it likes. There's a lot more to try from here, but turning a palm tree into a few tiny textures and getting it back
+                        on screen was a satisfying place to start.
+                    </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="copyright">
+            <p>&copy; 2026 Alwin Joshy</p>
+        </div>
+
+    <!-- final load scripts -->
+    <script src="../../../scripts/smallscreennavrops.js"></script>
+    <script>
+        // play the short demo loops only while they are on screen
+        (function(){
+            var vids = document.querySelectorAll('video.lazy-loop');
+            if (!('IntersectionObserver' in window)) { vids.forEach(function(v){ v.preload = 'auto'; v.play().catch(function(){}); }); return; }
+            var io = new IntersectionObserver(function(entries){
+                entries.forEach(function(e){ if (e.isIntersecting) e.target.play().catch(function(){}); else e.target.pause(); });
+            }, { rootMargin: '200px' });
+            vids.forEach(function(v){ io.observe(v); });
+        })();
+    </script>
+</body>
+
+</html>
