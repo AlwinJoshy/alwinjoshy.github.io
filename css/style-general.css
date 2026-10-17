@@ -285,3 +285,14 @@ button.icon-button:focus-visible,
     outline: 2px solid #38de2c;
     outline-offset: 3px;
 }
+
+/* text brand (replaces the logo image) */
+.brand{
+    color: #fff;
+    text-decoration: none;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+@media only screen and (max-width: 600px){ .brand{ font-size: 20px; } }

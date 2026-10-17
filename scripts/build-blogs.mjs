@@ -22,7 +22,7 @@ for (const group of list.data) {
         const excerpt = body.length > 180 ? body.slice(0, 180).replace(/\s\S*$/, '') + '…' : body;
 
         // give each post a real <title> and description (they were "Document")
-        const pageTitle = `${title} | Alwin Joseph`;
+        const pageTitle = `${title} | Alwin Joshy`;
         html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(pageTitle)}</title>`);
         const meta = `<meta name="description" content="${esc(excerpt.replace(/…$/, ''))}">`;
         html = /<meta name="description"[^>]*>/.test(html)
@@ -43,7 +43,7 @@ const card = (p) => `
     <div class="blog-display-content-text-assets">
         <h3 class="blog-display-title">${esc(p.title)}</h3>
         <p class="blog-display-title-p">${esc(p.excerpt)}</p>
-        <p class="blog-display-small-text">learn more</p>
+        <p class="blog-display-small-text">Read post</p>
     </div>
 </a>`;
 
@@ -68,7 +68,7 @@ inject('blogArchive.html', archive, 'loadblogsfromfolder\\.js');
 
 // sitemap with every post
 const today = new Date().toLocaleDateString('en-CA');
-const urls = ['', 'blogArchive.html', 'downloadables/AlwinJoshyCV.pdf', ...posts.map((p) => p.url)];
+const urls = ['', 'blogArchive.html', 'downloadables/Technical%20Artist%20-%20ALWIN%20JOSHY%20-%20CV.pdf', ...posts.map((p) => p.url)];
 fs.writeFileSync('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
