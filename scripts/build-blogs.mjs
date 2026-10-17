@@ -36,7 +36,9 @@ for (const group of list.data) {
         const body = strip((html.match(/<div class="blog-content-details">([\s\S]*)/) || [, html])[1].replace(/<div class="copyright">[\s\S]*/, ''));
         const words = body.split(' ').length;
         const minutes = Math.max(1, Math.round(words / 200));
-        const excerpt = body.length > 150 ? body.slice(0, 150).replace(/\s\S*$/, '') + '…' : body;
+        // optional hand-written summary: <meta name="post-summary" content="...">
+        const summary = (html.match(/<meta name="post-summary" content="([^"]*)"/) || [, ''])[1];
+        const excerpt = summary || (body.length > 150 ? body.slice(0, 150).replace(/\s\S*$/, '') + '…' : body);
 
         const pageTitle = `${title} | Alwin Joshy`;
         const desc = excerpt.replace(/…$/, '');

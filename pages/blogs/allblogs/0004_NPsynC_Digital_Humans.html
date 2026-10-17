@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="../../../images/favicon.ico">
+    <title>Giving AI a Face: Building Digital Humans at NPsynC | Alwin Joshy</title>
+    <meta name="twitter:image" content="https://alwinjoshy.github.io/images/blogs/NPsynC_2026/cover.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://alwinjoshy.github.io/images/blogs/NPsynC_2026/cover.jpg">
+    <meta property="og:url" content="https://alwinjoshy.github.io/pages/blogs/allblogs/0004_NPsynC_Digital_Humans.html">
+    <meta property="og:description" content="Why we built NPsynC, our company making AI staff with a face for government and enterprise, and how I create our digital humans in Unreal Engine.">
+    <meta property="og:title" content="Giving AI a Face: Building Digital Humans at NPsynC | Alwin Joshy">
+    <meta property="og:type" content="article">
+    <meta name="description" content="Why we built NPsynC, our company making AI staff with a face for government and enterprise, and how I create our digital humans in Unreal Engine.">
+    <meta name="post-summary" content="Why we built NPsynC, our company making AI staff with a face for government and enterprise, and how I create our digital humans in Unreal Engine.">
+    <meta name="post-tags" content="Unreal Engine, Digital Humans, Grooms, NPsynC">
+    <link rel="stylesheet" href="../../../css/style-general.css">
+    <link rel="stylesheet" href="../../../css/style-blog.css">
+
+
+    <script src="https://kit.fontawesome.com/a3c67ea782.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- --------------------------------- header bar -->
+    <div id="header"> 
+        <div class="container">
+            <nav>
+                <a href="../../../index.html#header" class="brand" aria-label="Alwin Joshy, home">Alwin Joshy</a>
+                <ul id="sidemenu">
+                    <li><a href="../../../index.html#header">HOME</a></li>
+                    <li><a href="../../../index.html#portfolio">WORK</a></li>
+                    <li><a href="../../../index.html#about">ABOUT</a></li>
+                    <li><a href="../../../index.html#services">SERVICES</a></li>
+                    <li class="active-page-marker"><a href="../../../blogArchive.html">BLOG</a></li>
+                    <li><a href="../../../index.html#contact">CONTACT</a></li>
+                    <i class="fa-solid fa-xmark" onclick='closeNavMenu()'></i>
+                </ul>
+                <i class="fa-solid fa-bars" onclick='openNavMenu()'></i>
+            </nav>
+        </div>
+    </div>
+
+    <div id="intro">
+        <div class="container">
+            <p class="date-small-text">17 October 2026</p>
+            <h1 class="blog-title">Giving AI a Face: Building Digital Humans at NPsynC</h1>
+            <div class="blog-prime-image">
+                <img src="../../../images/blogs/NPsynC_2026/cover.webp" alt="Digital human in a white ghutra and black agal against a magenta studio background" width="1200" height="675">
+            </div>
+        </div>
+    </div>
+        <div class="blog-content">
+            <div class="container">
+                <div class="row">
+                    <div class="blog-content-details">
+                    <p>
+                        A lot of organisations want to use AI to serve people, but a chat window on a website only goes so far. When someone walks into a government
+                        service centre, a bank lobby or a hotel, they expect to be greeted by someone. That's the idea behind NPsynC, our company: AI staff with a face.
+                        We build digital humans that can stand at the front of house, answer questions, guide visitors and talk to them in their own language.
+                    </p>
+
+                    <figure class="blog-inline-media-container">
+                        <video src="../../../images/blogs/NPsynC_2026/ahmed-loop.mp4" poster="../../../images/blogs/NPsynC_2026/ahmed-loop-poster.jpg" width="640" height="478" autoplay muted loop playsinline preload="none" aria-label="Short silent loop of the finished digital human talking"></video>
+                        <figcaption>Ahmed, one of our digital humans, mid-sentence.</figcaption>
+                    </figure>
+
+                    <h2>Why we built it</h2>
+                    <p>
+                        We started NPsynC for government and semi-government agencies, and for companies, that are moving their services into the digital world but still want a
+                        human touch. A digital human can work as a receptionist, an assistant or a concierge. It never gets tired of the same question, and it can switch
+                        from Arabic to English without missing a beat. For a ministry or a large company, that's a friendly, consistent face for thousands of conversations a day.
+                    </p>
+                    <p>
+                        Under the hood, the character listens, thinks with a conversational AI and answers out loud. Its face is driven in real time by our own neural lipsync,
+                        which runs locally on the GPU and streams facial animation into Unreal Engine at 60 frames a second. Nothing has to make a round trip to the cloud just to
+                        move the lips, and the whole thing installs as a single app, so a client's team can run it without writing code. But none of that matters if the person
+                        on screen doesn't feel real. Making them feel real is my part of the job.
+                    </p>
+
+                    <h2>Where I come in</h2>
+                    <p>
+                        Alongside running the company, I'm the technical artist behind our characters. I build them in Unreal Engine, with Blender alongside for modelling and
+                        hair. I model and texture the clothing, rig it so it moves with the body, groom the beards and eyebrows, then light and render the character until it
+                        holds up in a close-up. Here's how Ahmed came together.
+                    </p>
+
+                    <h2>Starting from a believable face</h2>
+                    <p>
+                        Every character begins in Unreal's MetaHuman Character editor. It gives me a face and body that already share a skeleton and a full facial rig, which is
+                        exactly what our lipsync needs to drive. I shape the face, choose the skin and keep the rig set up with both joints and blend shapes, so the mouth and
+                        cheeks can carry speech convincingly.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/NPsynC_2026/metahuman-editor.webp" alt="MetaHuman Character editor showing the base male head" width="1200" height="678" loading="lazy" decoding="async">
+                        <figcaption>Where every character starts: a clean MetaHuman base.</figcaption>
+                    </figure>
+                    <p>
+                        Before I touch the skin, I like to look at the face broken into its regions. Seeing where the forehead hands over to the brow, and where the cheeks meet
+                        the jaw, tells me where an edit will land and how it will blend into its neighbours. It's a small habit that saves a lot of repainting later.
+                    </p>
+                    <figure class="blog-inline-media-container narrow-wide">
+                        <img src="../../../images/blogs/NPsynC_2026/region-map.webp" alt="Bald head with colour-coded facial regions" width="800" height="836" loading="lazy" decoding="async">
+                        <figcaption>Reading the face region by region before texturing.</figcaption>
+                    </figure>
+
+                    <h2>Dressing him properly</h2>
+                    <p>
+                        Ahmed wears a white thobe, a ghutra over his head and a black agal holding it in place. For a character meant to represent organisations in the Gulf,
+                        this has to look right. People notice immediately when traditional dress sits wrong. I modelled all three pieces in Blender. The ghutra took the most
+                        care: it's a big, soft piece of cloth that folds over the shoulders and falls down the back, so I gave it dense, even topology. That gives the folds enough
+                        shape to read in silhouette and lets the cloth bend smoothly instead of creasing in hard steps.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/NPsynC_2026/ghutra-topology.webp" alt="Dense quad topology of the ghutra with the agal rings on top" width="900" height="843" loading="lazy" decoding="async">
+                        <figcaption>The ghutra's topology: plenty of even quads, so the folds bend softly.</figcaption>
+                    </figure>
+                    <p>
+                        Clothing on a digital human has to move with it, so every piece is rigged to the MetaHuman skeleton and weight painted bone by bone. The neck and shoulders
+                        are where it gets interesting. When Ahmed turns his head, the collar should follow, but the shoulders of the thobe shouldn't be dragged along with it.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/NPsynC_2026/weight-paint-thobe.webp" alt="Weight painting the thobe on the character skeleton in Blender" width="900" height="882" loading="lazy" decoding="async">
+                        <figcaption>Weight painting the thobe so the collar follows the neck and the shoulders stay put.</figcaption>
+                    </figure>
+                    <p>
+                        The ghutra needs a lighter touch. If I bound it fully to the nearest bones, it would move like a hard shell. Instead, I give parts of it only a little
+                        influence from the arms and shoulders, so the cloth drifts with the body rather than snapping to it. Back in Unreal, I assemble the body, face and each
+                        outfit piece as separate parts of one character, then turn him around in the viewport to check that the outfit sits right from every angle.
+                    </p>
+                    <figure class="blog-inline-media-container narrow-wide">
+                        <img src="../../../images/blogs/NPsynC_2026/thobe-blueprint.webp" alt="Full-body character in a white thobe and ghutra in the Unreal viewport" width="800" height="828" loading="lazy" decoding="async">
+                        <figcaption>Ahmed fully dressed, checked from every side before lighting.</figcaption>
+                    </figure>
+
+                    <h2>The beard and eyebrows</h2>
+                    <p>
+                        Nothing gives away a digital human faster than bad facial hair, so I groom the beard and eyebrows myself. I work in Blender with hair curves grown
+                        directly on the face. The curves are bound to the skin so they follow every contour, and a little random roll on the strands stops them from looking
+                        combed by a machine.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/NPsynC_2026/groom-curves-blender.webp" alt="Beard and eyebrow hair curves on the face in Blender, with hair brushes below" width="1200" height="831" loading="lazy" decoding="async">
+                        <figcaption>Growing the beard and brows as curves on the face, brushes at the ready.</figcaption>
+                    </figure>
+                    <p>
+                        From there it's like sculpting with a comb. I comb the strands to set their flow, puff them up so they lift off the skin, pull the tips to vary the length
+                        and smooth out clumps that look too neat. The eyebrows take the longest. Their direction changes right across the brow, rising near the nose and lying
+                        flatter towards the tail, and getting that wrong makes a face look subtly off.
+                    </p>
+                    <div class="compare">
+                        <figure class="blog-inline-media-container">
+                            <img src="../../../images/blogs/NPsynC_2026/eyebrow-groom.webp" alt="Close-up of the eyebrow strands in Blender" width="1100" height="530" loading="lazy" decoding="async">
+                            <figcaption>The brow, strand by strand.</figcaption>
+                        </figure>
+                        <figure class="blog-inline-media-container">
+                            <img src="../../../images/blogs/NPsynC_2026/beard-groom.webp" alt="Beard and eyebrows together on the head in Blender" width="800" height="740" loading="lazy" decoding="async">
+                            <figcaption>Beard and brows together.</figcaption>
+                        </figure>
+                    </div>
+                    <p>
+                        Once the shape feels right, I bring the grooms into Unreal and look at them on their own under plain outdoor daylight. Daylight is far less forgiving
+                        than a moody studio, so thin patches and strands pointing the wrong way show up straight away. I'd rather find them there than in a client demo.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/NPsynC_2026/groom-hdri.webp" alt="Beard groom floating on its own in Unreal under outdoor daylight" width="900" height="804" loading="lazy" decoding="async">
+                        <figcaption>Checking the beard in honest daylight.</figcaption>
+                    </figure>
+
+                    <h2>Texturing white cloth</h2>
+                    <p>
+                        White fabric sounds easy and isn't. Make the thobe and ghutra truly white and the first strong light burns them flat, and every fold disappears. So I keep
+                        the cloth a touch below pure white and let the lighting do the shaping. The skin works the other way: I want the detail and small imperfections that
+                        make a face read as a person rather than a mannequin.
+                    </p>
+
+                    <h2>Lighting him like a portrait</h2>
+                    <p>
+                        For final renders I keep a small studio level in Unreal: the character, a simple backdrop, four spotlights and a camera rig that can orbit around him for
+                        turntables. I light Ahmed the way you'd light a portrait. A warm, soft key light models his face. A pink-magenta rim light separates the white ghutra from
+                        the dark background, and a coloured wash on the backdrop sets the mood.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/NPsynC_2026/capture-level.webp" alt="Studio scene in Unreal with the character, backdrop and spotlights casting pink and white light" width="1100" height="842" loading="lazy" decoding="async">
+                        <figcaption>The little studio where our characters get their portraits taken.</figcaption>
+                    </figure>
+                    <p>
+                        The camera moves slowly, the way it would in a filmed interview, so the viewer's attention stays on his face and voice instead of on the technology.
+                    </p>
+                    <div class="compare">
+                        <figure class="blog-inline-media-container">
+                            <img src="../../../images/blogs/NPsynC_2026/final-ahmed.webp" alt="Final render of the digital human facing the camera against a magenta background" width="1000" height="748" loading="lazy" decoding="async">
+                            <figcaption>Warm key light on the face, magenta behind.</figcaption>
+                        </figure>
+                        <figure class="blog-inline-media-container">
+                            <img src="../../../images/blogs/NPsynC_2026/final-profile.webp" alt="Final render in three-quarter profile with a pink rim light on the ghutra" width="1000" height="748" loading="lazy" decoding="async">
+                            <figcaption>The rim light tracing the edge of the ghutra.</figcaption>
+                        </figure>
+                    </div>
+
+                    <h2>Seeing him speak</h2>
+                    <p>
+                        The moment that makes all of this worth it is hearing him talk. In our demo, Ahmed gives a short spokesperson pitch for an investment firm, first in Arabic
+                        and then in English, with his lips following every word. Between lines he blinks and breathes while the camera drifts around him. It's just over a minute
+                        long, and it's the clearest picture of what we're building: a representative who can greet people in their own language, any time of day.
+                    </p>
+                    <p>
+                        Building a character like this means care in every layer, from the topology of a headscarf to the direction of a single eyebrow hair. Each of those
+                        details decides whether someone talks to a digital human or just looks at one. If your organisation wants AI staff with a face, have a look at
+                        <a href="https://npsync.dev/" target="_blank" rel="noopener">npsync.dev</a> or follow us on
+                        <a href="https://www.linkedin.com/company/digitalhuman-npsync" target="_blank" rel="noopener">LinkedIn</a>.
+                    </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="copyright">
+            <p>&copy; 2026 Alwin Joshy</p>
+        </div>
+
+    <!-- final load scripts -->
+    <script src="../../../scripts/smallscreennavrops.js"></script>
+</body>
+
+</html>

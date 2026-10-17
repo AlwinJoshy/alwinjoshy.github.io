@@ -84,3 +84,5 @@
     .compare{ grid-template-columns: 1fr; }
     .blog-inline-media-container.narrow img{ max-width: 70%; }
 }
+.blog-inline-media-container.narrow-wide img{ max-width: 560px; }
+@media (max-width: 600px){ .blog-inline-media-container.narrow-wide img{ max-width: 100%; } }
