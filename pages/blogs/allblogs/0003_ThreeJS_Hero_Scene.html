@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="../../../images/favicon.ico">
+    <title>How I Built the Three.js Hero Scene | Alwin Joshy</title>
+    <meta name="twitter:image" content="https://alwinjoshy.github.io/images/blogs/HeroScene_2026/cover.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://alwinjoshy.github.io/images/blogs/HeroScene_2026/cover.jpg">
+    <meta property="og:url" content="https://alwinjoshy.github.io/pages/blogs/allblogs/0003_ThreeJS_Hero_Scene.html">
+    <meta property="og:description" content="The flying Spitfire at the top of this site is a small real-time scene built with three.js. It started as a fun experiment and slowly turned into a">
+    <meta property="og:title" content="How I Built the Three.js Hero Scene | Alwin Joshy">
+    <meta property="og:type" content="article">
+    <meta name="description" content="The flying Spitfire at the top of this site is a small real-time scene built with three.js. It started as a fun experiment and slowly turned into a">
+    <meta name="post-tags" content="Three.js, WebGL, Shaders, Optimisation">
+    <link rel="stylesheet" href="../../../css/style-general.css">
+    <link rel="stylesheet" href="../../../css/style-blog.css">
+
+
+    <script src="https://kit.fontawesome.com/a3c67ea782.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- --------------------------------- header bar -->
+    <div id="header"> 
+        <div class="container">
+            <nav>
+                <a href="../../../index.html#header" class="brand" aria-label="Alwin Joshy, home">Alwin Joshy</a>
+                <ul id="sidemenu">
+                    <li><a href="../../../index.html#header">HOME</a></li>
+                    <li><a href="../../../index.html#portfolio">WORK</a></li>
+                    <li><a href="../../../index.html#about">ABOUT</a></li>
+                    <li><a href="../../../index.html#services">SERVICES</a></li>
+                    <li class="active-page-marker"><a href="../../../blogArchive.html">BLOG</a></li>
+                    <li><a href="../../../index.html#contact">CONTACT</a></li>
+                    <i class="fa-solid fa-xmark" onclick='closeNavMenu()'></i>
+                </ul>
+                <i class="fa-solid fa-bars" onclick='openNavMenu()'></i>
+            </nav>
+        </div>
+    </div>
+
+    <div id="intro">
+        <div class="container">
+            <p class="date-small-text">17 October 2026</p>
+            <h1 class="blog-title">How I Built the Three.js Hero Scene</h1>
+            <div class="blog-prime-image">
+                <img src="../../../images/blogs/HeroScene_2026/cover.webp" alt="Spitfire flying over misty mountains at sunset with a lens flare" width="1200" height="675">
+            </div>
+        </div>
+    </div>
+        <div class="blog-content">
+            <div class="container">
+                <div class="row">
+                    <div class="blog-content-details">
+                    <p>
+                        The flying Spitfire at the top of this site is a small real-time scene built with three.js. It started as a fun experiment and slowly turned into a
+                        technical art exercise: make it look like a golden-hour flight over the mountains, but keep it light enough that it never gets in the way of the page
+                        itself. Here is how it's put together, what I optimised, and a few things I tried and threw away.
+                    </p>
+
+                    <h2>The stack</h2>
+                    <p>
+                        The scene uses three.js r117 as an ES module straight from the jsDelivr CDN, with no bundler or build step. The aircraft is a small Spitfire
+                        glTF with a separate albedo texture, and the terrain is a single landscape glTF that contains the land LODs and a scattered tree mesh.
+                        The sky is an HDR loaded with <code>RGBELoader</code> as half-float, which lights the plane and doubles as the backdrop.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/HeroScene_2026/pipeline.svg" alt="Render pipeline diagram: RenderPass, half-float target, bloom, grade pass, lens flare" width="900" height="300" loading="lazy" decoding="async">
+                        <figcaption>The frame, from scene render to the final grade. The lens flare is drawn on top afterwards.</figcaption>
+                    </figure>
+
+                    <h2>Weight first: Draco and a GIF lesson</h2>
+                    <p>
+                        The original land model was 17.65 MB. Running it through gltf-transform with Draco mesh compression brought it down to 1.87 MB, and three.js decodes it
+                        with the Draco WASM decoder from the same CDN. The terrain texture was a 2.4 MB, 2048&nbsp;px GIF, and converting it to a quality-85 JPG made it about 444 KB.
+                        Overall, the 3D payload went from roughly 12 MB to about 4.4 MB.
+                    </p>
+                    <p>
+                        The GIF taught me a lesson, though. My first JPG was converted <em>from the GIF</em>, so it inherited the GIF's 256-colour palette. On the dark,
+                        tone-mapped terrain this showed up as blotchy posterised patches and checkerboard dithering that looked exactly like a banding bug in the renderer.
+                        Re-exporting the JPG from the full-colour PNG master fixed it instantly.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/HeroScene_2026/banding-gif-vs-jpg.webp" alt="Contrast-stretched terrain: top from the GIF-derived JPG with palette blotches, bottom from the full-colour master" width="680" height="506" loading="lazy" decoding="async">
+                        <figcaption>Contrast-stretched terrain. Top: JPG made from the 256-colour GIF. Bottom: JPG re-exported from the full-colour PNG.</figcaption>
+                    </figure>
+
+                    <h2>Never block the page</h2>
+                    <p>
+                        The hero text paints immediately; the 3D scene starts only after the page has loaded and gone idle, or on the first interaction (scroll, pointer, key or touch).
+                        When it starts, I inject <code>modulepreload</code> hints for every module and <code>preload</code> hints for the models, textures, HDR and Draco decoder,
+                        so everything downloads in parallel instead of one request at a time. On a throttled connection that cut the time from the scene script request to all assets
+                        loaded from 1.97&nbsp;s to 1.66&nbsp;s. Because the hints are injected at scene start, they never compete with the page content.
+                    </p>
+                    <p>
+                        Rendering pauses completely when the hero scrolls out of view (an <code>IntersectionObserver</code>), when the tab is hidden, or when the user prefers
+                        reduced motion; in that case a single still frame is drawn instead.
+                    </p>
+
+                    <h2>Endless terrain from a pool of 25 tiles</h2>
+                    <p>
+                        The terrain is a fixed pool of 5&times;5 tiles (each 1042 units), created once. When the plane crosses into a new cell, tiles that fall out of range are simply moved to the
+                        newly needed cells, with no cloning or allocation after start-up. Because the fog is fully opaque by about 1700 units, each tile only keeps two LODs:
+                        full detail up close and a cheaper mesh from 1500 units.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/HeroScene_2026/tile-grid.webp" alt="Debug view from high above showing the square grid of pooled terrain tiles" width="640" height="443" loading="lazy" decoding="async">
+                        <figcaption>Debug view (fog off, camera far above): the 5&times;5 pool that follows the plane.</figcaption>
+                    </figure>
+
+                    <h2>Fog that matches the sky</h2>
+                    <p>
+                        Linear fog hides the tile edges and lets me pull the camera's far plane in to 1.45&times; the fog distance. Two problems showed up. First, three.js r117 fogs by view depth,
+                        which is much shorter than the real distance at the edges of a wide, off-centre frustum, so tiles at the sides popped in unfogged. Overriding the fog chunk to use radial
+                        distance fixed that:
+                    </p>
+<pre><code>THREE.ShaderChunk.fog_vertex =
+  '#ifdef USE_FOG\n\tfogDepth = length( mvPosition.xyz );\n#endif';</code></pre>
+                    <p>
+                        Second, a single fog colour never matched the sky: toward the sun the horizon is warm and bright, away from it cooler. So the terrain and tree shaders now sample the
+                        same equirectangular HDR per pixel in the view direction, with the same tone mapping, so fog equals the sky behind it. The colour difference at the horizon dropped from
+                        13&ndash;25 to 3&ndash;5 (out of 255).
+                    </p>
+                    <div class="compare">
+                        <figure class="blog-inline-media-container">
+                            <img src="../../../images/blogs/HeroScene_2026/fog-before.webp" alt="Before: flat fog colour visibly different from the sky at the horizon" width="900" height="450" loading="lazy" decoding="async">
+                            <figcaption>Before: one averaged fog colour.</figcaption>
+                        </figure>
+                        <figure class="blog-inline-media-container">
+                            <img src="../../../images/blogs/HeroScene_2026/fog-after.webp" alt="After: terrain dissolves into the sky colour at the horizon" width="900" height="450" loading="lazy" decoding="async">
+                            <figcaption>After: fog samples the sky per pixel.</figcaption>
+                        </figure>
+                    </div>
+                    <p>
+                        The sky itself is drawn as a single full-screen triangle that reads the equirect texture directly, instead of a low-resolution cube conversion that looked blocky.
+                    </p>
+
+                    <h2>Clouds in one draw call</h2>
+                    <p>
+                        The low clouds are 60 low-poly icosahedron puffs (35 on phones) in one instanced draw call. The CPU does nothing per frame except update a few uniforms: the vertex shader
+                        wraps every puff around a point slightly ahead of the camera, so the clouds stay in view forever.
+                    </p>
+<pre><code>c.xz = uWrapC.xz + mod(c.xz - uWrapC.xz + uRadius, 2.0 * uRadius) - uRadius;</code></pre>
+                    <p>
+                        In the fragment shader, a fresnel term fades the faceted silhouette away, and three octaves of value noise shift the fade threshold so the edges become wispy instead of a
+                        clean gradient sphere. The same wind offset scrolls a small noise texture across the terrain as cloud shadows, so the two move together.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/HeroScene_2026/clouds.webp" alt="Flying through soft noisy cloud puffs toward the sun" width="1000" height="562" loading="lazy" decoding="async">
+                        <figcaption>Fresnel and noise turn 80-triangle spheres into soft puffs.</figcaption>
+                    </figure>
+
+                    <h2>Light and colour</h2>
+                    <p>
+                        The look comes from a few cheap layers:
+                    </p>
+                    <ul class="styled-list">
+                        <li><strong>Half-float composer target</strong> on desktop, so the dark, tone-mapped image doesn't band before post-processing.</li>
+                        <li><strong>Bloom retuned</strong> to a high threshold and small radius, so only the sunlit highlights glow, with a red-orange tint for the sunset. My first version had a
+                            low threshold and covered the whole frame in a milky veil.</li>
+                        <li><strong>One grade pass</strong>: warm highlights, cool lifted shadows, a soft glow around the sun's screen position and a vignette.</li>
+                        <li><strong>Dither last</strong>: interleaved gradient noise of &plusmn;0.5/255 after the sRGB encode, which hides the remaining 8-bit steps.</li>
+                        <li><strong>Procedural lens flare</strong>: starburst, halo and hexagonal ghosts drawn in shaders as an overlay, with no textures.</li>
+                    </ul>
+<pre><code>float ign = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+gl_FragColor.rgb += (ign - 0.5) / 255.0;</code></pre>
+
+                    <h2>Terrain detail from one tiny texture</h2>
+                    <p>
+                        A single 2048&nbsp;px map can't hold close-up detail, so I packed three CC0 ambientCG textures (snow, rock and grass) into the R, G and B channels of one 256&nbsp;px JPG
+                        of about 26 KB. The shader picks a channel per pixel: bright base texels get snow, steep slopes get rock, and everything else gets grass. It's applied as a brightness
+                        modulation that fades out with distance, so the base map colours still dominate. That's one extra texture lookup.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/HeroScene_2026/detail-texture.webp" alt="Close-up of terrain showing fine grass detail and snow patches" width="900" height="519" loading="lazy" decoding="async">
+                        <figcaption>Near-camera detail from the channel-packed texture.</figcaption>
+                    </figure>
+
+                    <h2>A calm camera with a bit of wind</h2>
+                    <p>
+                        The Spitfire flies on a noise-driven flight controller: smooth random turns, banking into them, gentle climbs and dives within an altitude band. The camera follows with
+                        frame-rate-independent exponential damping. Instead of aiming the camera away from the plane, I use <code>camera.setViewOffset</code> to place the plane at a chosen
+                        point on screen: to the right of the headline on desktop, and lower and closer on phones.
+                    </p>
+<pre><code>setFrame(w, h) {
+  const f = w / h &lt; 1 ? this.o.frameNarrow : this.o.frame;
+  this.camera.setViewOffset(w, h, (0.5 - f[0]) * w, (0.5 - f[1]) * h, w, h);
+}</code></pre>
+                    <p>
+                        On top of that sits a small wind shake: a slow sway plus a faster buffet, both sums of sines, scaled by a slow gust envelope and a little by the bank angle. It's applied
+                        after the look-at as a tiny rotation, so it never disturbs the framing, and it switches off for reduced motion.
+                    </p>
+                    <figure class="blog-inline-media-container narrow">
+                        <img src="../../../images/blogs/HeroScene_2026/mobile-framing.webp" alt="Phone screenshot with the Spitfire framed below the headline" width="390" height="844" loading="lazy" decoding="async">
+                        <figcaption>Portrait framing: closer camera, plane below the headline.</figcaption>
+                    </figure>
+
+                    <h2>Scaling down</h2>
+                    <p>
+                        Phones, small screens and low-memory devices get a lighter tier: pixel ratio 1, fewer clouds, 8-bit render targets, a smaller HDR and no detail texture. On every device,
+                        an adaptive quality check watches the frame rate; if it stays under 45 fps, it steps down in stages: pixel ratio 1, then no bloom, then a 30 fps cap with the clouds hidden.
+                    </p>
+
+                    <h2>What I threw away</h2>
+                    <p>
+                        I had a god-rays pass for a while. It never really worked here: the sky HDR has no bright sun disc for the rays to come from (the visible sun is the flare overlay, drawn
+                        after post-processing), so the mask stayed empty. I removed it rather than keep a pass that cost time and showed nothing. I also had a dogfight mode with enemy planes and tracers,
+                        which was fun but made the hero feel chaotic, so that went too.
+                    </p>
+                    <p>
+                        Most of the work wasn't adding effects but finding why something looked wrong: a palette from a GIF, fog measured along the wrong axis, a bloom threshold that was far too low.
+                        Measuring first (pixel differences, unique colour counts, frame timings) saved me from fixing the wrong thing more than once.
+                    </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="copyright">
+            <p>&copy; 2026 Alwin Joshy</p>
+        </div>
+
+    <!-- final load scripts -->
+    <script src="../../../scripts/smallscreennavrops.js"></script>
+</body>
+
+</html>

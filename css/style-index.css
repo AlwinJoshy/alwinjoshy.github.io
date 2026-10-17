@@ -81,7 +81,10 @@
 
 .about-col-2 .about-description{
     margin-top: 10px;
-    color: #878787;
+    color: #dcdcdc;          /* ~12:1 on the dark green background (WCAG AA needs 4.5:1) */
+    font-size: 16px;
+    line-height: 1.65;
+    max-width: 720px;
 }
 
 .tab-titles{
@@ -290,26 +293,6 @@
 .project-links a::after, .more-projects a::after{ content: ' \2197'; }
 .project-links a:hover, .more-projects a:hover{ text-decoration: underline; }
 
-/* shared tag chips (project tech + skills) */
-.tag-list{
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 4px 0 0;
-    padding: 0;
-}
-.tag-list li{
-    font-size: 12px;
-    font-weight: 400;
-    color: #e6e6e6;
-    background: #262626;
-    border: 1px solid #333;
-    border-radius: 999px;
-    padding: 4px 12px;
-    margin: 0;
-}
-
 .more-projects{
     margin-top: 40px;
     background-color: #1a1a1a;
@@ -354,90 +337,20 @@
 
 /* -------------------------------------------Blogs */
 
-#all-blogs-list{
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    grid-gap: 40px;
-    margin-top: 50px;
-}
-
 #blogs.bg-in{ background-image: url("../images/blog-section-image.gif"); } /* set lazily (index.html) */
 #blogs{
-    padding: 50px 0;
+    padding: 70px 0 30px;
     width: 100%;
     background-size: cover;
     background-position: center;
 }
-
-#blog-section-title{
-    margin-bottom: 50px;
+#blog-section-title{ margin-bottom: 10px; }
+#all-blogs-list{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 40px;
+    margin-top: 40px;
 }
-
-.blog-year-section{
-    margin-bottom: 30px;
-}
-
-.blog-display{
-    height: 100%;
-    background-color: #1a1a1a;
-    border-radius: 10px;
-    transition: background-color .5s, transform .5s;
-}
-
-.blog-display:hover{
-    background-color: #222222;
-    transform: translateY(-20px);
-}
-
-.blog-display-content-image{
-    width: 100%;
-    height: 150px;
-    overflow: hidden;
-    border-radius: 10px 10px 0 0;
-}
-
-.blog-display-content-image img{
-    width: 100%; 
-    height: auto; 
-    display: block; 
-    margin: 0 auto; 
-}
-
-.blog-display-content-text-assets{
-    padding: 20px;
-    border-radius: 10px;
-}
-
-.blog-display-title{
-    max-width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.blog-display-title-p{
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    margin: 10px 0;
-    color: darkgray;
-}
-
-.blog-display-title{
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.blog-display-small-text{
-    text-decoration: none;
-    color: white;
-    font-size: 12px;
-    margin: 10px 0;
-    display: inline-block;
-    font-size: 10px;
-}
-
 
 /* ----------------------------------------------- Contact */
 
