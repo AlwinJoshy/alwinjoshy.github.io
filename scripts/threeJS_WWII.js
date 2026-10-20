@@ -68,7 +68,8 @@ const PROPS = {
     sink: { trees: 0.6, buildings: 0.4 },   // metres pushed into the ground (covers small terrain mismatches)
     trees:     { points: 'assets/models/spawn_trees.glb',     filter: /tree/i,           meshes: 'assets/models/props/trees.glb' },
     buildings: { points: 'assets/models/spawn_buildings.glb', filter: /house|building/i, meshes: 'assets/models/props/buildings.glb' },
-    buildingTint: 0.7,  
+    buildingTint: 0.7,
+    trunkTint: 0.4,      
 };
 const TERRAIN = {
     lite: IS_LOW_TIER,            // low tier: albedo only, rock on world XZ (3 detail lookups instead of 10)
@@ -107,7 +108,7 @@ const TERRAIN = {
     look: {
         saturation: 0.5,          // layer albedo saturation (keeps the land map's olive tones in charge)
         ambient: [0.17, 0.15, 0.14],      // scale on the ambient light for terrain + props
-        sun: 0.85                 // scale on the sun for terrain + props
+        sun: 0.7                 // scale on the sun for terrain + props
     }
 };
 
@@ -160,7 +161,7 @@ container.appendChild(renderer.domElement);
 // everything that only needs the direction (flare, clouds, grade glow, propeller) uses SUN_POS.
 const SUN_POS = new THREE.Vector3(100, 30, 100);
 const SUN_DIR = SUN_POS.clone().normalize();
-const sunLight = new THREE.DirectionalLight(0xffc98f, 2.2); // warm golden sunset sun
+const sunLight = new THREE.DirectionalLight(0xffb066, 2.4); // warm golden sunset sun
 sunLight.position.copy(SUN_POS);
 scene.add(sunLight); scene.add(sunLight.target);
 
@@ -193,7 +194,7 @@ const lowClouds = new LowClouds(scene, { count: IS_LOW_TIER ? 35 : 60, minY: 110
     minSize: 180, maxSize: 340, opacity: 0.38, sunDir: SUN_POS, fogNear: FOG_NEAR, fogFar: FOG_FAR });
 
 // Ambient light to act as uniform Ambient Occlusion fill across shadowed areas
-const ambientAO = new THREE.AmbientLight(0x93dcf5, 2.4); // Cool sky tint for fill shadows
+const ambientAO = new THREE.AmbientLight(0xc8b49a, 2.1); // Cool sky tint for fill shadows
 scene.add(ambientAO);
 
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
@@ -343,7 +344,7 @@ function spawnSet(name) {
     const c = PROPS[name], isTree = name === 'trees';
     const points = PropSpawner.loadPoints(gltfLoader, c.points, c.filter, c.points.replace(/\.glb$/, '.json'))
         .catch((e) => { console.warn('PropSpawner: ' + name + ' points unavailable, using placeholders', e); return PropSpawner.placeholderPoints(isTree ? 400 : 50, 1042, name.length); });
-    const meshes = PropSpawner.loadVariants(gltfLoader, c.meshes, { sink: PROPS.sink[name], material: (m) => { const p = PropSpawner.toPhong(m, 0.5); if (!isTree) p.color.multiplyScalar(PROPS.buildingTint); return p; }})
+    const meshes = PropSpawner.loadVariants(gltfLoader, c.meshes, { sink: PROPS.sink[name], material: (m) => { const p = PropSpawner.toPhong(m, 0.5); if (!isTree) p.color.multiplyScalar(PROPS.buildingTint); else if (!p.map) p.color.multiplyScalar(PROPS.trunkTint); return p; }})
         .then((v) => { if (!v.length) throw new Error('no meshes in ' + c.meshes); return v; })
         .catch((e) => { console.warn('PropSpawner: ' + name + ' meshes unavailable, using placeholders', e); return PropSpawner.placeholderVariants(name); });
     Promise.all([points, meshes]).then(([pts, variants]) => {
