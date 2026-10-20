@@ -86,17 +86,22 @@ const TERRAIN = {
     // sampled with U mirrored, red -> -X, green -> -Z.
     baseNormal: { map: 'assets/texture/terrain/terrain_normal.jpg', tiling: 1, strength: 0.5,
                   mirrorU: true, flipRed: true, flipGreen: true },   // (if a larger bake arrives, downsample to ~512)
+    // Whole-tile land colour map (olive grass + dark earth/rock patches), mapped once per tile with the mesh UVs.
+    // Not tileable (edge seams); its dark patches follow the steep slopes when U is mirrored (like baseNormal).
+    // Used as a tint ratio around its mean colour, so the grass/rock/snow layers keep their own detail.
+    landMap: { map: 'assets/texture/terrain/terrain_color.jpg', mirrorU: true,
+               contrast: 2.0,                     // >1 deepens the map's light/dark patches (it is low-contrast)
+               mean: [0.2516, 0.2327, 0.1555] },  // its mean colour (keeps the tint centred on 1)
     blend: {
         rockSlope: [0.74, 0.90],  // world normal.y (base normal included): fully rock below the first value, no rock above the second
         snowHeight: [50, 64],     // snow fades in between these heights (terrain spans ~1-70)
         snowSlopeLimit: 0.88,     // height snow only sticks where normal.y is above this (flatter ground)
-        paintedSnow: [0.30, 0.48],// land-map luminance read as painted snow
+        paintedSnow: [9, 10],     // land-map luminance read as painted snow (off: the colour map has no snow)
         noiseScale: 0.045,        // 1 / metres of the blend-breakup noise (second octave is 3.8x finer)
         noiseAmount: 1.0,         // 0 = clean bands, 1 = default breakup
         sharpness: 1.0,           // 1 = as authored, >1 = harder layer edges, <1 = softer
-        landTint: 0.9,            // how much of the painted land map tints/shades the layers (0..1)
-        landTintFloor: 0.6,       // darkest the land map may shade (its old baked forest shadows are lifted)
-        landMean: [0.144, 0.179, 0.119]   // mean colour of the land map (keeps the tint centred on 1)
+        landTint: 0.9,            // how much of the land colour map tints/shades the layers (0..1)
+        landTintFloor: 0.45       // darkest the land colour map may shade
     },
     look: {
         saturation: 0.5,          // layer albedo saturation (keeps the land map's olive tones in charge)
@@ -256,9 +261,9 @@ let terrainTiler = new TerrainTiler(scene, {
     gridSize: 4     // 4 -> 5x5 tile pool (2 tiles each side of the plane's cell)
 });
 
-// Terrain is only shown once BOTH the glb and its texture are ready (avoids an untextured-grey frame then a pop).
+// Terrain is only shown once BOTH the glb and its colour map are ready (avoids an untextured-grey frame then a pop).
 let landMapReady = false, pendingTerrain = null;
-const landMap = textureLoader.load('assets/texture/land_combined_01_2k.jpg', () => {
+const landMap = textureLoader.load(TERRAIN.landMap.map, () => {
     landMapReady = true;
     if (pendingTerrain) { terrainTiler.init(pendingTerrain); pendingTerrain = null; }
     requestStillFrame();

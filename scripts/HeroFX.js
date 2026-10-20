@@ -311,10 +311,10 @@ export function fillGLSL(mul) {
 //    ground (+ the snow painted in the land map). Blends are smoothstep bands broken up by 2-octave value noise.
 //    Albedo + normal per layer, blended with the same weights. Grass/snow use world-XZ UVs; rock is triplanar.
 //    Normals: whiteout blend in world space (no tangents needed), then to view space for three's lighting.
-//    The painted land map (material.map) stays as a low-frequency tint / AO / painted-snow mask.
+//    The whole-tile land colour map (material.map, cfg.landMap) is a low-frequency tint over the layers.
 //    lite: no normal maps, rock on world-XZ only -> 3 detail lookups instead of 10 (low tier).
 //    Every setting is a uniform: change cfg values at runtime with api.apply(cfg) (or the uniforms directly),
-//    swap textures with api.setTerrainTexture(layer, 'albedo' | 'normal', url).
+//    swap textures with api.setTerrainTexture(layer, 'albedo' | 'normal', url) (layer 'land' = the whole-tile colour map).
 //    cfg: see TERRAIN in threeJS_WWII.js. Sun shadows fade out toward the edge of the shadow frustum.
 export function addTerrainSplat(material, cfg) {
     const lite = !!cfg.lite;
@@ -339,7 +339,7 @@ export function addTerrainSplat(material, cfg) {
         uTPaint: { value: new THREE.Vector2() },    // land-map luminance band read as painted snow
         uTNoise: { value: new THREE.Vector2() },    // noise scale (1/m), amount
         uTSharp: { value: 1 },                      // blend sharpness (1 = as authored, >1 = harder edges)
-        uTMacro: { value: 0 }, uTMacroMin: { value: 0 }, uTMean: { value: v3() }, uTSat: { value: 1 },
+        uTMacro: { value: 0 }, uTMacroMin: { value: 0 }, uTMacroC: { value: 1 }, uTLMirror: { value: 0 }, uTMean: { value: v3() }, uTSat: { value: 1 },
         uTAmb: { value: v3() }, uTSun: { value: 1 },
         uShCenter: { value: new THREE.Vector2() }, uShFade: { value: new THREE.Vector2(300, 420) }
     };
@@ -379,6 +379,12 @@ export function addTerrainSplat(material, cfg) {
             if (b.landTint !== undefined) u.uTMacro.value = b.landTint;
             if (b.landTintFloor !== undefined) u.uTMacroMin.value = b.landTintFloor;
             if (b.landMean) u.uTMean.value.fromArray(b.landMean);
+            const lm = c.landMap;
+            if (lm) {
+                if (lm.mirrorU !== undefined) u.uTLMirror.value = lm.mirrorU ? 1 : 0;
+                if (lm.contrast !== undefined) u.uTMacroC.value = lm.contrast;
+                if (lm.mean) u.uTMean.value.fromArray(lm.mean);
+            }
             const k = c.look || {};
             if (k.saturation !== undefined) u.uTSat.value = k.saturation;
             if (k.ambient) u.uTAmb.value.fromArray(k.ambient);
@@ -388,6 +394,11 @@ export function addTerrainSplat(material, cfg) {
         },
         // layer: 'grass' | 'rock' | 'snow' | 'base' (the whole-tile base normal; kind is ignored for 'base')
         setTerrainTexture(layer, kind, url, onLoad) {
+            if (layer === 'land') {           // whole-tile colour map (material.map), kind ignored
+                const old = material.map;
+                const t = load(url, () => { if (old && old !== t) old.dispose(); material.map = t; if (onLoad) onLoad(t); });
+                return t;
+            }
             const name = key[layer][kind === 'normal' ? 1 : 0];
             if (layer !== 'base' && kind === 'normal' && lite) return null;   // lite shader has no detail normal maps
             const old = u[name].value;
@@ -416,7 +427,7 @@ export function addTerrainSplat(material, cfg) {
 uniform sampler2D uTMN; uniform vec4 uTMNP; uniform float uTMNMirror;
 uniform sampler2D uTGA, uTRA, uTSA, uTGN, uTRN, uTSN;
 uniform vec3 uTScale, uTNStr, uTTintG, uTTintR, uTTintS, uTSnow, uTMean, uTAmb;
-uniform vec2 uTRock, uTPaint, uTNoise, uShCenter, uShFade; uniform float uTSharp, uTMacro, uTMacroMin, uTSun, uTSat;
+uniform vec2 uTRock, uTPaint, uTNoise, uShCenter, uShFade; uniform float uTSharp, uTMacro, uTMacroMin, uTMacroC, uTLMirror, uTSun, uTSat;
 float tHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float tNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
     return mix(mix(tHash(i), tHash(i + vec2(1, 0)), f.x), mix(tHash(i + vec2(0, 1)), tHash(i + vec2(1, 1)), f.x), f.y); }
@@ -424,7 +435,7 @@ float tSharp(float w) { return clamp((w - 0.5) * uTSharp + 0.5, 0.0, 1.0); }
 vec3 tUnpack(vec4 t, float s) { vec3 n = t.xyz * 2.0 - 1.0; n.xy *= s; return n; }
 `;
         const mapCode = `
-    vec4 texelColor = texture2D(map, vUv);                       // painted land map: macro tint / AO / painted snow
+    vec4 texelColor = texture2D(map, vec2(mix(vUv.x, 1.0 - vUv.x, uTLMirror), vUv.y));   // whole-tile land colour map: macro tint
     vec3 tN = normalize(vTN);
 #ifdef TSPLAT_BASEN
     {   // base normal: baked from the high-detail terrain over the whole tile (mesh UVs, no repeat at tiling 1).
@@ -459,7 +470,7 @@ vec3 tUnpack(vec4 t, float s) { vec3 n = t.xyz * 2.0 - 1.0; n.xy *= s; return n;
     vec3 tAlb = pow(texture2D(uTGA, uvG).rgb, vec3(2.2)) * uTTintG * wG + pow(cR, vec3(2.2)) * uTTintR * wR
               + pow(texture2D(uTSA, uvS).rgb, vec3(2.2)) * uTTintS * wS;          // sRGB-authored layers -> linear
     tAlb = mix(vec3(dot(tAlb, vec3(0.2126, 0.7152, 0.0722))), tAlb, uTSat);
-    vec3 tMac = clamp(texelColor.rgb / uTMean, vec3(uTMacroMin), vec3(2.2));
+    vec3 tMac = clamp(pow(texelColor.rgb / uTMean, vec3(uTMacroC)), vec3(uTMacroMin), vec3(2.2));
     tMac = mix(vec3(1.0), tMac, uTMacro * (1.0 - wS * 0.7));
     diffuseColor.rgb *= tAlb * tMac;
 `;
