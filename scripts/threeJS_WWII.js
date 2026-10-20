@@ -5,8 +5,9 @@ import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/
 import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/RGBELoader.js';
 import { TerrainTiler } from './TerrainTiler.js';
+import { PropSpawner } from './PropSpawner.js';
 import { CalmCamera } from './CalmCamera.js';
-import { createGradePass, sampleHorizon, addCloudShadows, toneMapACES, addSkyFog, createSkyMesh, addTerrainDetail } from './HeroFX.js';
+import { createGradePass, sampleHorizon, addCloudShadows, toneMapACES, addSkyFog, createSkyMesh, addTerrainSplat, createFill, FILL_DECL, fillGLSL } from './HeroFX.js';
 import { WingtipTrail } from './WingtipTrail.js';
 import { FlightController } from './flightcontroller.js';
 import { SunFlare } from './SunFlare.js';
@@ -36,6 +37,74 @@ const FOG_NEAR = 300, FOG_FAR = 1700;
 THREE.ShaderChunk.fog_vertex = '#ifdef USE_FOG\n\tfogDepth = length( mvPosition.xyz );\n#endif';
 scene.fog = new THREE.Fog(0x959999, FOG_NEAR, FOG_FAR);
 
+// =============================================================================================================
+// SCENE CONFIG: props and terrain look. Everything here can also be changed at runtime:
+//   props.setChance('trees' | 'buildings', 0..1)          terrainSplat.apply({ blend: { ... }, layers: { ... } })
+//   terrainSplat.setTerrainTexture('grass' | 'rock' | 'snow' | 'base', 'albedo' | 'normal', url)
+// =============================================================================================================
+const LIGHTING = {
+    // Hemisphere fill: lifts shadowed / sun-facing-away areas with sky light from above and warm bounce from below.
+    fillSky: 'auto',              // 'auto' = hue of the HDR sky overhead (average, luminance-normalised), or a colour
+    autoSkyBand: 0.25,            // auto: rows from the zenith down to this fraction of the HDR (0.25 = above ~45 deg)
+    autoSkySaturation: 1.0,       // auto: 1 = the sky's own hue, 0 = neutral white
+    fillSkyFallback: 0x9db4d6,    // used until the HDR has loaded (auto mode)
+    fillGround: 0x7a5232,         // warm ground bounce (lit from below)
+    fillIntensity: 0.28,          // fill strength (0 = off, as before)
+    propFill: 1.25,               // extra multiplier for trees / buildings (their dense canopies read darker)
+    shadowStrength: 0.75          // 0..1: how much sun the shadow map removes (1 = full, as before)
+};
+const PROPS = {
+    spawnDistance: 1500,          // props show within this distance of the plane (fog runs 300 -> 1700)
+    buffer: 200,                  // ...and hide beyond spawnDistance + buffer (hysteresis)
+    interval: 0.5,                // seconds between distance checks
+    treeSpawnChance: 1.0,         // 0..1, fraction of tree points used (stable per point and tile: hashed)
+    buildingSpawnChance: 1.0,     // 0..1, fraction of building points used
+    randomRotation: true,         // random (hashed, stable) rotation around Y for every tree and building
+    treeScaleJitter: 0.15,        // trees: +-15% extra scale on top of the Blender point scale (0 = off)
+    buildingScaleJitter: 0,
+    // relative frequency per variant (variants are sorted by object name; undefined = all equal)
+    treeWeights: [1, 1, 1],                 // Tree_01, Tree_02, Tree_03
+    buildingWeights: [3, 0.6, 4, 5, 0.6],   // Big_House, Church, Medium_House, Small_House, Tower
+    sink: { trees: 0.6, buildings: 0.4 },   // metres pushed into the ground (covers small terrain mismatches)
+    trees:     { points: 'assets/models/spawn_trees.glb',     filter: /tree/i,           meshes: 'assets/models/props/trees.glb' },
+    buildings: { points: 'assets/models/spawn_buildings.glb', filter: /house|building/i, meshes: 'assets/models/props/buildings.glb' }
+};
+const TERRAIN = {
+    lite: IS_LOW_TIER,            // low tier: albedo only, rock on world XZ (3 detail lookups instead of 10)
+    layers: {
+        // tiling = metres per texture repeat; tint is multiplied in (linear), brightness scales it
+        grass: { albedo: 'assets/texture/terrain/grass_albedo.jpg', normal: 'assets/texture/terrain/grass_normal.jpg',
+                 tiling: 22, normalStrength: 1.0, tint: 0xffffff, brightness: 1.0 },
+        rock:  { albedo: 'assets/texture/terrain/rock_albedo.jpg',  normal: 'assets/texture/terrain/rock_normal.jpg',
+                 tiling: 34, normalStrength: 1.0, tint: 0xffffff, brightness: 1.0 },
+        snow:  { albedo: 'assets/texture/terrain/snow_albedo.jpg',  normal: 'assets/texture/terrain/snow_normal.jpg',
+                 tiling: 40, normalStrength: 1.0, tint: 0xffffff, brightness: 0.75 }
+    },
+    // Base normal: baked from the high-detail terrain, covers one whole tile (mesh UVs). Replaces the coarse
+    // mesh normal on every LOD (LOD1 gains the full-detail shape); the layer detail normals blend on top.
+    // Loaded on all tiers (one 256 px JPG, 1 lookup). Orientation verified against the mesh normals:
+    // sampled with U mirrored, red -> -X, green -> -Z.
+    baseNormal: { map: 'assets/texture/terrain/terrain_normal.jpg', tiling: 1, strength: 0.5,
+                  mirrorU: true, flipRed: true, flipGreen: true },   // (if a larger bake arrives, downsample to ~512)
+    blend: {
+        rockSlope: [0.74, 0.90],  // world normal.y (base normal included): fully rock below the first value, no rock above the second
+        snowHeight: [50, 64],     // snow fades in between these heights (terrain spans ~1-70)
+        snowSlopeLimit: 0.88,     // height snow only sticks where normal.y is above this (flatter ground)
+        paintedSnow: [0.30, 0.48],// land-map luminance read as painted snow
+        noiseScale: 0.045,        // 1 / metres of the blend-breakup noise (second octave is 3.8x finer)
+        noiseAmount: 1.0,         // 0 = clean bands, 1 = default breakup
+        sharpness: 1.0,           // 1 = as authored, >1 = harder layer edges, <1 = softer
+        landTint: 0.9,            // how much of the painted land map tints/shades the layers (0..1)
+        landTintFloor: 0.6,       // darkest the land map may shade (its old baked forest shadows are lifted)
+        landMean: [0.144, 0.179, 0.119]   // mean colour of the land map (keeps the tint centred on 1)
+    },
+    look: {
+        saturation: 0.5,          // layer albedo saturation (keeps the land map's olive tones in charge)
+        ambient: [0.17, 0.15, 0.14],      // scale on the ambient light for terrain + props
+        sun: 0.85                 // scale on the sun for terrain + props
+    }
+};
+
 const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, FOG_FAR * 1.45); // well past full haze; sky background is never clipped
 camera.position.set(-20, 100, -100); // Initial offset position relative to the plane height
 
@@ -60,15 +129,41 @@ container.appendChild(renderer.domElement);
 // controls.minDistance = 3;
 
 // --- Lighting & Environment Probe ---
-const sunLight = new THREE.DirectionalLight(0xffc98f, 2.2); // warm golden sunset sun (lights the Spitfire)
-sunLight.position.set(100, 30, 100);
-scene.add(sunLight);
+// Sun direction (toward the sun). sunLight itself follows the plane so its shadow frustum stays tight;
+// everything that only needs the direction (flare, clouds, grade glow, propeller) uses SUN_POS.
+const SUN_POS = new THREE.Vector3(100, 30, 100);
+const SUN_DIR = SUN_POS.clone().normalize();
+const sunLight = new THREE.DirectionalLight(0xffc98f, 2.2); // warm golden sunset sun
+sunLight.position.copy(SUN_POS);
+scene.add(sunLight); scene.add(sunLight.target);
+
+// --- Sun shadows (desktop tier only; dropped automatically if the frame rate can't hold ~45 fps) ---
+// One 1024 PCFSoft map, orthographic box 2*SHADOW_HALF wide centred a little ahead of the plane, snapped to
+// shadow texels so it doesn't shimmer as it follows. Terrain receives; the plane and props cast.
+const SHADOW_HALF = 420, SHADOW_AHEAD = 220, SHADOW_DIST = 700;
+const shadows = { supported: !IS_LOW_TIER, on: false, reenables: 0, good: 0 };
+renderer.shadowMap.enabled = shadows.supported;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+if (shadows.supported) {
+    const sc = sunLight.shadow.camera;
+    sc.left = sc.bottom = -SHADOW_HALF; sc.right = sc.top = SHADOW_HALF; sc.near = 50; sc.far = SHADOW_DIST + 400;
+    sc.updateProjectionMatrix();
+    sunLight.shadow.mapSize.set(1024, 1024);
+    sunLight.shadow.bias = -0.0008;
+    setShadows(true);
+}
+function setShadows(on) {
+    on = on && shadows.supported;
+    if (shadows.on === on) return;
+    shadows.on = on;
+    sunLight.castShadow = on;            // changes the lights hash: three switches every lit material's program (cached after the first time)
+}
 
 // --- Sun Flare ---
-const sunFlare = new SunFlare(scene, sunLight, { distance: 5000, size: 500 });
+const sunFlare = new SunFlare(scene, { position: SUN_POS }, { distance: 5000, size: 500 });
 // Fewer, bigger, denser puffs, wrapped around a point AHEAD of the camera so nearly all of them are in view.
 const lowClouds = new LowClouds(scene, { count: IS_LOW_TIER ? 35 : 60, minY: 110, maxY: 230, radius: 700, aheadFactor: 0.6,
-    minSize: 180, maxSize: 340, opacity: 0.38, sunDir: sunLight.position, fogNear: FOG_NEAR, fogFar: FOG_FAR });
+    minSize: 180, maxSize: 340, opacity: 0.38, sunDir: SUN_POS, fogNear: FOG_NEAR, fogFar: FOG_FAR });
 
 // Ambient light to act as uniform Ambient Occlusion fill across shadowed areas
 const ambientAO = new THREE.AmbientLight(0x93dcf5, 2.4); // Cool sky tint for fill shadows
@@ -91,6 +186,7 @@ hdriLoader.load(SKY_HDR, (texture) => {
         toneMapACES(scene.fog.color, renderer.toneMappingExposure);
         lowClouds.setFog(scene.fog.color, FOG_NEAR, FOG_FAR);
     }
+    fill.setSkyFromTexture(texture);   // fill's sky hue = the sunset sky's upper-hemisphere average
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
     scene.environment = envMap;      // Reflection probe for PBR materials
     // Sky: the equirect itself, bilinear-filtered at full source resolution (no cube conversion / resampling),
@@ -160,104 +256,79 @@ let terrainTiler = new TerrainTiler(scene, {
     gridSize: 4     // 4 -> 5x5 tile pool (2 tiles each side of the plane's cell)
 });
 
-let landModel = null;
-let treesModel = null;
-
-
-function checkAssetsReady() {
-    if (landModel && treesModel) {
-        terrainTiler.init(landModel, treesModel);
-    }
-}
-
-
-
-
 // Terrain is only shown once BOTH the glb and its texture are ready (avoids an untextured-grey frame then a pop).
 let landMapReady = false, pendingTerrain = null;
 const landMap = textureLoader.load('assets/texture/land_combined_01_2k.jpg', () => {
     landMapReady = true;
-    if (pendingTerrain) { terrainTiler.init(pendingTerrain[0], pendingTerrain[1]); pendingTerrain = null; }
+    if (pendingTerrain) { terrainTiler.init(pendingTerrain); pendingTerrain = null; }
     requestStillFrame();
 });
 landMap.flipY = false;
 
-// --- Load Terrain & Trees ---
-gltfLoader.load('assets/models/land_02_draco.glb', (gltf) => {
-    const terrainScene = gltf.scene;
+// --- Fill light (settings: LIGHTING above; runtime: fill.apply({ fillIntensity: .. }), propFillUniform.value) ---
+const fill = createFill(LIGHTING);
+const propFillUniform = { value: LIGHTING.propFill };
 
-        let landMaterial = new THREE.MeshBasicMaterial({
-                color: 0x888888,   // brighter land (MeshBasic: this is the exposure of the terrain)
-                map: landMap   
-            });
+// --- Terrain: procedural grass / rock / snow on top of the painted land map (settings: TERRAIN above) ---
+const landMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, map: landMap, specular: 0x000000, shininess: 1 });
+// scrolling cloud shadows (drift with the LowClouds wind), then the splat, then the sky-matched fog
+addCloudShadows(landMaterial, { windOffset: lowClouds.uniforms.uWindOff.value, scale: 1 / 900, strength: 0.25 });
+const terrainSplat = addTerrainSplat(landMaterial, Object.assign({ onLoad: requestStillFrame, fill, shadowFade: [SHADOW_HALF * 0.7, SHADOW_HALF * 0.97] }, TERRAIN));
+addSkyFog(landMaterial, skyTexUniform, skyReadyUniform);
 
-        // scrolling cloud shadows, drifting with the LowClouds wind
-        addCloudShadows(landMaterial, { windOffset: lowClouds.uniforms.uWindOff.value, scale: 1 / 900, strength: 0.25 });
-        addSkyFog(landMaterial, skyTexUniform, skyReadyUniform);
-        // near-camera snow / rock / grass detail (one channel-packed 256px texture, 1 lookup); skipped on the low tier
-        if (!IS_LOW_TIER) addTerrainDetail(landMaterial, LoadTexture('assets/texture/detail/terrain_detail_pack.jpg', false), { scale: 1 / 30, near: 700, far: 1400, strength: 1.0 }); // terrain is ~500-1000 units from the camera
-
-            let treeMaterial = new THREE.MeshBasicMaterial({
-                color: 0x333333,    
-                map: LoadTexture('assets/texture/tree_02.png'),
-                
-                // 1. Render both sides of the flat plane geometry
-                side: THREE.DoubleSide,
-                
-                // 2. Enable Alpha Clipping (drops pixels below 0.5 opacity)
-                alphaTest: 0.5,
-                
-                // 3. Ensure it writes into the depth buffer cleanly 
-                // to prevent background objects leaking through
-                depthWrite: true,
-                depthTest: true
-            });
-            addSkyFog(treeMaterial, skyTexUniform, skyReadyUniform);
-            
-
-    // Array to temporarily collect our 5 levels in correct order
+gltfLoader.load('assets/models/land_03_draco.glb', (gltf) => {
     const landLODs = new Array(5);
-    let rawTreesMesh = null;
-
-    terrainScene.traverse((child) => {
-        if (child.isMesh) {
-            const meshName = child.name;
-
-
-              if (meshName.startsWith('Landscape_LOD')) {
-                    const oldMat = child.material;
-                    child.material = landMaterial;
-             }
-             else if (meshName.includes('Trees')) {
-                    const oldMat = child.material;
-                    child.material = treeMaterial;
-             }
-
-            // Sort out our land LOD variations dynamically by name matching
-            if (meshName === 'Landscape_LOD0') landLODs[0] = child;
-            else if (meshName === 'Landscape_LOD1') landLODs[1] = child;
-            else if (meshName === 'Landscape_LOD2') landLODs[2] = child;
-            else if (meshName === 'Landscape_LOD3') landLODs[3] = child;
-            else if (meshName === 'Landscape_LOD4') landLODs[4] = child;
-            
-            // Capture the shared scatter element
-            else if (meshName.includes('Trees')) {
-                rawTreesMesh = child;
-            }
-        }
+    gltf.scene.traverse((child) => {
+        if (!child.isMesh || !child.name.startsWith('Landscape_LOD')) return;
+        child.material = landMaterial;
+        child.receiveShadow = true;
+        const k = +child.name.slice(13);
+        if (k >= 0 && k < 5) landLODs[k] = child;
     });
-
-    // Check to ensure your pipeline didn't miss a variation level
-    if (landLODs.includes(undefined) || !rawTreesMesh) {
-        console.error("LOD Setup Error: Missing one of the 5 Land levels or Trees mesh in GLTF structural layout!");
+    if (!landLODs[0] || !landLODs[1]) {
+        console.error('Terrain: Landscape_LOD0 / Landscape_LOD1 missing from land_03_draco.glb');
         return;
     }
-
-    // Pass the ordered LOD array to the rebuilt terrain manager system
-    if (landMapReady) terrainTiler.init(landLODs, rawTreesMesh); else pendingTerrain = [landLODs, rawTreesMesh];
+    if (landMapReady) terrainTiler.init(landLODs); else pendingTerrain = landLODs;
     requestStillFrame();
 });
 
+// --- Props: trees + buildings on the Blender spawn points, repeated per terrain tile (settings: PROPS above) ---
+// Same lighting balance as the terrain (scaled sun / ambient), cloud shadows and sky fog.
+const props = new PropSpawner(scene, { tileSize: 1042, spawnDistance: PROPS.spawnDistance, buffer: PROPS.buffer, interval: PROPS.interval,
+    castShadow: shadows.supported, receiveShadow: false });
+function decorateProp(mat) {
+    addCloudShadows(mat, { windOffset: lowClouds.uniforms.uWindOff.value, scale: 1 / 900, strength: 0.25 });
+    const prev = mat.onBeforeCompile;
+    mat.onBeforeCompile = (sh, r) => {
+        prev(sh, r);
+        sh.uniforms.uTAmb = terrainSplat.uniforms.uTAmb; sh.uniforms.uTSun = terrainSplat.uniforms.uTSun;
+        Object.assign(sh.uniforms, fill.uniforms); sh.uniforms.uPropFill = propFillUniform;
+        sh.fragmentShader = FILL_DECL + 'uniform vec3 uTAmb; uniform float uTSun, uPropFill;\n' + sh.fragmentShader.replace('#include <lights_fragment_end>',
+            '#include <lights_fragment_end>\n    reflectedLight.indirectDiffuse *= uTAmb; reflectedLight.directDiffuse *= uTSun;' + fillGLSL('uPropFill'));
+    };
+    addSkyFog(mat, skyTexUniform, skyReadyUniform);
+}
+function spawnSet(name) {
+    const c = PROPS[name], isTree = name === 'trees';
+    const points = PropSpawner.loadPoints(gltfLoader, c.points, c.filter, c.points.replace(/\.glb$/, '.json'))
+        .catch((e) => { console.warn('PropSpawner: ' + name + ' points unavailable, using placeholders', e); return PropSpawner.placeholderPoints(isTree ? 400 : 50, 1042, name.length); });
+    const meshes = PropSpawner.loadVariants(gltfLoader, c.meshes, { sink: PROPS.sink[name], material: (m) => PropSpawner.toPhong(m, 0.5) })
+        .then((v) => { if (!v.length) throw new Error('no meshes in ' + c.meshes); return v; })
+        .catch((e) => { console.warn('PropSpawner: ' + name + ' meshes unavailable, using placeholders', e); return PropSpawner.placeholderVariants(name); });
+    Promise.all([points, meshes]).then(([pts, variants]) => {
+        props.addSet(name, pts, variants, decorateProp, {
+            chance: isTree ? PROPS.treeSpawnChance : PROPS.buildingSpawnChance,
+            randomRotation: PROPS.randomRotation,
+            scaleJitter: isTree ? PROPS.treeScaleJitter : PROPS.buildingScaleJitter,
+            weights: variants.length === (isTree ? PROPS.treeWeights : PROPS.buildingWeights).length ? (isTree ? PROPS.treeWeights : PROPS.buildingWeights) : null
+        });
+        if (spitfire) props.update(spitfire.position, 0, true);
+        requestStillFrame();
+    });
+}
+spawnSet('trees');
+spawnSet('buildings');
 
 
 function createPropellerShader() {
@@ -354,6 +425,7 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
         }
         else {
             if (child.isMesh) {
+                child.castShadow = true;
                 // body: keep the model's material, just give it the texture back
                 child.material.map = spitfireAlbedo;
                 child.material.color.set(0xffffff);   // so the texture isn't tinted
@@ -372,14 +444,15 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
     scene.add(spitfire);
 
 flightController = new FlightController(spitfire, {
-    minY: 50,          // keep above the ~70 m peaks
-    maxY: 260,
+    minY: 70,          // keep above the ~70 m peaks
+    maxY: 300,
     baseSpeed: 50.0,
     maxClimb: 0.7,    // steeper dives and climbs (about 26°)
     altSpeed: 10.5,     // how often it dips and climbs
     pitchResponse: 8.8, // how quickly it noses up or down
     rollResponse: 6.0,  // how quickly it banks left or right
     turnFrequency: 1.0,  // how often it changes direction
+    startHeading: Math.atan2(SUN_POS.x, SUN_POS.z),
 });
 
     cameraController = new CalmCamera(camera, spitfire, flightController);
@@ -451,8 +524,10 @@ function requestStillFrame() {
         if (!isPaused) return; // the main loop is already drawing
         if (spitfire) {
             terrainTiler.update(spitfire.position, camera);
+            props.update(spitfire.position, 0, true);
             // Let the chase camera settle behind the aircraft (no flight motion)
             if (cameraController) for (let i = 0; i < 60; i++) cameraController.update(1 / 60);
+            updateShadowFrustum();
         }
 
         sunFlare.update(camera);
@@ -469,17 +544,43 @@ const _propRotation = new THREE.Quaternion();
 const _sunScr = new THREE.Vector3();
 // Screen position of the sun for the grade's warm glow (no allocation)
 function updateSunScreen() {
-    _sunScr.copy(sunLight.position).normalize().multiplyScalar(1000).add(camera.position).project(camera);
+    _sunScr.copy(SUN_DIR).multiplyScalar(1000).add(camera.position).project(camera);
     gradePass.setSun(_sunScr.x * 0.5 + 0.5, _sunScr.y * 0.5 + 0.5, _sunScr.z < 1 ? 1 : 0);
 }
 
 // --- Adaptive quality: on slow devices drop pixel ratio, then bloom, then cap at 30 fps ---
 const perf = { level: 0, frames: 0, time: 0, fpsCap: 0, lastDraw: 0, settle: 5 }  // first window is longer so asset loading hitches are ignored;
+
+// Shadow frustum follows the plane: centred SHADOW_AHEAD units ahead along the camera's ground direction,
+// snapped to whole shadow texels in light space (no shimmer). Terrain shadows fade out before the box edge.
+const _shC = new THREE.Vector3(), _shV = new THREE.Vector3(), _shR = new THREE.Vector3(), _shU = new THREE.Vector3();
+function updateShadowFrustum() {
+    if (!spitfire) return;
+    camera.getWorldDirection(_shV); _shV.y = 0;
+    if (_shV.lengthSq() < 1e-6) _shV.set(0, 0, -1);
+    _shV.normalize();
+    _shC.copy(spitfire.position).addScaledVector(_shV, SHADOW_AHEAD); _shC.y = 30;
+    terrainSplat.uniforms.uShCenter.value.set(_shC.x, _shC.z);
+    if (!shadows.on) return;
+    // light-space axes (right / up perpendicular to the sun direction) for texel snapping
+    _shR.set(0, 1, 0).cross(SUN_DIR).normalize(); _shU.copy(SUN_DIR).cross(_shR);
+    const texel = SHADOW_HALF * 2 / 1024;
+    const a = Math.round(_shC.dot(_shR) / texel) * texel - _shC.dot(_shR), b = Math.round(_shC.dot(_shU) / texel) * texel - _shC.dot(_shU);
+    _shC.addScaledVector(_shR, a).addScaledVector(_shU, b);
+    sunLight.target.position.copy(_shC); sunLight.target.updateMatrixWorld();
+    sunLight.position.copy(_shC).addScaledVector(SUN_DIR, SHADOW_DIST); sunLight.updateMatrixWorld();
+}
 function adaptQuality(dt) {
     perf.frames++; perf.time += dt;
     if (perf.time < perf.settle) return;              // average over ~2 s windows
     const fps = perf.frames / perf.time;
     perf.frames = 0; perf.time = 0; perf.settle = 2;
+    // shadows go first; they come back only after ~6 s at >= 58 fps with nothing else degraded (max 2 times)
+    if (shadows.on && fps < 45) { setShadows(false); shadows.good = 0; return; }
+    if (shadows.supported && !shadows.on && perf.level === 0 && shadows.reenables < 2) {
+        shadows.good = fps >= 58 ? shadows.good + 1 : 0;
+        if (shadows.good >= 3) { shadows.good = 0; shadows.reenables++; setShadows(true); return; }
+    }
     if (fps >= 45 || perf.level >= 3) return;
     perf.level++;
     if (perf.level === 1) { renderer.setPixelRatio(1); if (composer.setPixelRatio) composer.setPixelRatio(1); composer.setSize(w, h); }
@@ -514,17 +615,19 @@ function animate(now) {
         // controls.target.copy(spitfire.position);
         // Feeds the aircraft position coordinates into the grid recalculator
         terrainTiler.update(spitfire.position, camera);
+        props.update(spitfire.position, deltaTime);
     }
 
     if (cameraController) cameraController.update(deltaTime);
+    updateShadowFrustum();
     lowClouds.update(camera, deltaTime);
 
     // controls.update(); // Resolves smooth lerped damping physics
 
-if (propellerMesh && propMaterial && sunLight) {
+if (propellerMesh && propMaterial) {
         
         // 1. Get the vector pointing directly TOWARD the sun
-        const worldSunDir = _worldSunDir.copy(sunLight.position).normalize();
+        const worldSunDir = _worldSunDir.copy(SUN_DIR);
         
         // 2. Grab the propeller's absolute world rotation
         const propRotation = _propRotation;
@@ -559,3 +662,6 @@ if (vapourTrails.length > 0 && flightController) {
 }
 
 requestAnimationFrame(animate);
+
+// Opt-in test hook (?fxdebug): exposes scene state for automated screenshots. Nothing is exposed otherwise.
+if (location.search.indexOf('fxdebug') >= 0) window.__fx = { THREE, scene, camera, renderer, props, perf, shadows, setShadows, terrainSplat, PROPS, TERRAIN, LIGHTING, fill, propFillUniform, get spitfire() { return spitfire; }, get flight() { return flightController; }, get cam() { return cameraController; } };

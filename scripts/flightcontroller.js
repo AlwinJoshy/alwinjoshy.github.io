@@ -37,7 +37,7 @@ export class FlightController {
         this.edgeMargin = config.edgeMargin ?? 3000;     // start turning home this far from the edge
         this.timeScale = config.timeScale ?? 1.0;        // > 1 speeds up all maneuvering (turns and altitude)
 
-        this.heading = Math.random() * Math.PI * 2;
+        this.heading = config.startHeading ?? Math.random() * Math.PI * 2;
         this.pitch = 0;
         this.turnRate = 0;
         this.bank = 0;

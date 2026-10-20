@@ -2,7 +2,8 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.117.1/build/three.m
 
 // Fixed-pool terrain tiler.
 // - (2*floor(gridSize/2)+1)^2 tiles (gridSize 4 -> 5x5) are built ONCE in init(); each tile is a THREE.LOD with
-//   two land levels (LOD0 near, LOD1 from lod1Distance) plus a trees clone.
+//   two land levels (LOD0 near, LOD1 from lod1Distance). Trees/buildings are not part of the tiles any more:
+//   PropSpawner repeats the Blender spawn points per tile cell with the same tileSize.
 // - When the plane crosses into a new cell, tiles that fell out of range are moved to the newly needed cells
 //   (reposition + updateMatrixWorld only). No cloning, allocation, string keys or Map/Set churn after init.
 // - LOD switching: r117 calls lod.update(camera) for every visible LOD (autoUpdate = true) during render.
@@ -15,15 +16,14 @@ export class TerrainTiler {
         this.lod1Distance = config.lod1Distance || 1500;
         this.half = Math.floor(this.gridSize / 2);
         this.span = this.half * 2 + 1;
-        this.tiles = [];            // { lod, trees, cx, cz }
+        this.tiles = [];            // { lod, cx, cz, keep }
         this.currentChunkX = NaN; this.currentChunkZ = NaN;
     }
 
-    // landMeshArray: [LOD0, LOD1, ...] (only the first two are used); treesMesh: scatter mesh
-    init(landMeshArray, treesMesh) {
+    // landMeshArray: [LOD0, LOD1, ...] (only the first two are used)
+    init(landMeshArray) {
         if (this.tiles.length) return;
         landMeshArray.forEach(m => { if (m) m.visible = false; });
-        if (treesMesh) treesMesh.visible = false;
         const n = this.span * this.span;
         for (let i = 0; i < n; i++) {
             const lod = new THREE.LOD();
@@ -32,9 +32,8 @@ export class TerrainTiler {
             lod.addLevel(l0, 0);
             lod.addLevel(l1, this.lod1Distance);
             lod.matrixAutoUpdate = false;
-            const trees = treesMesh.clone(); trees.visible = true; trees.matrixAutoUpdate = false;
-            this.scene.add(lod); this.scene.add(trees);
-            this.tiles.push({ lod, trees, cx: NaN, cz: NaN, keep: false });
+            this.scene.add(lod);
+            this.tiles.push({ lod, cx: NaN, cz: NaN, keep: false });
         }
         this.currentChunkX = NaN; this.currentChunkZ = NaN;
     }
@@ -76,7 +75,6 @@ export class TerrainTiler {
             t.cx = cx0 + dx - h; t.cz = cz0 + dz - h;
             const x = t.cx * this.tileSize, z = t.cz * this.tileSize;
             t.lod.position.set(x, 0, z); t.lod.updateMatrix(); t.lod.updateMatrixWorld(true);
-            t.trees.position.set(x, 0, z); t.trees.updateMatrix(); t.trees.updateMatrixWorld(true);
         }
     }
 }
