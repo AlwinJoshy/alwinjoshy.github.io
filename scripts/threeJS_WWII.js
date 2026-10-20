@@ -58,7 +58,7 @@ const PROPS = {
     buffer: 200,                  // ...and hide beyond spawnDistance + buffer (hysteresis)
     interval: 0.5,                // seconds between distance checks
     treeSpawnChance: 1.0,         // 0..1, fraction of tree points used (stable per point and tile: hashed)
-    buildingSpawnChance: 1.0,     // 0..1, fraction of building points used
+    buildingSpawnChance: 0.5,     // 0..1, fraction of building points used
     randomRotation: true,         // random (hashed, stable) rotation around Y for every tree and building
     treeScaleJitter: 0.15,        // trees: +-15% extra scale on top of the Blender point scale (0 = off)
     buildingScaleJitter: 0,
@@ -67,7 +67,8 @@ const PROPS = {
     buildingWeights: [3, 0.6, 4, 5, 0.6],   // Big_House, Church, Medium_House, Small_House, Tower
     sink: { trees: 0.6, buildings: 0.4 },   // metres pushed into the ground (covers small terrain mismatches)
     trees:     { points: 'assets/models/spawn_trees.glb',     filter: /tree/i,           meshes: 'assets/models/props/trees.glb' },
-    buildings: { points: 'assets/models/spawn_buildings.glb', filter: /house|building/i, meshes: 'assets/models/props/buildings.glb' }
+    buildings: { points: 'assets/models/spawn_buildings.glb', filter: /house|building/i, meshes: 'assets/models/props/buildings.glb' },
+    buildingTint: 0.7,  
 };
 const TERRAIN = {
     lite: IS_LOW_TIER,            // low tier: albedo only, rock on world XZ (3 detail lookups instead of 10)
@@ -91,7 +92,7 @@ const TERRAIN = {
     // Used as a tint ratio around its mean colour, so the grass/rock/snow layers keep their own detail.
     landMap: { map: 'assets/texture/terrain/terrain_color.jpg', mirrorU: true,
                contrast: 2.0,                     // >1 deepens the map's light/dark patches (it is low-contrast)
-               mean: [0.2516, 0.2327, 0.1555] },  // its mean colour (keeps the tint centred on 1)
+               mean: [0.2512, 0.2320, 0.1549] },  // its mean colour (keeps the tint centred on 1)
     blend: {
         rockSlope: [0.74, 0.90],  // world normal.y (base normal included): fully rock below the first value, no rock above the second
         snowHeight: [50, 64],     // snow fades in between these heights (terrain spans ~1-70)
@@ -110,7 +111,28 @@ const TERRAIN = {
     }
 };
 
-const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, FOG_FAR * 1.45); // well past full haze; sky background is never clipped
+// Depth precision (scene renders into 24-bit depth composer targets, see the composer below).
+// Was a fixed near of 0.1 (far/near 24650 + 16-bit depth: z-fighting on props).
+// - Desktop: fixed small near (desktopNear) so the wingtip vapour trails streaming past the camera are never
+//   clipped; 24-bit depth keeps houses/trees clean out to the fog (~1 mm steps at 100 m, ~1.5 cm at 500 m).
+// - Low tier (phones): near follows the chase camera's clearance to the aircraft (the closest geometry),
+//   near = clamp((camera-to-aircraft distance - aircraft radius) * nearFraction, nearMin, nearMax).
+//   Trails are off there by default (trailsOnMobile), so nothing streams past the camera to be cut.
+const DEPTH = {
+    desktopNear: 1.0,
+    nearMin: 1.5, nearMax: 8, nearFraction: 0.7,   // low tier dynamic near
+    far: FOG_FAR * 1.45,                           // well past full haze; sky background is never clipped
+    trailsOnMobile: false                          // wingtip vapour trails on the low tier (off: saves 2 ribbons/frame)
+};
+const DYNAMIC_NEAR = IS_LOW_TIER;
+const camera = new THREE.PerspectiveCamera(60, w / h, DYNAMIC_NEAR ? DEPTH.nearMin : DEPTH.desktopNear, DEPTH.far);
+let planeRadius = 0;   // aircraft bounding radius around its origin (set once it loads)
+function updateNearPlane() {
+    if (!DYNAMIC_NEAR || !planeRadius) return;
+    const d = camera.position.distanceTo(spitfire.position) - planeRadius;
+    const n = Math.min(DEPTH.nearMax, Math.max(DEPTH.nearMin, d * DEPTH.nearFraction));
+    if (Math.abs(n - camera.near) > camera.near * 0.08) { camera.near = n; camera.updateProjectionMatrix(); }
+}
 camera.position.set(-20, 100, -100); // Initial offset position relative to the plane height
 
 
@@ -208,12 +230,15 @@ hdriLoader.load(SKY_HDR, (texture) => {
 // --- Post Processing Stack (Bloom) ---
 // Composer targets: HalfFloat where renderable (desktop), so the linear-light intermediate image doesn't band
 // in the darks; 8-bit on the low tier. The final grade pass adds dither either way.
+// Depth: the scene is drawn into these targets, not the canvas. r117 gives a depth-only render target a
+// DEPTH_COMPONENT16 renderbuffer (16-bit: the z-fighting); with stencilBuffer it allocates a packed
+// DEPTH_STENCIL renderbuffer instead (DEPTH24_STENCIL8: WebGL2 core, WebGL1 via packed depth-stencil),
+// i.e. 24-bit depth on every tier, no depth-texture extension needed. (Composer clones it for target 2.)
 const gl2 = renderer.capabilities.isWebGL2;
 const halfOK = !IS_LOW_TIER && (gl2 ? !!renderer.extensions.get('EXT_color_buffer_float') : !!renderer.extensions.get('EXT_color_buffer_half_float'));
-const composer = halfOK
-    ? new EffectComposer(renderer, new THREE.WebGLRenderTarget(w * currentDPR(), h * currentDPR(), {
-        minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type: THREE.HalfFloatType, stencilBuffer: false }))
-    : new EffectComposer(renderer);
+const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(w * currentDPR(), h * currentDPR(), {
+    minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat,
+    type: halfOK ? THREE.HalfFloatType : THREE.UnsignedByteType, depthBuffer: true, stencilBuffer: true }));
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
@@ -318,7 +343,7 @@ function spawnSet(name) {
     const c = PROPS[name], isTree = name === 'trees';
     const points = PropSpawner.loadPoints(gltfLoader, c.points, c.filter, c.points.replace(/\.glb$/, '.json'))
         .catch((e) => { console.warn('PropSpawner: ' + name + ' points unavailable, using placeholders', e); return PropSpawner.placeholderPoints(isTree ? 400 : 50, 1042, name.length); });
-    const meshes = PropSpawner.loadVariants(gltfLoader, c.meshes, { sink: PROPS.sink[name], material: (m) => PropSpawner.toPhong(m, 0.5) })
+    const meshes = PropSpawner.loadVariants(gltfLoader, c.meshes, { sink: PROPS.sink[name], material: (m) => { const p = PropSpawner.toPhong(m, 0.5); if (!isTree) p.color.multiplyScalar(PROPS.buildingTint); return p; }})
         .then((v) => { if (!v.length) throw new Error('no meshes in ' + c.meshes); return v; })
         .catch((e) => { console.warn('PropSpawner: ' + name + ' meshes unavailable, using placeholders', e); return PropSpawner.placeholderVariants(name); });
     Promise.all([points, meshes]).then(([pts, variants]) => {
@@ -404,6 +429,7 @@ let vapourTrails = [];
 
 // Wingtip vapour: camera-facing ribbon from a fixed ring buffer (see WingtipTrail.js)
 function CreateTrail(trailTarget, width = 0.09) {
+    if (IS_LOW_TIER && !DEPTH.trailsOnMobile) return;   // phones: no trails (not created, never updated)
     vapourTrails.push(new WingtipTrail(scene, trailTarget, { width, maxPoints: 22, segmentLength: 1.3 })); // ~28 m, fades out
 }
 
@@ -447,6 +473,14 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
     let scale = 1;
     spitfire.scale.set(scale, scale, scale);
     scene.add(spitfire);
+    {   // rotation-proof bounding radius about the origin (all 8 box corners), for the dynamic near plane
+        spitfire.updateMatrixWorld(true);
+        const b = new THREE.Box3().setFromObject(spitfire), c = new THREE.Vector3();
+        for (let k = 0; k < 8; k++) {
+            c.set(k & 1 ? b.max.x : b.min.x, k & 2 ? b.max.y : b.min.y, k & 4 ? b.max.z : b.min.z);
+            planeRadius = Math.max(planeRadius, c.distanceTo(spitfire.position));
+        }
+    }
 
 flightController = new FlightController(spitfire, {
     minY: 70,          // keep above the ~70 m peaks
@@ -532,6 +566,7 @@ function requestStillFrame() {
             props.update(spitfire.position, 0, true);
             // Let the chase camera settle behind the aircraft (no flight motion)
             if (cameraController) for (let i = 0; i < 60; i++) cameraController.update(1 / 60);
+            updateNearPlane();
             updateShadowFrustum();
         }
 
@@ -624,6 +659,7 @@ function animate(now) {
     }
 
     if (cameraController) cameraController.update(deltaTime);
+    updateNearPlane();
     updateShadowFrustum();
     lowClouds.update(camera, deltaTime);
 
@@ -669,4 +705,4 @@ if (vapourTrails.length > 0 && flightController) {
 requestAnimationFrame(animate);
 
 // Opt-in test hook (?fxdebug): exposes scene state for automated screenshots. Nothing is exposed otherwise.
-if (location.search.indexOf('fxdebug') >= 0) window.__fx = { THREE, scene, camera, renderer, props, perf, shadows, setShadows, terrainSplat, PROPS, TERRAIN, LIGHTING, fill, propFillUniform, get spitfire() { return spitfire; }, get flight() { return flightController; }, get cam() { return cameraController; } };
+if (location.search.indexOf('fxdebug') >= 0) window.__fx = { THREE, scene, camera, renderer, props, perf, shadows, setShadows, terrainSplat, PROPS, TERRAIN, LIGHTING, DEPTH, composer, vapourTrails, fill, propFillUniform, get spitfire() { return spitfire; }, get flight() { return flightController; }, get cam() { return cameraController; } };
