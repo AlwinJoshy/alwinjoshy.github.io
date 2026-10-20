@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 280" width="900" height="280" font-family="Arial, Helvetica, sans-serif">
+  <rect width="900" height="280" rx="14" fill="#111"/>
+  <g font-size="15" font-weight="bold" fill="#fff" text-anchor="middle"><text x="160" y="60">Block A</text><text x="450" y="60">Block B</text><text x="740" y="60">Block C</text></g>
+  <g stroke="#ff7a5a" stroke-width="1.5" fill="#1c1c1c">
+    <rect x="60" y="80" width="200" height="120" rx="10"/><rect x="350" y="80" width="200" height="120" rx="10"/><rect x="640" y="80" width="200" height="120" rx="10" stroke-dasharray="6 5"/>
+  </g>
+  <g fill="#ff7a5a" fill-opacity="0.18">
+    <rect x="80" y="100" width="70" height="80" rx="4"/><rect x="370" y="100" width="70" height="80" rx="4"/><rect x="660" y="100" width="70" height="80" rx="4"/>
+  </g>
+  <g fill="#ddd" font-size="13">
+    <text x="165" y="130">meshes</text><text x="165" y="150">+ own volume</text><text x="165" y="170">(KB)</text>
+    <text x="455" y="130">meshes</text><text x="455" y="150">+ own volume</text><text x="455" y="170">(KB)</text>
+    <text x="745" y="130">not loaded</text><text x="745" y="150">yet</text>
+  </g>
+  <text x="450" y="245" fill="#999" font-size="13" text-anchor="middle">The lighting ships inside the block. Load the block, push its volume, done.</text>
+</svg>

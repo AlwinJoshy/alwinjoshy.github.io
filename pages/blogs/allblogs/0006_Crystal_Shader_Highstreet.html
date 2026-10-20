@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="../../../images/favicon.ico">
+    <title>A Crystal Shader for Highstreet's Growing Minerals | Alwin Joshy</title>
+    <meta name="twitter:image" content="https://alwinjoshy.github.io/images/blogs/Crystal_2026/cover.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://alwinjoshy.github.io/images/blogs/Crystal_2026/cover.jpg">
+    <meta property="og:url" content="https://alwinjoshy.github.io/pages/blogs/allblogs/0006_Crystal_Shader_Highstreet.html">
+    <meta property="og:description" content="How I faked deep, glowing crystals for Highstreet in Unity Shader Graph: inset-edge meshes, parallax inner layers, sparkles, fake reflections and a growth dissolve.">
+    <meta property="og:title" content="A Crystal Shader for Highstreet's Growing Minerals | Alwin Joshy">
+    <meta property="og:type" content="article">
+    <meta name="description" content="How I faked deep, glowing crystals for Highstreet in Unity Shader Graph: inset-edge meshes, parallax inner layers, sparkles, fake reflections and a growth dissolve.">
+    <meta name="post-summary" content="How I faked deep, glowing crystals for Highstreet in Unity Shader Graph: inset-edge meshes, parallax inner layers, sparkles, fake reflections and a growth dissolve.">
+    <meta name="post-tags" content="Unity, Shader Graph, Shaders, VR, Highstreet">
+    <link rel="stylesheet" href="../../../css/style-general.css">
+    <link rel="stylesheet" href="../../../css/style-blog.css">
+
+
+    <script src="https://kit.fontawesome.com/a3c67ea782.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- --------------------------------- header bar -->
+    <div id="header"> 
+        <div class="container">
+            <nav>
+                <a href="../../../index.html#header" class="brand" aria-label="Alwin Joshy, home">Alwin Joshy</a>
+                <ul id="sidemenu">
+                    <li><a href="../../../index.html#header">HOME</a></li>
+                    <li><a href="../../../index.html#portfolio">WORK</a></li>
+                    <li><a href="../../../index.html#about">ABOUT</a></li>
+                    <li><a href="../../../index.html#services">SERVICES</a></li>
+                    <li class="active-page-marker"><a href="../../../blogArchive.html">BLOG</a></li>
+                    <li><a href="../../../index.html#contact">CONTACT</a></li>
+                    <i class="fa-solid fa-xmark" onclick='closeNavMenu()'></i>
+                </ul>
+                <i class="fa-solid fa-bars" onclick='openNavMenu()'></i>
+            </nav>
+        </div>
+    </div>
+
+    <div id="intro">
+        <div class="container">
+            <p class="date-small-text">18 October 2026</p>
+            <h1 class="blog-title">A Crystal Shader for Highstreet's Growing Minerals</h1>
+            <div class="blog-prime-image">
+                <img src="../../../images/blogs/Crystal_2026/cover.webp" alt="Iridescent pink, green and orange crystal clusters" width="1200" height="675">
+            </div>
+        </div>
+    </div>
+        <div class="blog-content">
+            <div class="container">
+                <div class="row">
+                    <div class="blog-content-details">
+                    <p>
+                        At Highstreet, the VR metaverse I worked on as a Unity engineer and technical artist, the world had crystals and minerals that grew out of the ground. They
+                        needed to look precious, almost magical, and they needed to be cheap, because they had to sit in a VR scene with everything else and still hold the frame
+                        rate. Real refraction was out of the question. So I built a shader that fakes it: a crystal that looks like it has depth, glowing edges and something
+                        sparkling inside, all from a simple mesh and a handful of textures.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/Crystal_2026/spin.mp4" poster="../../../images/blogs/Crystal_2026/spin-poster.jpg" width="1032" height="662" muted loop playsinline preload="none" aria-label="A crystal spinning slowly to show its inner parallax and glowing edges"></video>
+                        <figcaption>The finished shader on a slowly spinning crystal.</figcaption>
+                    </figure>
+
+                    <h2>What I was after</h2>
+                    <p>
+                        Good crystals read in three ways at once. Their edges catch the light, so the shape is crisp even from a distance. They look deep, as if you can see into
+                        them. And they have life inside: little flecks and colour shifts that move as you walk around them. I wanted all three without transparency sorting
+                        headaches or expensive passes, so the shader is unlit, opaque, and does almost all of its thinking with textures and UV tricks.
+                    </p>
+
+                    <h2>Letting the mesh carry the edges</h2>
+                    <p>
+                        The first trick isn't in the shader at all, it's in the model. Each crystal is a very light mesh: the demo piece is just 100 vertices and 120 triangles. I
+                        inset each face slightly, which gives every face a thin outer ring of geometry around a central panel. Then I paint those outer rings with vertex colour.
+                        Now the shader knows exactly where the edges are without any edge detection at all: it just reads the colour.
+                    </p>
+                    <figure class="blog-inline-media-container narrow-wide">
+                        <img src="../../../images/blogs/Crystal_2026/inset-mesh.webp" alt="Wireframe of a simple crystal mesh with inset faces, 100 vertices and 120 triangles" width="788" height="455" loading="lazy" decoding="async">
+                        <figcaption>The demo crystal: inset faces give every edge its own strip of geometry.</figcaption>
+                    </figure>
+                    <p>
+                        I use the red channel for the edges and the green channel for a glowing core. Inside the shader, the edge colour also changes with the viewing angle: a
+                        fresnel term blends between one colour for edges facing you and another for edges turning away, so the outline shifts as the crystal rotates.
+                    </p>
+<pre><code>// vertex colour is painted on the mesh: R = outer edge ring, G = core
+float  edgeMask = vertexColor.r;
+float  coreMask = vertexColor.g;
+
+// edges change colour with the viewing angle
+float  facing    = fresnel(normal, viewDir, 1.0);
+float3 edgeColor = lerp(edgeFacingColor, edgeNonFacingColor, facing) * edgeMask;
+float3 coreGlow  = coreColorHDR * coreMask;</code></pre>
+
+                    <h2>The first version</h2>
+                    <p>
+                        The first pass was very basic: mostly colour and those painted edges, with only a hint of depth. It already read as a crystal at a glance, which told me the
+                        inset trick was worth it. Up close, though, it looked like what it was, a coloured surface.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/Crystal_2026/first-version.mp4" poster="../../../images/blogs/Crystal_2026/first-version-poster.jpg" width="1280" height="728" muted loop playsinline preload="none" aria-label="Early crystal shader with flat colours and glowing edges"></video>
+                        <figcaption>The first version: colour and edges, very little depth.</figcaption>
+                    </figure>
+
+                    <h2>Faking depth with parallax</h2>
+                    <p>
+                        Depth comes from parallax. Instead of reading a texture at the surface's own UVs, I push the UVs along the view direction. A layer shifted this way slides
+                        across the surface as you move, exactly as something sitting further inside the crystal would. The main inner texture is offset like this, and its value
+                        picks between a dark and a bright colour, which gives the cloudy, caustic-looking pattern inside.
+                    </p>
+<pre><code>// a layer "inside" the crystal: shift its UVs along the view direction
+float2 innerUV = uv * innerScale + viewDir.xy * parallaxStrength;
+
+float  pattern    = sample(parallaxTex, innerUV).r;
+float3 innerColor = lerp(innerDarkColor, innerBrightColor, pattern);</code></pre>
+                    <p>
+                        One layer gives depth, but two more give life. I added two sparkle layers that use the same idea with their own scale and their own amount of shift. Because
+                        each one moves at a different rate, they separate as you look around the crystal, and the inside starts to feel like a real volume with things suspended at
+                        different depths.
+                    </p>
+<pre><code>// two sparkle layers, each with its own scale and depth
+float2 sparkUV_A = uv * sparkA.scale + viewDir.xy * sparkA.shift;
+float2 sparkUV_B = uv * sparkB.scale + viewDir.xy * sparkB.shift;
+
+float3 sparkle = (sample(sparkleTex, sparkUV_A) + sample(sparkleTex, sparkUV_B)).rgb
+               * sparkleColor;</code></pre>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/Crystal_2026/parallax-still-b.webp" alt="Close-up of crystals with blue and pink inner layers at different depths" width="1298" height="657" loading="lazy" decoding="async">
+                        <figcaption>Layers at different depths make the inside read as a volume.</figcaption>
+                    </figure>
+                    <p>
+                        For the surface sheen, I reflect the view direction off the normal and use that to look up an environment texture, tinted by a reflection colour. That's
+                        where much of the shifting, iridescent colour comes from as the crystal turns.
+                    </p>
+<pre><code>// fake reflection: look up an environment texture with the reflected view
+float2 reflUV     = reflect(viewDir, normal).xy * reflectionAmount;
+float3 reflection = sample(environmentTex, reflUV).rgb * reflectionColor;</code></pre>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/Crystal_2026/parallax-depth.mp4" poster="../../../images/blogs/Crystal_2026/parallax-depth-poster.jpg" width="1280" height="658" muted loop playsinline preload="none" aria-label="Crystals with layered inner patterns that shift as the camera moves"></video>
+                        <figcaption>Parallax and fake depth: the inner layers slide past each other as the view changes.</figcaption>
+                    </figure>
+                    <p>
+                        A detail I'm quite happy with: all of these shifted UVs are worked out per vertex, not per pixel. The vertex stage packs them into a couple of spare
+                        interpolators, the GPU blends them across each face for free, and the pixel shader just samples. On low-poly crystals that saves a lot of maths for very
+                        little visual difference.
+                    </p>
+
+                    <h2>Putting it together</h2>
+                    <p>
+                        The final colour is simply everything added up: the inner pattern, the angle-dependent edges, the reflection, the sparkles and the core glow. Scene fog is
+                        then blended on top, so crystals in the distance sit in the world like everything else.
+                    </p>
+<pre><code>float3 color = innerColor + edgeColor + reflection + sparkle + coreGlow;
+color = lerp(color, fogColor, fogDensity);</code></pre>
+
+                    <h2>Growing out of the ground</h2>
+                    <p>
+                        The crystals also needed to grow, so the shader has a dissolve built in. It uses a second UV set: a noise pattern on top of a gradient running up the
+                        crystal. A single amount slider sweeps a cut-off through that mask, clipping away what hasn't grown yet, and a thin band just ahead of the cut glows in its
+                        own colour. Animate the slider and the crystal grows upwards with a bright, crackling edge.
+                    </p>
+<pre><code>// growth / dissolve along the second UV set
+float mask   = noise(uv2, dissolveScale) * (1.0 - uv2.y);
+float cutoff = remap(dissolveAmount, 0, 1, -0.2, 0.7);
+
+alpha    = 1.0 - step(mask, cutoff);                       // clipped below the threshold
+emission = step(mask, cutoff + dissolveWidth) * dissolveColor; // glowing growth edge</code></pre>
+
+                    <h2>The final look</h2>
+                    <p>
+                        With every layer in place, the crystals look deep and alive while staying a cheap, opaque, unlit material on a tiny mesh. Each cluster can take its own
+                        colours, so the same shader gives pink, green and warm orange crystals just by changing a few values.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/Crystal_2026/final-look.webp" alt="Two crystal clusters, one pink and green, one orange, with glowing inner patterns" width="1088" height="701" loading="lazy" decoding="async">
+                        <figcaption>The final look: two clusters, same shader, different colours.</figcaption>
+                    </figure>
+                    <p>
+                        What I enjoyed most about this one is how little of it is real. There's no refraction, no transparency and no ray marching, just a mesh that knows where
+                        its edges are and a few textures sliding past each other at different speeds. For a VR world that has to stay fast, that kind of honest fakery is often
+                        exactly the right tool.
+                    </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="copyright">
+            <p>&copy; 2026 Alwin Joshy</p>
+        </div>
+
+    <!-- final load scripts -->
+    <script src="../../../scripts/smallscreennavrops.js"></script>
+    <script>
+        // play the short demo loops only while they are on screen
+        (function(){
+            var vids = document.querySelectorAll('video.lazy-loop');
+            if (!('IntersectionObserver' in window)) { vids.forEach(function(v){ v.preload = 'auto'; v.play().catch(function(){}); }); return; }
+            var io = new IntersectionObserver(function(entries){
+                entries.forEach(function(e){ if (e.isIntersecting) e.target.play().catch(function(){}); else e.target.pause(); });
+            }, { rootMargin: '200px' });
+            vids.forEach(function(v){ io.observe(v); });
+        })();
+    </script>
+</body>
+
+</html>

@@ -86,3 +86,9 @@
 }
 .blog-inline-media-container.narrow-wide img{ max-width: 560px; }
 @media (max-width: 600px){ .blog-inline-media-container.narrow-wide img{ max-width: 100%; } }
+/* smaller code text on phones; wide lines scroll inside the panel */
+.blog-content-details pre{ max-width: 100%; }
+@media (max-width: 600px){ .blog-content-details pre code{ font-size: 12.5px; } }
+/* flex child must be allowed to shrink so long code lines scroll inside <pre> instead of widening the page */
+.blog-content-details{ min-width: 0; max-width: 100%; flex: 1 1 100%; width: 100%; }
+.blog-inline-media-container.narrow-wide video{ max-width: 560px; width: 100%; }

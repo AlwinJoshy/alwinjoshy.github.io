@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="../../../images/favicon.ico">
+    <title>Cheap VR Grass for Highstreet | Alwin Joshy</title>
+    <meta name="twitter:image" content="https://alwinjoshy.github.io/images/blogs/Grass_2026/cover.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://alwinjoshy.github.io/images/blogs/Grass_2026/cover.jpg">
+    <meta property="og:url" content="https://alwinjoshy.github.io/pages/blogs/allblogs/0007_VR_Grass_Highstreet.html">
+    <meta property="og:description" content="How I made cheap grass for Highstreet VR: an editor painter, one combined mesh, a proximity zone, alpha clip with 4x MSAA, and light from my voxel light baker.">
+    <meta property="og:title" content="Cheap VR Grass for Highstreet | Alwin Joshy">
+    <meta property="og:type" content="article">
+    <meta name="description" content="How I made cheap grass for Highstreet VR: an editor painter, one combined mesh, a proximity zone, alpha clip with 4x MSAA, and light from my voxel light baker.">
+    <meta name="post-summary" content="How I made cheap grass for Highstreet VR: an editor painter, one combined mesh, a proximity zone, alpha clip with 4x MSAA, and light from my voxel light baker.">
+    <meta name="post-tags" content="Unity, VR, Shader Graph, Optimisation, Tools">
+    <link rel="stylesheet" href="../../../css/style-general.css">
+    <link rel="stylesheet" href="../../../css/style-blog.css">
+
+
+    <script src="https://kit.fontawesome.com/a3c67ea782.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- --------------------------------- header bar -->
+    <div id="header"> 
+        <div class="container">
+            <nav>
+                <a href="../../../index.html#header" class="brand" aria-label="Alwin Joshy, home">Alwin Joshy</a>
+                <ul id="sidemenu">
+                    <li><a href="../../../index.html#header">HOME</a></li>
+                    <li><a href="../../../index.html#portfolio">WORK</a></li>
+                    <li><a href="../../../index.html#about">ABOUT</a></li>
+                    <li><a href="../../../index.html#services">SERVICES</a></li>
+                    <li class="active-page-marker"><a href="../../../blogArchive.html">BLOG</a></li>
+                    <li><a href="../../../index.html#contact">CONTACT</a></li>
+                    <i class="fa-solid fa-xmark" onclick='closeNavMenu()'></i>
+                </ul>
+                <i class="fa-solid fa-bars" onclick='openNavMenu()'></i>
+            </nav>
+        </div>
+    </div>
+
+    <div id="intro">
+        <div class="container">
+            <p class="date-small-text">18 October 2026</p>
+            <h1 class="blog-title">Cheap VR Grass for Highstreet</h1>
+            <div class="blog-prime-image">
+                <img src="../../../images/blogs/Grass_2026/cover.webp" alt="Grass field at dusk with pink and teal lit patches" width="1200" height="675">
+            </div>
+        </div>
+    </div>
+        <div class="blog-content">
+            <div class="container">
+                <div class="row">
+                    <div class="blog-content-details">
+                    <p>
+                        At Highstreet we needed grass. Lots of it, in VR, running on hardware that doesn't forgive you much. I needed something really cheap, so I made my own. It's not fancy. It's a painter tool that places grass in the
+                        editor, a step that combines all of it into one mesh, a simple trick so the grass only turns on when you're close, and a cheap unlit shader that does the
+                        rest.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/Grass_2026/test-scene.mp4" poster="../../../images/blogs/Grass_2026/test-scene-poster.jpg" width="1140" height="666" muted loop playsinline preload="none" aria-label="Dusk grass field with coloured lights moving over it"></video>
+                        <figcaption>The grass test scene.</figcaption>
+                    </figure>
+
+                    <h2>Painting the grass</h2>
+                    <p>
+                        The painter is an editor script. You give it a grass mesh, a material, a min and max scale and a colour gradient, then hit Draw and paint in the scene view
+                        like a brush. Every drag fires a ray from the mouse into the scene. If it hits something inside the painter's box, the brush drops a few blades at random
+                        spots inside the brush circle. Brush Power is how many it tries per stroke. Before placing one, it checks the distance to every blade already there and
+                        skips it if it's closer than the padding, so you don't get piles of grass in one spot.
+                    </p>
+<pre><code>// on mouse drag in the scene view
+if (Physics.Raycast(mouseRay, out hit) &amp;&amp; InsideBox(hit.point))
+{
+    for (int i = 0; i &lt; brushPower; i++)
+    {
+        Vector3 pos = hit.point + RandomInCircle(brushSize);
+        if (!InsideBox(pos) || TooCloseToExisting(pos, padding)) continue;
+
+        float scale = sizeMode == Perlin
+            ? Lerp(minScale, maxScale, PerlinNoise(pos.x * perlinScale, pos.z * perlinScale))
+            : Random.Range(minScale, maxScale);
+
+        Color color = gradient.Evaluate(InverseLerp(minScale, maxScale, scale));
+        if (useLightProbes) color *= SampleProbesAround(pos);
+
+        SpawnBlade(pos, randomYaw, smallTilt, scale, color); // colour goes into vertex colours
+    }
+}</code></pre>
+                    <p>
+                        Each blade gets a random spin, a small random tilt and a scale. The scale is either plain random or comes from Perlin noise, so you get areas of taller and
+                        shorter grass instead of noise everywhere. The colour comes from the gradient based on that scale, so tall and short grass are slightly different shades.
+                        Holding Ctrl while drawing erases, and Ctrl+Z pulls back the last few blades.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/Grass_2026/painting.mp4" poster="../../../images/blogs/Grass_2026/painting-poster.jpg" width="1014" height="640" muted loop playsinline preload="none" aria-label="Painting and erasing patches of grass in the Unity scene view"></video>
+                        <figcaption>Painting and erasing grass with the brush.</figcaption>
+                    </figure>
+                    <p>
+                        There's also a Generate button for when you don't want to paint by hand. It fills the whole box with random points, drops a ray down from above each one
+                        to find the ground, and places a blade there. Patchiness is just the chance that a point gets skipped, so turning it up gives you bare spots. Naturalize
+                        is for cleaning up the look after: it nudges every blade a bit, re-snaps it to the ground with a ray, re-tilts it and shifts its colour a little, and it
+                        can run a few passes. It's cheap, but it takes away that obviously placed look.
+                    </p>
+                    <figure class="blog-inline-media-container narrow-wide">
+                        <img src="../../../images/blogs/Grass_2026/painter-inspector.webp" alt="Grass Painter inspector with brush, box, naturalize and generate settings and Draw, Erase, Bake, Combine, Clear, Naturalize and Generate buttons" width="577" height="847" loading="lazy" decoding="async">
+                        <figcaption>The painter. Everything is tweakable from the inspector.</figcaption>
+                    </figure>
+
+                    <h2>Baking light into the grass</h2>
+                    <p>
+                        This part is easy to miss. When light probes are on, the painter samples the lighting for every blade while you paint. For each vertex of the blade it
+                        picks a random point nearby (kept above the ground), reads the light probe there, and averages all of it. That colour gets multiplied into the blade's
+                        vertex colour. So the grass already carries the scene's baked light before the shader even runs, and it costs nothing at runtime.
+                    </p>
+<pre><code>Color SampleProbesAround(Transform blade)
+{
+    Color sum = black; int count = 0;
+    foreach (Vector3 v in grassMesh.vertices)
+    {
+        Vector3 p = blade.TransformPoint(v) + RandomInSphere(samplingDistance);
+        p.y = abovePoint;                       // keep the offset upwards
+        LightProbes.GetInterpolatedProbe(p, null, out var sh);
+        Color c = sh.Evaluate(Vector3.up);       // light coming from above
+        if (c != black) { sum += c; count++; }
+    }
+    return count &gt; 0 ? sum / count : white;
+}</code></pre>
+
+                    <h2>Combining it all</h2>
+                    <p>
+                        Painting makes a separate object for every blade. That's fine while you're working, but it's terrible for a game. Thousands of objects means thousands of
+                        draw calls.
+                    </p>
+                    <div class="compare">
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/Grass_2026/hierarchy.webp" alt="Unity hierarchy full of separate grass instance objects" width="352" height="795" loading="lazy" decoding="async">
+                        <figcaption>After painting: one object per blade.</figcaption>
+                    </figure>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/Grass_2026/combined.webp" alt="Unity hierarchy showing a grass zone with a single combined grass object" width="313" height="51" loading="lazy" decoding="async">
+                        <figcaption>After combining: one mesh.</figcaption>
+                    </figure>
+                    </div>
+                    <p>
+                        So Combine takes every blade, with its position, rotation and scale, and merges them into one mesh with the vertex colours kept. If there's already a
+                        combined mesh, it gets merged in too, so you can paint more later and combine again. Bake does the same thing from scratch, also optimises the mesh, and
+                        sets the renderer up the cheap way: light probes for GI, no shadow casting, no shadow receiving. After that, the whole patch is one object and one
+                        material.
+                    </p>
+<pre><code>var parts = new List&lt;CombineInstance&gt;();
+if (combinedGrass != null) parts.Add(combinedGrass.mesh);   // keep what was combined before
+
+foreach (var blade in grassInstances)
+    parts.Add(new CombineInstance { mesh = blade.mesh, transform = blade.localToWorldMatrix });
+
+Mesh combined = new Mesh();
+combined.CombineMeshes(parts.ToArray(), mergeSubMeshes: true, useMatrices: true);
+combined.colors = allBladeColors;   // baked tint + probe light per blade
+
+DestroyAll(grassInstances);         // one object left</code></pre>
+
+                    <h2>Only on when you're near</h2>
+                    <p>
+                        Even one mesh per patch is a waste if you're nowhere near it. Each painter has its box, and around it a bigger box that's the box size plus the
+                        sensitivity range on every side. Each update it checks whether the camera is inside that bigger box and just turns the combined grass on or off. No
+                        fading, nothing smart. You just don't pay for grass you can't see properly anyway.
+                    </p>
+<pre><code>void Update()
+{
+    Vector3 cam  = transform.InverseTransformPoint(Camera.main.transform.position);
+    Vector3 zone = boxSize + Vector3.one * (2f * sensitivityRange);
+
+    bool near = Mathf.Abs(cam.x) &lt;= zone.x / 2
+             &amp;&amp; Mathf.Abs(cam.y) &lt;= zone.y / 2
+             &amp;&amp; Mathf.Abs(cam.z) &lt;= zone.z / 2;
+
+    combinedGrass.SetActive(near);
+}</code></pre>
+
+                    <h2>The shader</h2>
+                    <p>
+                        The shader is unlit. The colour is the baked vertex colour times the grass texture, darker at the root and full at the tip, all multiplied by light from my
+                        voxel map (more on that below). In the vertex stage, the tip of each blade moves and the root stays put, because every offset is scaled by the blade's
+                        UV height. The wind comes from a pattern texture scrolled across the world with time. Its red and green channels push the blade along X and Z, so nearby
+                        blades move together in waves instead of each one doing its own thing. There's also a bend that depends on the distance to the camera: within the bend
+                        range, the tip is pushed along the blade's normal instead of by the wind.
+                    </p>
+<pre><code>// vertex
+float  h    = uv.y;                                       // 0 at the root, 1 at the tip
+float2 wuv  = (worldPos.xz + time * windSpeed) * windPatternScale;
+float3 wind = float3(windTex.SampleLOD(wuv).r, 0, windTex.SampleLOD(wuv).g) * windStrength;
+
+float  near = min(dot(viewVec, viewVec) * bendRange, 1);  // squared distance to the camera
+float3 tip  = lerp(normalWS * h, wind * h, near);         // close: bend, far: wind
+
+worldPos += tip + float3(0, grassHeight * h, 0);</code></pre>
+
+                    <h2>Alpha clip, not alpha blend</h2>
+                    <p>
+                        The grass uses alpha clip. Pixels below the clip value just get thrown away, and what's left is written to depth like any opaque object. That means the
+                        draw order sorts itself out through the depth buffer. I tried alpha blending, and it does give nice soft edges, but the draw order gets really wacky.
+                        Blades in front draw behind blades in the back, and it changes as you move your head. With one combined mesh you can't sort the blades either. So, clip.
+                    </p>
+<pre><code>// fragment
+float4 tex   = mainTex.Sample(grassUV);
+float  alpha = tex.a * saturate(h * 10);    // also fades the very root
+clip(alpha - clipThreshold);                // opaque + depth write, no sorting needed</code></pre>
+                    <p>
+                        The problem is that alpha clip comes with jagged edges. Every blade edge is a hard cut, and in VR that looks horrible. The fix I went with is 4x MSAA. MSAA
+                        works on geometry edges, and with alpha clip on top it cleans the blade edges up a lot. It's not the smoothest solve. Far away, where the blades are thinner
+                        than a pixel, it still shimmers. But up close it looks fine, and it's way cheaper than the alternatives.
+                    </p>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/Grass_2026/vr-test.mp4" poster="../../../images/blogs/Grass_2026/vr-test-poster.jpg" width="640" height="480" muted loop playsinline preload="none" aria-label="VR headset view walking over a grass patch"></video>
+                        <figcaption>Testing in VR.</figcaption>
+                    </figure>
+
+                    <h2>Lighting from the voxel map</h2>
+                    <p>
+                        The last piece is light. I'd already built a voxel light baker for Highstreet that bakes the scene lighting into a 3D texture, a kind of 3D lightmap. The
+                        grass shader reads it. It passes the world position of each pixel into a small custom function that samples that voxel map, and the result tints the grass.
+                        So if a patch sits in a pink-lit area or under a teal light, the grass picks that up, without any real-time lights.
+                    </p>
+<pre><code>// voxel light lookup (custom function in the graph)
+float3 SampleEnvironmentVoxelMap(float3 worldPos)
+{
+    float3 uvw = (worldPos - volumeMin) / volumeSize;   // world -&gt; 0..1 inside the baked volume
+    return voxelLightTex.Sample(linearSampler, uvw).rgb;
+}
+
+float3 light = SampleEnvironmentVoxelMap(worldPos);
+float3 color = light * (light * 0.02 + vertexColor * h * tex.rgb);</code></pre>
+                    <figure class="blog-inline-media-container">
+                        <img src="../../../images/blogs/Grass_2026/final-look.webp" alt="Dusk grass field with pink and teal lit patches" width="1071" height="665" loading="lazy" decoding="async">
+                        <figcaption>The final look. The pink and teal patches come from the baked light.</figcaption>
+                    </figure>
+
+                    <h2>Where it started</h2>
+                    <p>
+                        The early version was a lot rougher. It was very bright and yellow and pretty uniform, more like a carpet than a field. It did prove the idea in VR though.
+                    </p>
+                    <figure class="blog-inline-media-container narrow-wide">
+                        <video class="lazy-loop" src="../../../images/blogs/Grass_2026/vr-early.mp4" poster="../../../images/blogs/Grass_2026/vr-early-poster.jpg" width="960" height="960" muted loop playsinline preload="none" aria-label="Early bright yellow grass tested in VR"></video>
+                        <figcaption>The earlier version, tested in VR.</figcaption>
+                    </figure>
+                    <figure class="blog-inline-media-container">
+                        <video class="lazy-loop" src="../../../images/blogs/Grass_2026/editor-early.mp4" poster="../../../images/blogs/Grass_2026/editor-early-poster.jpg" width="1280" height="658" muted loop playsinline preload="none" aria-label="Editor view of the early grass with coloured lighting"></video>
+                        <figcaption>The earlier version in the editor.</figcaption>
+                    </figure>
+                    <p>
+                        That's it really. Nothing here is new tech. It's a bunch of cheap tricks stacked together: paint in the editor, merge into one mesh, switch it off when
+                        you're far, bake the light in, and clip instead of blend. The jaggies and the shimmer in the distance are the price, and for VR on a budget I think it was
+                        worth paying.
+                    </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="copyright">
+            <p>&copy; 2026 Alwin Joshy</p>
+        </div>
+
+    <!-- final load scripts -->
+    <script src="../../../scripts/smallscreennavrops.js"></script>
+    <script>
+        // play the short demo loops only while they are on screen
+        (function(){
+            var vids = document.querySelectorAll('video.lazy-loop');
+            if (!('IntersectionObserver' in window)) { vids.forEach(function(v){ v.preload = 'auto'; v.play().catch(function(){}); }); return; }
+            var io = new IntersectionObserver(function(entries){
+                entries.forEach(function(e){ if (e.isIntersecting) e.target.play().catch(function(){}); else e.target.pause(); });
+            }, { rootMargin: '200px' });
+            vids.forEach(function(v){ io.observe(v); });
+        })();
+    </script>
+</body>
+
+</html>
