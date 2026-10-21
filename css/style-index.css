@@ -295,6 +295,21 @@
     object-fit: cover;
     display: block;
 }
+/* optional card video (scripts/cardVideo.js): sits over the image with the same cover crop,
+   invisible until it is actually playing, then a 300ms crossfade; never takes clicks */
+.project-media{ position: relative; overflow: hidden; }
+.project-media video{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.project-media.is-playing video{ opacity: 1; }
 .project-body{
     padding: 24px 26px 28px;
     font-size: 14px;
