@@ -14,6 +14,27 @@ import { SunFlare } from './SunFlare.js';
 import { LowClouds } from './LowClouds.js';
 import { DRACOLoader } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/DRACOLoader.js';
 
+// --- Hero loading overlay hooks (index.html #hero-loader listens; harmless without it) ---
+// window 'herofx:progress' (detail 0..1): files via THREE.DefaultLoadingManager (GLB / textures / HDR / Draco)
+// blended with the scene milestones below; 'herofx:ready' once every milestone is in, no file is pending and
+// HERO_READY_FRAMES real frames have been drawn (the first frames compile shaders / upload textures).
+const HERO_STEPS = ['sky', 'terrain', 'plane', 'trees', 'buildings'], HERO_READY_FRAMES = 2;
+const heroLoad = { done: new Set(), items: 0, total: 0, frames: 0, ready: false };
+function heroEmit(type, detail) { window.dispatchEvent(new CustomEvent(type, { detail })); }
+function heroProgress() {
+    const files = heroLoad.total ? heroLoad.items / heroLoad.total : 0;
+    heroEmit('herofx:progress', 0.5 * files + 0.5 * heroLoad.done.size / HERO_STEPS.length);
+}
+function heroStep(name) { heroLoad.done.add(name); heroProgress(); }
+THREE.DefaultLoadingManager.onProgress = (url, loaded, total) => { heroLoad.items = loaded; heroLoad.total = total; heroProgress(); };
+heroProgress();
+function heroFrame() {   // called after every real composer.render()
+    if (heroLoad.ready || heroLoad.done.size < HERO_STEPS.length || heroLoad.items < heroLoad.total) return;
+    if (++heroLoad.frames < HERO_READY_FRAMES) { if (isPaused) requestStillFrame(); return; }
+    heroLoad.ready = true;
+    heroEmit('herofx:progress', 1); heroEmit('herofx:ready');
+}
+
 // --- Scene Setup ---
 const container = document.getElementById('show-screen');
 let w = container.clientWidth;
@@ -242,6 +263,7 @@ hdriLoader.load(SKY_HDR, (texture) => {
     skyTexUniform.value = texture; skyReadyUniform.value = 1;
     scene.add(createSkyMesh(camera, skyTexUniform));   // drawn first; replaces scene.background
     pmremGenerator.dispose();
+    heroStep('sky');
     requestStillFrame();
 });
 
@@ -308,7 +330,7 @@ let terrainTiler = new TerrainTiler(scene, {
 let landMapReady = false, pendingTerrain = null;
 const landMap = textureLoader.load(TERRAIN.landMap.map, () => {
     landMapReady = true;
-    if (pendingTerrain) { terrainTiler.init(pendingTerrain); pendingTerrain = null; }
+    if (pendingTerrain) { terrainTiler.init(pendingTerrain); pendingTerrain = null; heroStep('terrain'); }
     requestStillFrame();
 });
 landMap.flipY = false;
@@ -337,7 +359,7 @@ gltfLoader.load('assets/models/land_03_draco.glb', (gltf) => {
         console.error('Terrain: Landscape_LOD0 / Landscape_LOD1 missing from land_03_draco.glb');
         return;
     }
-    if (landMapReady) terrainTiler.init(landLODs); else pendingTerrain = landLODs;
+    if (landMapReady) { terrainTiler.init(landLODs); heroStep('terrain'); } else pendingTerrain = landLODs;
     requestStillFrame();
 });
 
@@ -416,6 +438,7 @@ function spawnSet(name) {
             lod
         });
         if (spitfire) props.update(spitfire.position, 0, true);
+        heroStep(name);
         requestStillFrame();
     });
 }
@@ -561,6 +584,7 @@ flightController = new FlightController(spitfire, {
 
 
     //CreateTrail(spitfire);
+    heroStep('plane');
     requestStillFrame();
 });
 
@@ -637,6 +661,7 @@ function requestStillFrame() {
         updateSunScreen();
         composer.render();
         sunFlare.render(renderer);
+        heroFrame();
     });
 }
 
@@ -762,9 +787,10 @@ if (vapourTrails.length > 0 && flightController) {
     updateSunScreen();
     composer.render();
     sunFlare.render(renderer);
+    heroFrame();
 }
 
 requestAnimationFrame(animate);
 
 // Opt-in test hook (?fxdebug): exposes scene state for automated screenshots. Nothing is exposed otherwise.
-if (location.search.indexOf('fxdebug') >= 0) window.__fx = { THREE, scene, camera, renderer, props, treeLod: { trunk: lodTrunkUniform, tint: lodTintUniform, bend: lodBendUniform }, perf, shadows, setShadows, terrainSplat, PROPS, TERRAIN, LIGHTING, DEPTH, composer, vapourTrails, fill, propFillUniform, get spitfire() { return spitfire; }, get flight() { return flightController; }, get cam() { return cameraController; } };
+if (location.search.indexOf('fxdebug') >= 0) window.__fx = { THREE, scene, camera, renderer, props, treeLod: { trunk: lodTrunkUniform, tint: lodTintUniform, bend: lodBendUniform }, perf, shadows, setShadows, terrainSplat, PROPS, TERRAIN, LIGHTING, DEPTH, composer, vapourTrails, fill, propFillUniform, heroLoad, get spitfire() { return spitfire; }, get flight() { return flightController; }, get cam() { return cameraController; } };
