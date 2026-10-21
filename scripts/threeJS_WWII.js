@@ -46,9 +46,9 @@ const LIGHTING = {
     // Hemisphere fill: lifts shadowed / sun-facing-away areas with sky light from above and warm bounce from below.
     fillSky: 'auto',              // 'auto' = hue of the HDR sky overhead (average, luminance-normalised), or a colour
     autoSkyBand: 0.25,            // auto: rows from the zenith down to this fraction of the HDR (0.25 = above ~45 deg)
-    autoSkySaturation: 1.0,       // auto: 1 = the sky's own hue, 0 = neutral white
+    autoSkySaturation: 0.4,       // auto: 1 = the sky's own hue, 0 = neutral white
     fillSkyFallback: 0x9db4d6,    // used until the HDR has loaded (auto mode)
-    fillGround: 0x7a5232,         // warm ground bounce (lit from below)
+    fillGround: 0x9a5a2a,         // warm ground bounce (lit from below)
     fillIntensity: 0.28,          // fill strength (0 = off, as before)
     propFill: 1.25,               // extra multiplier for trees / buildings (their dense canopies read darker)
     shadowStrength: 0.75          // 0..1: how much sun the shadow map removes (1 = full, as before)
@@ -58,18 +58,18 @@ const PROPS = {
     buffer: 200,                  // ...and hide beyond spawnDistance + buffer (hysteresis)
     interval: 0.5,                // seconds between distance checks
     treeSpawnChance: 1.0,         // 0..1, fraction of tree points used (stable per point and tile: hashed)
-    buildingSpawnChance: 0.5,     // 0..1, fraction of building points used
+    buildingSpawnChance: 1.0,     // 0..1, fraction of building points used
     randomRotation: true,         // random (hashed, stable) rotation around Y for every tree and building
     treeScaleJitter: 0.15,        // trees: +-15% extra scale on top of the Blender point scale (0 = off)
     buildingScaleJitter: 0,
+    buildingTint: 0.7,            // 1 = original building texture, lower = darker
+    trunkTint: 0.4,               // 1 = original trunk colour, lower = darker
     // relative frequency per variant (variants are sorted by object name; undefined = all equal)
     treeWeights: [1, 1, 1],                 // Tree_01, Tree_02, Tree_03
     buildingWeights: [3, 0.6, 4, 5, 0.6],   // Big_House, Church, Medium_House, Small_House, Tower
     sink: { trees: 0.6, buildings: 0.4 },   // metres pushed into the ground (covers small terrain mismatches)
     trees:     { points: 'assets/models/spawn_trees.glb',     filter: /tree/i,           meshes: 'assets/models/props/trees.glb' },
-    buildings: { points: 'assets/models/spawn_buildings.glb', filter: /house|building/i, meshes: 'assets/models/props/buildings.glb' },
-    buildingTint: 0.7,
-    trunkTint: 0.4,      
+    buildings: { points: 'assets/models/spawn_buildings.glb', filter: /house|building/i, meshes: 'assets/models/props/buildings.glb' }
 };
 const TERRAIN = {
     lite: IS_LOW_TIER,            // low tier: albedo only, rock on world XZ (3 detail lookups instead of 10)
@@ -88,18 +88,26 @@ const TERRAIN = {
     // sampled with U mirrored, red -> -X, green -> -Z.
     baseNormal: { map: 'assets/texture/terrain/terrain_normal.jpg', tiling: 1, strength: 0.5,
                   mirrorU: true, flipRed: true, flipGreen: true },   // (if a larger bake arrives, downsample to ~512)
-    // Whole-tile land colour map (olive grass + dark earth/rock patches), mapped once per tile with the mesh UVs.
-    // Not tileable (edge seams); its dark patches follow the steep slopes when U is mirrored (like baseNormal).
+    // Whole-tile land colour map (green grass + dark rocky/earth veins), mapped once per tile with the mesh UVs.
+    // 1024 px JPG (from a 2048 px PNG). Its edges wrap, so neighbouring tiles join without seams; its dark veins
+    // follow the steep slopes when U is mirrored (like baseNormal; checked against terrain_normal.jpg).
     // Used as a tint ratio around its mean colour, so the grass/rock/snow layers keep their own detail.
     landMap: { map: 'assets/texture/terrain/terrain_color.jpg', mirrorU: true,
-               contrast: 2.0,                     // >1 deepens the map's light/dark patches (it is low-contrast)
-               mean: [0.2512, 0.2320, 0.1549] },  // its mean colour (keeps the tint centred on 1)
+               contrast: 1.3,                     // >1 deepens the map's light/dark patches, <1 flattens them
+               mean: [0.2453, 0.2620, 0.1640] },  // its mean colour (raw texel values, as sampled: keeps the tint centred on 1)
     blend: {
         rockSlope: [0.74, 0.90],  // world normal.y (base normal included): fully rock below the first value, no rock above the second
-        snowHeight: [50, 64],     // snow fades in between these heights (terrain spans ~1-70)
-        snowSlopeLimit: 0.88,     // height snow only sticks where normal.y is above this (flatter ground)
+        // Snow: fbm cloud noise + a coverage bias that rises with height, cut at snowCutoff -> chunky patches
+        // with crisp edges. Isolated patches near snowHeight[0], mostly covered by snowHeight[1].
+        snowHeight: [42, 68],     // height band over which the coverage bias ramps (terrain spans ~1-70); none well below [0]
+        snowHeightBias: [-0.2, 0.22],    // bias added to the noise (~0..1) at snowHeight[0] / [1]: raise = more snow
+        snowNoiseScale: 0.035,    // 1 / metres of the snow noise (smaller = bigger patches, ~30 m blobs at 0.035)
+        snowNoiseOctaves: 5,      // fbm octaves, 1-6 (lite / low tier capped at 3); more = more ragged edges
+        snowCutoff: 0.5,          // noise + bias above this is snow
+        snowEdge: 0.02,           // half-width of the edge in noise units: smaller = crisper (widens with distance)
+        snowSlopeLimit: 0.88,     // snow only sticks where normal.y is above this (flatter ground)
         paintedSnow: [9, 10],     // land-map luminance read as painted snow (off: the colour map has no snow)
-        noiseScale: 0.045,        // 1 / metres of the blend-breakup noise (second octave is 3.8x finer)
+        noiseScale: 0.045,        // 1 / metres of the rock-blend breakup noise (second octave is 3.8x finer)
         noiseAmount: 1.0,         // 0 = clean bands, 1 = default breakup
         sharpness: 1.0,           // 1 = as authored, >1 = harder layer edges, <1 = softer
         landTint: 0.9,            // how much of the land colour map tints/shades the layers (0..1)
@@ -108,7 +116,7 @@ const TERRAIN = {
     look: {
         saturation: 0.5,          // layer albedo saturation (keeps the land map's olive tones in charge)
         ambient: [0.17, 0.15, 0.14],      // scale on the ambient light for terrain + props
-        sun: 0.7                 // scale on the sun for terrain + props
+        sun: 0.85                 // scale on the sun for terrain + props
     }
 };
 
@@ -161,7 +169,7 @@ container.appendChild(renderer.domElement);
 // everything that only needs the direction (flare, clouds, grade glow, propeller) uses SUN_POS.
 const SUN_POS = new THREE.Vector3(100, 30, 100);
 const SUN_DIR = SUN_POS.clone().normalize();
-const sunLight = new THREE.DirectionalLight(0xffb066, 2.4); // warm golden sunset sun
+const sunLight = new THREE.DirectionalLight(0xffb066, 2.4); // golden-orange sunset sun (was 0xffc98f, 2.2)
 sunLight.position.copy(SUN_POS);
 scene.add(sunLight); scene.add(sunLight.target);
 
@@ -194,7 +202,7 @@ const lowClouds = new LowClouds(scene, { count: IS_LOW_TIER ? 35 : 60, minY: 110
     minSize: 180, maxSize: 340, opacity: 0.38, sunDir: SUN_POS, fogNear: FOG_NEAR, fogFar: FOG_FAR });
 
 // Ambient light to act as uniform Ambient Occlusion fill across shadowed areas
-const ambientAO = new THREE.AmbientLight(0xc8b49a, 2.1); // Cool sky tint for fill shadows
+const ambientAO = new THREE.AmbientLight(0xc8b49a, 2.2); // warm fill for shadows (was cool 0x93dcf5, 2.4)
 scene.add(ambientAO);
 
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
@@ -344,7 +352,7 @@ function spawnSet(name) {
     const c = PROPS[name], isTree = name === 'trees';
     const points = PropSpawner.loadPoints(gltfLoader, c.points, c.filter, c.points.replace(/\.glb$/, '.json'))
         .catch((e) => { console.warn('PropSpawner: ' + name + ' points unavailable, using placeholders', e); return PropSpawner.placeholderPoints(isTree ? 400 : 50, 1042, name.length); });
-    const meshes = PropSpawner.loadVariants(gltfLoader, c.meshes, { sink: PROPS.sink[name], material: (m) => { const p = PropSpawner.toPhong(m, 0.5); if (!isTree) p.color.multiplyScalar(PROPS.buildingTint); else if (!p.map) p.color.multiplyScalar(PROPS.trunkTint); return p; }})
+    const meshes = PropSpawner.loadVariants(gltfLoader, c.meshes, { sink: PROPS.sink[name], material: (m) => { const p = PropSpawner.toPhong(m, 0.5); if (!isTree) p.color.multiplyScalar(PROPS.buildingTint); else if (!p.map) p.color.multiplyScalar(PROPS.trunkTint); return p; } })
         .then((v) => { if (!v.length) throw new Error('no meshes in ' + c.meshes); return v; })
         .catch((e) => { console.warn('PropSpawner: ' + name + ' meshes unavailable, using placeholders', e); return PropSpawner.placeholderVariants(name); });
     Promise.all([points, meshes]).then(([pts, variants]) => {

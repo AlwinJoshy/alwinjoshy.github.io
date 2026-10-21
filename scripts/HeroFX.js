@@ -307,8 +307,9 @@ export function fillGLSL(mul) {
 
 // ---------------------------------------------------------------------------------------------
 // 6. Procedural terrain texturing for a MeshPhongMaterial (per-pixel sun + ambient, receives shadows).
-//    Layers: grass on flat ground, rock on steep slopes (world normal y), snow by height and on flatter high
-//    ground (+ the snow painted in the land map). Blends are smoothstep bands broken up by 2-octave value noise.
+//    Layers: grass on flat ground, rock on steep slopes (world normal y), snow as chunky patches on flatter high
+//    ground (fbm cloud noise + a height-driven coverage bias, thresholded with a narrow edge) (+ the snow painted
+//    in the land map). Rock/grass blends are smoothstep bands broken up by 2-octave value noise.
 //    Albedo + normal per layer, blended with the same weights. Grass/snow use world-XZ UVs; rock is triplanar.
 //    Normals: whiteout blend in world space (no tangents needed), then to view space for three's lighting.
 //    The whole-tile land colour map (material.map, cfg.landMap) is a low-frequency tint over the layers.
@@ -336,6 +337,8 @@ export function addTerrainSplat(material, cfg) {
         uTTintG: { value: v3() }, uTTintR: { value: v3() }, uTTintS: { value: v3() },   // tint x brightness (linear)
         uTRock: { value: new THREE.Vector2() },     // normal.y band: full rock below x, none above y
         uTSnow: { value: v3() },                    // snow height start, end, slope limit (normal.y)
+        uTSnowN: { value: new THREE.Vector4(0.035, 5, 0.5, 0.02) },   // snow fbm: scale (1/m), octaves, cutoff, edge
+        uTSnowB: { value: new THREE.Vector2(-0.2, 0.22) },           // snow coverage bias at snowHeight start / end
         uTPaint: { value: new THREE.Vector2() },    // land-map luminance band read as painted snow
         uTNoise: { value: new THREE.Vector2() },    // noise scale (1/m), amount
         uTSharp: { value: 1 },                      // blend sharpness (1 = as authored, >1 = harder edges)
@@ -372,6 +375,11 @@ export function addTerrainSplat(material, cfg) {
             if (b.rockSlope) u.uTRock.value.set(b.rockSlope[0], b.rockSlope[1]);
             if (b.snowHeight) { u.uTSnow.value.x = b.snowHeight[0]; u.uTSnow.value.y = b.snowHeight[1]; }
             if (b.snowSlopeLimit !== undefined) u.uTSnow.value.z = b.snowSlopeLimit;
+            if (b.snowNoiseScale !== undefined) u.uTSnowN.value.x = b.snowNoiseScale;
+            if (b.snowNoiseOctaves !== undefined) u.uTSnowN.value.y = Math.max(1, Math.min(lite ? 3 : 6, Math.round(b.snowNoiseOctaves)));
+            if (b.snowCutoff !== undefined) u.uTSnowN.value.z = b.snowCutoff;
+            if (b.snowEdge !== undefined) u.uTSnowN.value.w = Math.max(b.snowEdge, 0.001);
+            if (b.snowHeightBias) u.uTSnowB.value.set(b.snowHeightBias[0], b.snowHeightBias[1]);
             if (b.paintedSnow) u.uTPaint.value.set(b.paintedSnow[0], b.paintedSnow[1]);
             if (b.noiseScale !== undefined) u.uTNoise.value.x = b.noiseScale;
             if (b.noiseAmount !== undefined) u.uTNoise.value.y = b.noiseAmount;
@@ -427,10 +435,23 @@ export function addTerrainSplat(material, cfg) {
 uniform sampler2D uTMN; uniform vec4 uTMNP; uniform float uTMNMirror;
 uniform sampler2D uTGA, uTRA, uTSA, uTGN, uTRN, uTSN;
 uniform vec3 uTScale, uTNStr, uTTintG, uTTintR, uTTintS, uTSnow, uTMean, uTAmb;
+uniform vec4 uTSnowN; uniform vec2 uTSnowB;
 uniform vec2 uTRock, uTPaint, uTNoise, uShCenter, uShFade; uniform float uTSharp, uTMacro, uTMacroMin, uTMacroC, uTLMirror, uTSun, uTSat;
 float tHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float tNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
     return mix(mix(tHash(i), tHash(i + vec2(1, 0)), f.x), mix(tHash(i + vec2(0, 1)), tHash(i + vec2(1, 1)), f.x), f.y); }
+float tFbm(vec2 p) {   // cloud noise for the snow patches: value-noise fbm, rotated octaves, normalised to ~0..1
+    float s = 0.0, a = 0.5, n = 0.0;
+#ifdef TSPLAT_LITE
+    for (int i = 0; i < 3; i++) {
+#else
+    for (int i = 0; i < 6; i++) {
+#endif
+        if (float(i) >= uTSnowN.y) break;
+        s += tNoise(p) * a; n += a; a *= 0.5; p = mat2(1.6, 1.2, -1.2, 1.6) * p + 17.3;
+    }
+    return s / n;
+}
 float tSharp(float w) { return clamp((w - 0.5) * uTSharp + 0.5, 0.0, 1.0); }
 vec3 tUnpack(vec4 t, float s) { vec3 n = t.xyz * 2.0 - 1.0; n.xy *= s; return n; }
 `;
@@ -451,7 +472,11 @@ vec3 tUnpack(vec4 t, float s) { vec3 n = t.xyz * 2.0 - 1.0; n.xy *= s; return n;
     float tNz = (tNoise(vTW.xz * uTNoise.x) * 0.65 + tNoise(vTW.xz * uTNoise.x * 3.8) * 0.35 - 0.5) * uTNoise.y;   // ~-0.5..0.5
     // weights
     float wR = tSharp(1.0 - smoothstep(uTRock.x, uTRock.y, tN.y + tNz * 0.08));
-    float hS = smoothstep(uTSnow.x, uTSnow.y, vTW.y + tNz * 14.0);
+    // snow: fbm cloud noise thresholded into chunky patches; the coverage bias rises with height
+    // (isolated patches at snowHeight.x, mostly covered at snowHeight.y; keeps falling below the start -> none)
+    float hB = mix(uTSnowB.x, uTSnowB.y, min((vTW.y - uTSnow.x) / max(uTSnow.y - uTSnow.x, 0.001), 1.0));
+    float sE = uTSnowN.w * (1.0 + length(vViewPosition) * 0.0015);   // edge widens with distance (no sparkle far off)
+    float hS = smoothstep(uTSnowN.z - sE, uTSnowN.z + sE, tFbm(vTW.xz * uTSnowN.x) + hB);
     float pS = smoothstep(uTPaint.x, uTPaint.y, dot(texelColor.rgb, vec3(0.2126, 0.7152, 0.0722)) + tNz * 0.06);
     float wS = tSharp(max(hS * smoothstep(uTSnow.z - 0.12, uTSnow.z, tN.y + tNz * 0.1), pS));
     wS *= 1.0 - wR * 0.75;                                         // a little snow survives on rock
