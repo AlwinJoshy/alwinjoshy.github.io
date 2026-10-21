@@ -569,7 +569,7 @@ gltfLoader.load('assets/models/spitfire.glb', (gltf) => {
 
 flightController = new FlightController(spitfire, {
     minY: 70,          // keep above the ~70 m peaks
-    maxY: 300,
+    maxY: 200,
     baseSpeed: 50.0,
     maxClimb: 0.7,    // steeper dives and climbs (about 26°)
     altSpeed: 10.5,     // how often it dips and climbs

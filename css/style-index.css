@@ -20,17 +20,36 @@
     /* background-color: #404040; */
 }
 
-/* Subtle scrim behind the hero headline (left side) for readability; canvas stays untouched */
+/* Hero knobs: scrim strength/tone + nav bar background */
+#header{
+    --hero-scrim: 0.45;               /* scrim opacity at its darkest point (0 = off) */
+    --hero-scrim-rgb: 20, 14, 6;      /* warm dark brown/olive, same tone as the text shadows */
+    --nav-bg: rgba(2, 2, 2, 0.048);   /* top nav bar; set alpha to 0.10 for the very subtle version */
+    --nav-blur: 5px;
+}
+
+/* Warm gradient scrim behind the hero text (left side, fades out by mid-screen).
+   Sits above the canvas, below the loading overlay, text and nav; never takes pointer events. */
+#hero-loader{ z-index: 1; }
 #show-screen::after{
     content: "";
     position: absolute;
     inset: 0;
+    z-index: 0;
     pointer-events: none;
-    background: linear-gradient(90deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.16) 38%, rgba(0,0,0,0) 62%);
+    background: linear-gradient(90deg,
+        rgba(var(--hero-scrim-rgb), var(--hero-scrim)) 0%,
+        rgba(var(--hero-scrim-rgb), calc(var(--hero-scrim) * 0.75)) 22%,
+        rgba(var(--hero-scrim-rgb), calc(var(--hero-scrim) * 0.3)) 38%,
+        rgba(var(--hero-scrim-rgb), 0) 52%);
 }
 @media only screen and (max-width: 600px){
+    /* text spans the full width here: soft radial pool behind the text block instead */
     #show-screen::after{
-        background: linear-gradient(180deg, rgba(0,0,0,0) 15%, rgba(0,0,0,0.22) 40%, rgba(0,0,0,0) 70%);
+        background: radial-gradient(ellipse 95% 26% at 50% 24%,
+            rgba(var(--hero-scrim-rgb), var(--hero-scrim)) 0%,
+            rgba(var(--hero-scrim-rgb), calc(var(--hero-scrim) * 0.6)) 55%,
+            rgba(var(--hero-scrim-rgb), 0) 100%);
     }
 }
 
@@ -39,26 +58,48 @@
 
 #main-nav{
     z-index: 1;
+    position: relative;
+}
+/* Full-width dark blurred bar behind the nav. On a pseudo-element (not #main-nav itself) because
+   backdrop-filter on the nav would trap the fixed mobile menu inside it. -12.5% of the nav = the 10% container padding. */
+#main-nav::before{
+    content: "";
+    position: absolute;
+    top: -10px;
+    bottom: -6px;
+    left: -12.5%;
+    right: -12.5%;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--nav-bg);
+    -webkit-backdrop-filter: blur(var(--nav-blur));
+    backdrop-filter: blur(var(--nav-blur));
 }
 
 .hearder-text{
     z-index: 2;
     margin-top: 20%;
     font-size: 30px;
+    /* Hero text drop shadow: a tight shadow + a wide soft halo, in a warm dark tone (not pure black) */
+    --hero-shadow-color: rgba(20, 14, 6, 0.979);
+    --hero-shadow-y: 2px;             /* tight shadow vertical offset */
+    --hero-shadow-blur: 6px;          /* tight shadow blur */
+    --hero-shadow-spread: 35px;       /* wide halo blur radius (darkens the area around the text) */
+}
+
+.hearder-text h1,
+.hearder-text p{
+    text-shadow:
+        0 var(--hero-shadow-y) var(--hero-shadow-blur) var(--hero-shadow-color),
+        0 0 var(--hero-shadow-spread) var(--hero-shadow-color);
 }
 
 .hearder-text span{
     color: #5bec51;
-    text-shadow: 0px 0px 8px #2eaa25;
 }
 
 .hearder-text h1{
     z-index: 2;
-    text-shadow: -2px 2px 12px #000000;
-}
-
-.hearder-text p{
-    text-shadow: -0px 0px 6px #000000;
 }
 
 /* -----------------------------------------about */
@@ -465,7 +506,6 @@
     max-width: 620px;
     margin-top: 14px;
     color: #f2f2f2;
-    text-shadow: 0 1px 10px rgba(0,0,0,0.8);
 }
 .hero-actions{
     display: flex;
@@ -498,6 +538,7 @@
 .contact-left a[href^="mailto"]:hover{ color: #2eaa25; }
 
 @media only screen and (max-width: 600px){
+    .hearder-text{ --hero-shadow-y: 1px; --hero-shadow-blur: 4px; --hero-shadow-spread: 16px; }
     .hearder-text .hero-value{ font-size: 16px; }
     .hero-btn{ padding: 11px 22px; font-size: 15px; }
     .project-grid{ grid-template-columns: 1fr; gap: 28px; }

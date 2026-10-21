@@ -214,8 +214,12 @@ form .btn2{
         font-size: 25px;
     }
 
+    /* mobile slide-out menu: dark warm-charcoal glass panel, green only as the active/hover accent */
     nav ul{
-        background: #2eaa25;
+        background: rgba(18, 16, 12, 0.92);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        border-left: 1px solid rgba(255, 255, 255, 0.08);
         position: fixed;
         top: 0;
         right: -200px;
@@ -229,6 +233,20 @@ form .btn2{
     nav ul li{
         display: block;
         margin: 25px;
+    }
+
+    nav ul li a{
+        color: #f2efe8;
+        font-size: 16px;
+        letter-spacing: 0.06em;
+    }
+
+    nav ul .active-page-marker a{
+        color: #5bec51;
+    }
+
+    nav ul .fa-solid{
+        color: #f2efe8;
     }
 
     nav ul .fa-solid{
