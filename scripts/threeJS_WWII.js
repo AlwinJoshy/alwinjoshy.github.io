@@ -68,7 +68,16 @@ const PROPS = {
     treeWeights: [1, 1, 1],                 // Tree_01, Tree_02, Tree_03
     buildingWeights: [3, 0.6, 4, 5, 0.6],   // Big_House, Church, Medium_House, Small_House, Tower
     sink: { trees: 0.6, buildings: 0.4 },   // metres pushed into the ground (covers small terrain mismatches)
-    trees:     { points: 'assets/models/spawn_trees.glb',     filter: /tree/i,           meshes: 'assets/models/props/trees.glb' },
+    // Tree LODs (assets/models/props/trees_lod.glb, Tree_LODs_Tree_01..03 -> Tree_01..03 by name): cross-card trees
+    // beyond treeLodDistance, the full tree inside it. Runtime: props.setLod('trees', distance, buffer).
+    treeLodDistance: 550,         // metres from the plane: full tree inside, LOD card beyond (+ buffer); -1 = no LODs
+    treeLodBuffer: 40,            // hysteresis: a full tree turns LOD only past treeLodDistance + treeLodBuffer
+    treeLodTint: [1.75, 1.3, 1.0], // LOD foliage colour multiplier, number or [r, g, b] (1 = as baked; matched to the full
+                                  // trees' warmer leaf texture); the LOD trunk follows trunkTint
+    treeLodNormalUp: 2.0,         // bends the cards' in-plane rounded normals toward world up, like the full trees' foliage
+    treeLodNormalView: 0.3,       // ...and toward the viewer (sphere-like canopy); both 0 = normals exactly as authored
+    trees:     { points: 'assets/models/spawn_trees.glb',     filter: /tree/i,           meshes: 'assets/models/props/trees.glb',
+                 lods: 'assets/models/props/trees_lod.glb' },
     buildings: { points: 'assets/models/spawn_buildings.glb', filter: /house|building/i, meshes: 'assets/models/props/buildings.glb' }
 };
 const TERRAIN = {
@@ -348,19 +357,63 @@ function decorateProp(mat) {
     };
     addSkyFog(mat, skyTexUniform, skyReadyUniform);
 }
+// LOD cards: the baked trunk texels are keyed to pure grey (see trees_lod.glb), recoloured here with the full trees'
+// trunk colour (same Color object, so trunkTint and runtime changes apply to both); foliage scaled by treeLodTint.
+// The cards' rounded normals lie in the card plane (lower half facing down), while the full trees' foliage normals
+// mostly face up (mean n.y ~0.9) and outward: bent toward world up / the viewer (treeLodNormalUp / View) so both
+// light alike from any side.
+const lodTrunkUniform = { value: new THREE.Color(0x3a2a24) }, lodTintUniform = { value: new THREE.Vector3().fromArray(Array.isArray(PROPS.treeLodTint) ? PROPS.treeLodTint : [PROPS.treeLodTint, PROPS.treeLodTint, PROPS.treeLodTint]) }, lodBendUniform = { value: new THREE.Vector2(PROPS.treeLodNormalUp, PROPS.treeLodNormalView) };
+function lodTreeMaterial(m) {
+    const p = PropSpawner.toPhong(m, 0.5);
+    decorateProp(p); p.userData.__propDecorated = true;
+    const prev = p.onBeforeCompile;
+    // own outermost function (three r117 keys shader programs by onBeforeCompile source): not shared with leaves
+    p.onBeforeCompile = function lodTreeCompile(sh, r) {
+        prev(sh, r);
+        sh.uniforms.uLodTrunk = lodTrunkUniform; sh.uniforms.uLodTint = lodTintUniform; sh.uniforms.uLodBend = lodBendUniform;
+        sh.fragmentShader = 'uniform vec3 uLodTrunk, uLodTint; uniform vec2 uLodBend;\n' + sh.fragmentShader.replace('#include <normal_fragment_maps>',
+            '#include <normal_fragment_maps>\n    normal = normalize(normal + normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz) * uLodBend.x + normalize(vViewPosition) * uLodBend.y);').replace('#include <map_fragment>',
+            '#include <map_fragment>\n    { float lmx = max(diffuseColor.r, max(diffuseColor.g, diffuseColor.b)), lmn = min(diffuseColor.r, min(diffuseColor.g, diffuseColor.b));\n' +
+            '      float ltk = 1.0 - smoothstep(0.03, 0.08, (lmx - lmn) / max(lmx, 1e-4));\n' +
+            '      diffuseColor.rgb = mix(diffuseColor.rgb * uLodTint, uLodTrunk * clamp(lmx / 0.25, 0.4, 1.2), ltk); }');
+    };
+    return p;
+}
+// map LOD variants onto the full variants by their Tree_NN suffix (sorted order if the names don't pair up)
+function matchLods(full, lods) {
+    const key = (n) => { const mt = /tree[_\-\s.]*0*(\d+)\s*$/i.exec(n || ''); return mt ? +mt[1] : null; };
+    const out = full.map((v) => { const k = key(v.name); return lods.find((l) => k !== null && key(l.name) === k) || null; });
+    if (out.some((x) => !x) && lods.length === full.length) {
+        console.warn('PropSpawner: tree LOD names do not match, mapping by sorted order');
+        return lods.slice();
+    }
+    return out;
+}
 function spawnSet(name) {
     const c = PROPS[name], isTree = name === 'trees';
     const points = PropSpawner.loadPoints(gltfLoader, c.points, c.filter, c.points.replace(/\.glb$/, '.json'))
         .catch((e) => { console.warn('PropSpawner: ' + name + ' points unavailable, using placeholders', e); return PropSpawner.placeholderPoints(isTree ? 400 : 50, 1042, name.length); });
+    let realMeshes = true;
     const meshes = PropSpawner.loadVariants(gltfLoader, c.meshes, { sink: PROPS.sink[name], material: (m) => { const p = PropSpawner.toPhong(m, 0.5); if (!isTree) p.color.multiplyScalar(PROPS.buildingTint); else if (!p.map) p.color.multiplyScalar(PROPS.trunkTint); return p; } })
         .then((v) => { if (!v.length) throw new Error('no meshes in ' + c.meshes); return v; })
-        .catch((e) => { console.warn('PropSpawner: ' + name + ' meshes unavailable, using placeholders', e); return PropSpawner.placeholderVariants(name); });
-    Promise.all([points, meshes]).then(([pts, variants]) => {
+        .catch((e) => { realMeshes = false; console.warn('PropSpawner: ' + name + ' meshes unavailable, using placeholders', e); return PropSpawner.placeholderVariants(name); });
+    // LODs are optional: if the file fails, the full trees are used at every distance (as before)
+    const lods = c.lods ? PropSpawner.loadVariants(gltfLoader, c.lods, { sink: PROPS.sink[name], material: lodTreeMaterial })
+        .then((v) => { if (!v.length) throw new Error('no meshes in ' + c.lods); return v; })
+        .catch((e) => { console.warn('PropSpawner: ' + name + ' LODs unavailable, using full meshes at all distances', e); return null; }) : Promise.resolve(null);
+    Promise.all([points, meshes, lods]).then(([pts, variants, lodVariants]) => {
+        let lod = null;
+        if (lodVariants && realMeshes && PROPS.treeLodDistance >= 0) {
+            const trunk = variants.map((v) => v.parts.find((pt) => !pt.material.map)).find(Boolean);
+            if (trunk) lodTrunkUniform.value = trunk.material.color;
+            lod = { variants: matchLods(variants, lodVariants), distance: PROPS.treeLodDistance, buffer: PROPS.treeLodBuffer };
+        }
         props.addSet(name, pts, variants, decorateProp, {
             chance: isTree ? PROPS.treeSpawnChance : PROPS.buildingSpawnChance,
             randomRotation: PROPS.randomRotation,
             scaleJitter: isTree ? PROPS.treeScaleJitter : PROPS.buildingScaleJitter,
-            weights: variants.length === (isTree ? PROPS.treeWeights : PROPS.buildingWeights).length ? (isTree ? PROPS.treeWeights : PROPS.buildingWeights) : null
+            weights: variants.length === (isTree ? PROPS.treeWeights : PROPS.buildingWeights).length ? (isTree ? PROPS.treeWeights : PROPS.buildingWeights) : null,
+            lod
         });
         if (spitfire) props.update(spitfire.position, 0, true);
         requestStillFrame();
@@ -714,4 +767,4 @@ if (vapourTrails.length > 0 && flightController) {
 requestAnimationFrame(animate);
 
 // Opt-in test hook (?fxdebug): exposes scene state for automated screenshots. Nothing is exposed otherwise.
-if (location.search.indexOf('fxdebug') >= 0) window.__fx = { THREE, scene, camera, renderer, props, perf, shadows, setShadows, terrainSplat, PROPS, TERRAIN, LIGHTING, DEPTH, composer, vapourTrails, fill, propFillUniform, get spitfire() { return spitfire; }, get flight() { return flightController; }, get cam() { return cameraController; } };
+if (location.search.indexOf('fxdebug') >= 0) window.__fx = { THREE, scene, camera, renderer, props, treeLod: { trunk: lodTrunkUniform, tint: lodTintUniform, bend: lodBendUniform }, perf, shadows, setShadows, terrainSplat, PROPS, TERRAIN, LIGHTING, DEPTH, composer, vapourTrails, fill, propFillUniform, get spitfire() { return spitfire; }, get flight() { return flightController; }, get cam() { return cameraController; } };

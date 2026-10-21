@@ -10,6 +10,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.117.1/build/three.m
  *       { "points": [ [x, y, z, rotY, scale, variant?], ... ] }   or
  *       { "points": [ { "p": [x,y,z], "q": [qx,qy,qz,qw] | "ry": radians, "s": n | [sx,sy,sz], "v": variant }, ... ] }
  *   assets/models/props/trees.glb      variant meshes: one top-level object per variant (Tree_01..03), sorted by name
+ *   assets/models/props/trees_lod.glb  optional LOD per tree variant (Tree_LODs_Tree_01..03, matched by name in threeJS_WWII)
  *   assets/models/props/buildings.glb  Building_Big_House_01, _Church_01, _Medium_House_01, _Small_House_01, _Tower_01
  *       A variant may have several sub-meshes / materials (e.g. trunk + alpha-cut leaves): each part becomes its
  *       own InstancedMesh sharing the variant's instance pool. The object's rotation/scale are baked in, its
@@ -37,6 +38,12 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.117.1/build/three.m
  *     (one matrix copy) and `live--`. The draw count is always exactly the live count (no hidden/degenerate
  *     instances drawn) and only the touched slot range is re-uploaded (BufferAttribute.updateRange).
  *   - No allocation after init: all state is typed arrays sized at addSet().
+ *   - Optional LOD per variant (addSet so.lod = { variants, distance, buffer }): a second instanced pool with the
+ *     low-detail mesh. Inside `distance` an instance is in the full pool, beyond distance + buffer in the LOD pool,
+ *     in between it keeps its pool (hysteresis). Decided in the same distance check (no per-frame work); a swap
+ *     copies the instance matrix across (same position / rotation / scale) and frees the old slot in the same
+ *     upload, so each instance is drawn by exactly one pool. Full pools are sized for the near disc only; if one is
+ *     full the instance just stays a LOD.
  */
 
 const PLACEHOLDER_TREE = [0x1c2b14, 0x243318, 0x182611], PLACEHOLDER_BUILDING = [0x6e6052, 0x7a6a5a, 0x5e5449, 0x84745f, 0x55504a];
@@ -63,7 +70,7 @@ export class PropSpawner {
         }, opts);
         this.sets = [];
         this._timer = 0;
-        this.stats = { visible: 0, uploads: 0, checks: 0, overflow: 0, capacity: 0 };
+        this.stats = { visible: 0, lod: 0, uploads: 0, checks: 0, overflow: 0, swaps: 0, capacity: 0 };
     }
 
     // ---- point loading ------------------------------------------------------------------------------------
@@ -260,17 +267,26 @@ export class PropSpawner {
             live: new Int32Array(W * W * N),                 // pool slot + 1 of (window slot, point); 0 = hidden
             slotLive: new Uint32Array(W * W),                // live instances per window slot (fast skip)
             slotCx: new Int32Array(W * W).fill(EMPTY), slotCz: new Int32Array(W * W),
-            pools: [], visible: 0
+            pools: [], lodPools: [], hasLod: false, visible: 0, lodVisible: 0
         };
         // pools: capacity from the max visible estimate (points of that variant inside a hide-radius disc)
         const counts = new Uint32Array(V); for (let i = 0; i < N; i++) counts[variant[i]]++;
         const estTiles = Math.PI * hideR * hideR / (s * s);
-        for (let v = 0; v < V; v++) {
-            const cap = Math.ceil(counts[v] * Math.min(1, so.chance) * estTiles * o.headroom) + 16;
+        // LOD (optional): so.lod = { variants: [lodVariant | null per variant], distance, buffer }. Beyond `distance`
+        // (+ buffer, hysteresis) an instance lives in the variant's LOD pool instead of the full pool (never both).
+        const lodList = so.lod && so.lod.variants ? so.lod.variants : null;
+        const hasLod = !!lodList && so.lod.distance >= 0 && lodList.some((x) => x && x.parts && x.parts.length);
+        set.lodPools = new Array(V).fill(null);
+        set.hasLod = hasLod;
+        if (hasLod) { so.lodDistance = so.lod.distance; so.lodBuffer = so.lod.buffer; }
+        // full pools with LOD: sized from the densest sampled near disc (radius distance + buffer); overflow
+        // just leaves the instance as a LOD (no missing trees). LOD pools take the old (whole range) size.
+        const nearPeak = hasLod ? this._peakCounts(set, Math.min(so.lodDistance + so.lodBuffer, hideR)) : null;
+        const makePool = (v, vdef, cap, sign, tag) => {
             const attr = new THREE.InstancedBufferAttribute(new Float32Array(cap * 16), 16);
             attr.setUsage(THREE.DynamicDrawUsage);
-            const pool = { cap, live: 0, attr, arr: attr.array, owner: new Int32Array(cap), dMin: EMPTY, dMax: -1, parts: [], countDirty: false };
-            for (const part of variants[v].parts) {
+            const pool = { cap, live: 0, attr, arr: attr.array, owner: new Int32Array(cap), sign, dMin: EMPTY, dMax: -1, parts: [], countDirty: false };
+            for (const part of vdef.parts) {
                 const mat = part.material;
                 if (decorate && !mat.userData.__propDecorated) { decorate(mat); mat.userData.__propDecorated = true; }
                 const im = new THREE.InstancedMesh(part.geometry, mat, cap);
@@ -280,16 +296,39 @@ export class PropSpawner {
                 if (o.castShadow && mat.alphaTest > 0) {     // cut-out shadows for alpha-tested foliage
                     im.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: mat.map, alphaTest: mat.alphaTest, side: mat.side });
                 }
-                im.matrixAutoUpdate = false; im.name = name + '_' + (variants[v].name || v);
+                im.matrixAutoUpdate = false; im.name = name + '_' + (vdef.name || v) + tag;
                 this.scene.add(im);
                 pool.parts.push(im);
             }
-            set.pools.push(pool);
             this.stats.capacity += cap;
+            return pool;
+        };
+        for (let v = 0; v < V; v++) {
+            const capAll = Math.ceil(counts[v] * Math.min(1, so.chance) * estTiles * o.headroom) + 16;
+            const lv = hasLod ? lodList[v] : null, withLod = !!(lv && lv.parts && lv.parts.length);
+            const capFull = withLod ? Math.min(capAll, Math.ceil(nearPeak[v] * Math.min(1, so.chance) * o.headroom) + 16) : capAll;
+            set.pools.push(makePool(v, variants[v], capFull, 1, ''));
+            if (withLod) set.lodPools[v] = makePool(v, lv, capAll, -1, '_lod');
         }
         this.sets.push(set);
         this._timer = o.interval;   // check on the next update
         return set;
+    }
+
+    // Max points per variant inside a disc of radius r, sampled on a grid over one tile (tiles repeat).
+    _peakCounts(set, r) {
+        const s = this.o.tileSize, { N, V, px, pz, variant } = set, r2 = r * r, K = Math.ceil(r / s), G = 12;
+        const peak = new Uint32Array(V), c = new Uint32Array(V);
+        for (let gz = 0; gz < G; gz++) for (let gx = 0; gx < G; gx++) {
+            const sx = -s / 2 + (gx + 0.5) * s / G, sz = -s / 2 + (gz + 0.5) * s / G;
+            c.fill(0);
+            for (let i = 0; i < N; i++) for (let oz = -K; oz <= K; oz++) for (let ox = -K; ox <= K; ox++) {
+                const dx = px[i] + ox * s - sx, dz = pz[i] + oz * s - sz;
+                if (dx * dx + dz * dz <= r2) c[variant[i]]++;
+            }
+            for (let v = 0; v < V; v++) if (c[v] > peak[v]) peak[v] = c[v];
+        }
+        return peak;
     }
 
     setChance(name, chance) { for (const st of this.sets) if (st.name === name) st.so.chance = chance; this._timer = this.o.interval; }
@@ -302,13 +341,16 @@ export class PropSpawner {
         if (!force && this._timer < this.o.interval) return;
         this._timer = 0;
         this.stats.checks++;
-        let vis = 0;
-        for (let i = 0; i < this.sets.length; i++) vis += this._check(this.sets[i], target.x, target.z);
-        this.stats.visible = vis;
+        let vis = 0, lod = 0;
+        for (let i = 0; i < this.sets.length; i++) { vis += this._check(this.sets[i], target.x, target.z); lod += this.sets[i].lodVisible; }
+        this.stats.visible = vis; this.stats.lod = lod;
     }
 
-    _claim(set, f, i, cx, cz) {
-        const pool = set.pools[set.variant[i]];
+    // pool of an instance from its live code: > 0 full pool slot + 1, < 0 LOD pool -(slot + 1), 0 hidden
+    _poolOf(set, f, i) { return set.live[f] > 0 ? set.pools[set.variant[i]] : set.lodPools[set.variant[i]]; }
+
+    _claim(set, f, i, cx, cz, lod) {
+        const pool = lod ? set.lodPools[set.variant[i]] : set.pools[set.variant[i]];
         if (pool.live >= pool.cap) { this.stats.overflow++; return false; }
         const slot = pool.live++, a = slot * 16, l = i * 16, arr = pool.arr, L = set.local, so = set.so;
         // M = P * RotY(theta) * Scale(j): columns 0 and 2 rotate about the point's own up axis
@@ -324,22 +366,38 @@ export class PropSpawner {
         arr[a + 3] = 0; arr[a + 7] = 0; arr[a + 11] = 0;
         arr[a + 12] = L[l + 12] + cx * this.o.tileSize; arr[a + 13] = L[l + 13]; arr[a + 14] = L[l + 14] + cz * this.o.tileSize; arr[a + 15] = 1;
         pool.owner[slot] = f;
-        set.live[f] = slot + 1;
+        set.live[f] = pool.sign * (slot + 1);
         if (slot < pool.dMin) pool.dMin = slot; if (slot > pool.dMax) pool.dMax = slot;
         pool.countDirty = true;
         return true;
     }
 
     _release(set, f, i) {
-        const pool = set.pools[set.variant[i]], slot = set.live[f] - 1, last = --pool.live;
+        const pool = this._poolOf(set, f, i), slot = Math.abs(set.live[f]) - 1, last = --pool.live;
         set.live[f] = 0;
         if (slot !== last) {                            // move the last live instance into the hole
             const arr = pool.arr, a = slot * 16, b = last * 16;
             for (let e = 0; e < 16; e++) arr[a + e] = arr[b + e];
-            const of = pool.owner[last]; pool.owner[slot] = of; set.live[of] = slot + 1;
+            const of = pool.owner[last]; pool.owner[slot] = of; set.live[of] = pool.sign * (slot + 1);
             if (slot < pool.dMin) pool.dMin = slot; if (slot > pool.dMax) pool.dMax = slot;
         }
         pool.countDirty = true;
+    }
+
+    // full <-> LOD: copy the instance's matrix into the other pool (identical transform, no jump), then free the old
+    // slot. Both changes land in the same upload, so no frame shows both or neither. Target pool full: keep as is.
+    _swap(set, f, i, toLod) {
+        const from = this._poolOf(set, f, i), to = toLod ? set.lodPools[set.variant[i]] : set.pools[set.variant[i]];
+        if (to.live >= to.cap) { this.stats.overflow++; return false; }
+        const src = (Math.abs(set.live[f]) - 1) * 16, slot = to.live++, a = slot * 16;
+        for (let e = 0; e < 16; e++) to.arr[a + e] = from.arr[src + e];
+        to.owner[slot] = f;
+        if (slot < to.dMin) to.dMin = slot; if (slot > to.dMax) to.dMax = slot;
+        to.countDirty = true;
+        this._release(set, f, i);
+        set.live[f] = to.sign * (slot + 1);
+        this.stats.swaps++;
+        return true;
     }
 
     _clearSlot(set, ws) {
@@ -349,11 +407,24 @@ export class PropSpawner {
         set.slotLive[ws] = 0;
     }
 
+    // Change the LOD distance / buffer at runtime (-1 = all full). Full pools keep their load-time size, so beyond
+    // it the extra trees simply stay LOD (stats.overflow counts them).
+    setLod(name, distance, buffer) {
+        for (const st of this.sets) if (st.name === name && st.hasLod) {
+            if (distance !== undefined) st.so.lodDistance = distance;
+            if (buffer !== undefined) st.so.lodBuffer = buffer;
+        }
+        this._timer = this.o.interval;
+    }
+
     _check(set, tx, tz) {
         const o = this.o, s = o.tileSize, half = s / 2, showR2 = o.spawnDistance * o.spawnDistance;
         const hideR = o.spawnDistance + o.buffer, hideR2 = hideR * hideR;
-        const { N, px, pz, g, cs, start, idx, R, W, live, slotLive, slotCx, slotCz, pools, so } = set;
+        const { N, px, pz, g, cs, start, idx, R, W, live, slotLive, slotCx, slotCz, pools, lodPools, so, variant } = set;
         const chance = so.chance, salt = so.seed + 101;
+        // LOD band: full tree inside lodR, LOD beyond lodR + lodBuffer, in between keep the current pool
+        const lodOn = set.hasLod && so.lodDistance >= 0, lodR = lodOn ? so.lodDistance : 0, lodR2 = lodR * lodR,
+            lodH = lodR + (lodOn ? Math.max(0, so.lodBuffer) : 0), lodH2 = lodH * lodH;
         const ccx = Math.floor((tx + half) / s), ccz = Math.floor((tz + half) / s);
         // pass 1: free whole tiles first (window slots reused for new cells, tiles beyond the hide radius), so a
         // big jump (teleport / resize) never needs more than the pool capacity at once
@@ -382,30 +453,43 @@ export class PropSpawner {
                     const x0 = -half + bx * cs, ddx = lx < x0 ? x0 - lx : (lx > x0 + cs ? lx - x0 - cs : 0);
                     const far = ddx * ddx + ddz * ddz > hideR2;              // whole bucket beyond the hide radius
                     const fx = Math.max(Math.abs(lx - x0), Math.abs(lx - x0 - cs));
-                    const allIn = !far && fx * fx + fz * fz <= showR2;        // whole bucket inside the show radius
+                    const far2 = fx * fx + fz * fz;
+                    const allIn = !far && far2 <= showR2;                     // whole bucket inside the show radius
+                    const allNear = lodOn && far2 <= lodR2;                   // whole bucket inside the full-tree radius
+                    const allLod = lodOn && ddx * ddx + ddz * ddz > lodH2;    // whole bucket beyond the LOD hide radius
                     for (let k = i0; k < i1; k++) {
-                        const i = idx[k], f = fb + i, cur = live[f] !== 0;
-                        let on = false;
+                        const i = idx[k], f = fb + i, lc = live[f], cur = lc === 0 ? 0 : (lc > 0 ? 2 : 1);   // 0 hidden, 1 LOD, 2 full
+                        let want = 0;
                         if (!far && (chance >= 1 || hash01(cx, cz, i, salt) < chance)) {
-                            if (allIn) on = true;
+                            let d2 = -1;
+                            if (allIn) want = 2;
                             else {
-                                const qx = px[i] - lx, qz = pz[i] - lz, d2 = qx * qx + qz * qz;
-                                on = d2 <= showR2 ? true : (d2 > hideR2 ? false : cur);   // hysteresis band keeps state
+                                const qx = px[i] - lx, qz = pz[i] - lz; d2 = qx * qx + qz * qz;
+                                want = d2 <= showR2 ? 2 : (d2 > hideR2 ? 0 : (cur ? 2 : 0));   // hysteresis band keeps state
+                            }
+                            if (want && lodOn && lodPools[variant[i]]) {
+                                if (allLod) want = 1;
+                                else if (!allNear) {
+                                    if (d2 < 0) { const qx = px[i] - lx, qz = pz[i] - lz; d2 = qx * qx + qz * qz; }
+                                    want = d2 <= lodR2 ? 2 : (d2 > lodH2 ? 1 : (cur === 2 ? 2 : 1));   // LOD hysteresis
+                                }
                             }
                         }
-                        if (on === cur) continue;
-                        if (on) { if (this._claim(set, f, i, cx, cz)) n++; }
-                        else { this._release(set, f, i); n--; }
+                        if (want === cur) continue;
+                        if (!want) { this._release(set, f, i); n--; }
+                        else if (!cur) { if (this._claim(set, f, i, cx, cz, want === 1) || (want === 2 && lodPools[variant[i]] && this._claim(set, f, i, cx, cz, true))) n++; }
+                        else this._swap(set, f, i, want === 1);
                     }
                 }
             }
             slotLive[ws] = n;
         }
         // upload only the touched slot range; draw count = live count
-        let total = 0;
-        for (let v = 0; v < pools.length; v++) {
-            const p = pools[v];
-            total += p.live;
+        let total = 0, lodLive = 0;
+        for (let pv = 0; pv < pools.length * 2; pv++) {
+            const p = pv < pools.length ? pools[pv] : lodPools[pv - pools.length];
+            if (!p) continue;
+            total += p.live; if (p.sign < 0) lodLive += p.live;
             if (p.dMax >= p.dMin) {
                 // three resets updateRange.count to -1 after uploading; if a range is still pending, merge with it
                 const ur = p.attr.updateRange;
@@ -420,7 +504,7 @@ export class PropSpawner {
                 for (let k = 0; k < p.parts.length; k++) { p.parts[k].count = p.live; p.parts[k].visible = p.live > 0; }
             }
         }
-        set.visible = total;
+        set.visible = total; set.lodVisible = lodLive;
         return total;
     }
 }
