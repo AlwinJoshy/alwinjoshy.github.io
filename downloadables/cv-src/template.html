@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{TITLE}}</title>
+<meta name="author" content="Alwin Joshy">
+<meta name="keywords" content="{{KEYWORDS}}">
+<style>
+@font-face{font-family:"Lato";src:url(fonts/Lato-Regular.ttf) format("truetype");font-weight:400;font-style:normal}
+@font-face{font-family:"Lato";src:url(fonts/Lato-Italic.ttf) format("truetype");font-weight:400;font-style:italic}
+@font-face{font-family:"Lato";src:url(fonts/Lato-Bold.ttf) format("truetype");font-weight:700;font-style:normal}
+@page{size:A4;margin:12mm 15mm 12mm}
+*{box-sizing:border-box}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;font-family:"Lato",Arial,Helvetica,sans-serif;font-size:9.6pt;line-height:1.38;color:#1d1d1d;background:#fff}
+a{color:inherit;text-decoration:none}
+a:hover{text-decoration:underline}
+header{border-bottom:2px solid #2eaa25;padding-bottom:7pt;margin-bottom:8pt}
+h1{font-size:23pt;line-height:1.05;margin:0;letter-spacing:.2pt;color:#111}
+.role{font-size:13pt;font-weight:700;color:#1f8a1a;margin:3pt 0 1pt}
+.subtitle{font-size:9.6pt;color:#555;margin:0 0 4pt}
+.contact{font-size:9.2pt;color:#333;margin:0}
+.contact a{color:#1d1d1d;border-bottom:1px solid #b9e3b5}
+.sep{color:#2eaa25;padding:0 2pt}
+h2{font-size:10.5pt;text-transform:uppercase;letter-spacing:1.1pt;color:#111;margin:10pt 0 4pt;padding-bottom:2pt;border-bottom:1px solid #dcdcdc}
+h2::before{content:"";display:inline-block;width:7pt;height:7pt;background:#2eaa25;margin-right:5pt;vertical-align:0}
+p{margin:0 0 4pt}
+ul{margin:0;padding-left:12pt}
+li{margin:0 0 2pt}
+li::marker{color:#2eaa25}
+.thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:5pt;margin:2pt 0 0}
+.thumb{display:block;font-size:7.6pt;line-height:1.2;color:#333}
+.thumb img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:3pt;border:1px solid #e3e3e3;margin-bottom:2pt}
+.skills{list-style:none;padding:0}
+.skills li{margin-bottom:2.5pt}
+.job{margin:0 0 6pt;break-inside:avoid}
+h3{font-size:10pt;margin:0;color:#111}
+.org{font-weight:700;color:#1f8a1a}
+.org a{color:#1f8a1a}
+.where{font-weight:400;color:#666}
+.dates{font-weight:700;color:#555;font-size:8.9pt;margin:0 0 2pt}
+.earlier{color:#444;font-size:9pt}
+.meta{color:#666}
+.projects li b a{color:#111;border-bottom:1px solid #b9e3b5}
+section{break-inside:auto}
+.cta{display:flex;align-items:center;gap:12pt;margin-top:10pt;padding:8pt;border:1px solid #dcdcdc;border-left:3pt solid #2eaa25;border-radius:3pt;break-inside:avoid}
+.cta img{width:62mm;aspect-ratio:2/1;object-fit:cover;border-radius:2pt;display:block}
+.cta b{display:block;font-size:12pt;color:#111;margin-bottom:2pt}
+.cta .go{display:inline-block;margin-top:5pt;font-weight:700;color:#fff;background:#1f8a1a;padding:3pt 8pt;border-radius:3pt}
+</style>
+</head>
+<body>
+<header>
+<h1>{{NAME}}</h1>
+<p class="role">{{ROLE}}</p>
+<p class="subtitle">{{SUBTITLE}}</p>
+<p class="contact">{{CONTACT}}</p>
+</header>
+
+<section>
+<h2>Summary</h2>
+<p>{{SUMMARY}}</p>
+<div class="thumbs">{{THUMBS}}</div>
+</section>
+
+<section>
+<h2>Skills</h2>
+<ul class="skills">{{SKILLS}}</ul>
+</section>
+
+<section>
+<h2>Experience</h2>
+{{EXPERIENCE}}
+</section>
+
+<section>
+<h2>Projects</h2>
+<ul class="projects">{{PROJECTS}}</ul>
+</section>
+
+<section>
+<h2>Education</h2>
+{{EDUCATION}}
+</section>
+
+<section>
+<h2>Achievements</h2>
+<ul>{{ACHIEVEMENTS}}</ul>
+<p style="margin-top:4pt"><b>Languages:</b> {{LANGUAGES}}</p>
+</section>
+
+<a class="cta" href="{{HOME}}"><img src="img/{{CTAIMG}}.jpg" alt="Portfolio of Alwin Joshy"><span><b>See the work in motion</b>Videos, shader breakdowns and write-ups for every project above.<br><span class="go">{{HOMETEXT}}</span></span></a>
+</body>
+</html>

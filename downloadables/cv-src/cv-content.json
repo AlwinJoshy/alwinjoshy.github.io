@@ -1,0 +1,455 @@
+{
+  "_note": "Single source for the three role CVs. Only real facts from index.html and the old CV. Edit here, then run: python3 downloadables/cv-src/build_cvs.py",
+  "person": {
+    "name": "Alwin Joshy",
+    "location": "Dubai, UAE",
+    "email": "ajoshy300@gmail.com",
+    "linkedin": "https://www.linkedin.com/in/0merta/",
+    "github": "https://github.com/AlwinJoshy",
+    "site": "https://alwinjoshy.github.io/"
+  },
+  "images": {
+    "highstreet": {
+      "src": "downloadables/cv-src/src-img/highstreet.jpg",
+      "caption": "Highstreet: VR / PC MMO (Unity)",
+      "link": "home#work-highstreet"
+    },
+    "holofair": {
+      "src": "downloadables/cv-src/src-img/holofair.jpg",
+      "caption": "HoloFair: WebGL virtual events",
+      "link": "home#work-holofair",
+      "crop": [
+        40,
+        70,
+        1100,
+        733
+      ]
+    },
+    "npsync": {
+      "src": "downloadables/cv-src/src-img/npsync.jpg",
+      "caption": "NPsynC: digital humans (Unreal)",
+      "link": "home#work-npsync",
+      "crop": [
+        290,
+        20,
+        1330,
+        670
+      ]
+    },
+    "dreamtopia": {
+      "src": "images/work/dreamtopia-512.webp",
+      "caption": "Dreamtopia: Steam, lead developer",
+      "link": "home#work-dreamtopia"
+    },
+    "pablo": {
+      "src": "downloadables/cv-src/src-img/pablo.jpg",
+      "caption": "Pablo Let's Go Bar: Steam",
+      "link": "home#work-pablo",
+      "crop": [
+        180,
+        0,
+        996,
+        510
+      ]
+    },
+    "crystal": {
+      "src": "images/blogs/Crystal_2026/cover.webp",
+      "caption": "Crystal shader (Shader Graph)",
+      "link": "pages/blogs/allblogs/0006_Crystal_Shader_Highstreet.html"
+    },
+    "voxel": {
+      "src": "images/blogs/VoxelLight_2026/cover.webp",
+      "caption": "Voxel light baker (VR)",
+      "link": "pages/blogs/allblogs/0008_Voxel_Light_Baker.html"
+    },
+    "tod": {
+      "src": "downloadables/cv-src/src-img/tod.jpg",
+      "caption": "Time-of-day lighting study (URP)",
+      "link": "pages/blogs/allblogs/0009_Time_Of_Day_Lighting_Study.html"
+    },
+    "grass": {
+      "src": "images/blogs/Grass_2026/cover.webp",
+      "caption": "VR grass, voxel-lit",
+      "link": "pages/blogs/allblogs/0007_VR_Grass_Highstreet.html"
+    },
+    "hero": {
+      "src": "images/blogs/HeroScene_2026/cover.webp",
+      "caption": "Three.js hero scene (WebGL)",
+      "link": "pages/blogs/allblogs/0003_ThreeJS_Hero_Scene.html"
+    },
+    "cta": {
+      "src": "images/blogs/HeroScene_2026/cover.webp"
+    },
+    "cta_la": {
+      "src": "downloadables/cv-src/src-img/tod.jpg",
+      "crop": [
+        0,
+        38,
+        1600,
+        838
+      ]
+    }
+  },
+  "roles": {
+    "ta": {
+      "file": "Alwin Joshy - Technical Artist - CV.pdf",
+      "title": "Technical Artist",
+      "subtitle": "Shaders · Rendering optimisation · Unity tools · Unity & Unreal",
+      "keywords": "Technical Artist, Unity, Unreal Engine, HLSL, Shader Graph, shaders, rendering optimisation, VFX, tools, pipelines, VR, WebGL, C#",
+      "summary": "Technical Artist and Unity Engineer with 6+ years shipping real-time 3D on PC, VR, WebGL and mobile. I write shaders (HLSL, Shader Graph), build C# tools and pipelines, and own rendering performance. At Highstreet I led technical art for a VR / PC MMO and built imposter and voxel-lighting systems to keep dense scenes in budget. Today I am founder and technical artist at NPsynC, creating real-time digital humans in Unreal Engine.",
+      "thumbs": [
+        "highstreet",
+        "crystal",
+        "voxel",
+        "npsync",
+        "holofair"
+      ],
+      "skills": [
+        [
+          "Technical art",
+          "Shader development (HLSL, Shader Graph, GLSL), VFX, C# editor tools and asset pipelines, technical art direction, bridging art and engineering"
+        ],
+        [
+          "Rendering & optimisation",
+          "CPU/GPU profiling, draw-call reduction, SRP Batcher, GPU instancing, LOD and imposters, overdraw, memory management, compute shaders"
+        ],
+        [
+          "Lighting",
+          "Real-time and baked lighting, light probes, reflections, post-processing, 3D-texture (voxel) light baking"
+        ],
+        [
+          "Engines & platforms",
+          "Unity (expert, URP), Unreal Engine (MetaHuman, grooms), Three.js / WebGL; PC, VR, WebGL, mobile"
+        ],
+        [
+          "Languages & tools",
+          "C#, C++, HLSL, JavaScript, Git, Blender, network programming, UI/UX programming"
+        ]
+      ],
+      "projects": [
+        "hero",
+        "tod",
+        "dreamtopia",
+        "pablo",
+        "blacksky",
+        "sdf"
+      ],
+      "order": {
+        "npsync": [
+          0,
+          1,
+          2
+        ],
+        "highstreet": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "knotgames": [
+          1,
+          0,
+          2
+        ],
+        "bluemonocle": [
+          0,
+          1
+        ],
+        "outreal": [
+          0,
+          1
+        ]
+      },
+      "cta": "cta"
+    },
+    "ue": {
+      "file": "Alwin Joshy - Unity Engineer - CV.pdf",
+      "title": "Unity Engineer",
+      "subtitle": "C# · Multiplayer / networking · Rendering performance · VR, WebGL, PC",
+      "keywords": "Unity Engineer, Unity Developer, C#, Unity, multiplayer, network programming, VR, WebGL, performance optimisation, profiling, tools, Steam, C++",
+      "summary": "Unity Engineer with 6+ years building real-time 3D products in C# for VR, PC, WebGL and mobile, with deep rendering and multiplayer experience. At Highstreet (VR / PC MMO) I led network programming and technical art and owned performance and rendering budgets. Earlier I built features for HoloFair, an MMO-style virtual event platform in Unity WebGL, and led Dreamtopia from prototype to Steam release.",
+      "thumbs": [
+        "highstreet",
+        "holofair",
+        "dreamtopia",
+        "pablo",
+        "hero"
+      ],
+      "skills": [
+        [
+          "Unity engineering",
+          "C#, Unity (expert), gameplay and systems programming, C# editor tools and asset pipelines, UI/UX programming"
+        ],
+        [
+          "Multiplayer & networking",
+          "Network programming for a VR / PC MMO (Highstreet), multi-user experiences (Knotgames), shared WebGL event spaces (HoloFair)"
+        ],
+        [
+          "Performance & rendering",
+          "CPU/GPU profiling on WebGL, mobile and VR, draw-call reduction, SRP Batcher, GPU instancing, LOD and imposters, memory management, HLSL, Shader Graph, compute shaders"
+        ],
+        [
+          "Platforms",
+          "PC (Steam), VR, WebGL, mobile"
+        ],
+        [
+          "Also",
+          "C++, JavaScript, Three.js, React Native, Git, Unreal Engine"
+        ]
+      ],
+      "projects": [
+        "dreamtopia",
+        "pablo",
+        "hero",
+        "sevenbattles",
+        "sdf",
+        "tod"
+      ],
+      "order": {
+        "npsync": [
+          0,
+          1,
+          2
+        ],
+        "highstreet": [
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "knotgames": [
+          0,
+          2,
+          1
+        ],
+        "bluemonocle": [
+          1,
+          0
+        ],
+        "outreal": [
+          0,
+          1
+        ]
+      },
+      "cta": "cta"
+    },
+    "la": {
+      "file": "Alwin Joshy - Lighting Artist - CV.pdf",
+      "title": "Lighting Artist",
+      "subtitle": "Real-time lighting · Unity URP & Unreal · Lighting tech for VR and WebGL",
+      "keywords": "Lighting Artist, real-time lighting, Unity URP, Unreal Engine, baked lighting, light probes, reflections, post-processing, time of day, technical artist, VR, WebGL",
+      "summary": "Technical Artist with 6+ years in real-time Unity and Unreal, focused on lighting. I light scenes from the sun, sky ambient, controlled bounce, reflections and a few support lights, and I build lighting tech that ships on VR and WebGL: a voxel light baker for streamed VR scenes at Highstreet, and the lighting and rendering of NPsynC's digital humans in Unreal Engine. Latest study: one Unity URP cabin lit for dawn, noon, dusk and night.",
+      "thumbs": [
+        "tod",
+        "voxel",
+        "npsync",
+        "grass",
+        "hero"
+      ],
+      "skills": [
+        [
+          "Lighting",
+          "Scene and time-of-day lighting, directional sun / moon and sky ambient, real-time and baked lighting, light probes, reflections, bounce control, support spot and area lights, post-processing"
+        ],
+        [
+          "Lighting tech",
+          "3D-texture (voxel) light baking, shader-based relighting (normal / albedo), fog and sky matching, Shader Graph and HLSL lighting shaders"
+        ],
+        [
+          "Performance-aware lighting",
+          "Lighting within VR, WebGL and mobile budgets, CPU/GPU profiling, draw-call and overdraw reduction"
+        ],
+        [
+          "Engines",
+          "Unity (URP), Unreal Engine (character lighting and rendering, MetaHuman), Three.js / WebGL"
+        ],
+        [
+          "Tools",
+          "C#, HLSL, Shader Graph, Blender, Git"
+        ]
+      ],
+      "projects": [
+        "tod",
+        "voxel",
+        "hero",
+        "pablo",
+        "dreamtopia",
+        "sdf"
+      ],
+      "order": {
+        "npsync": [
+          1,
+          0,
+          2
+        ],
+        "highstreet": [
+          1,
+          4,
+          2,
+          0,
+          3,
+          5
+        ],
+        "knotgames": [
+          1,
+          2,
+          0
+        ],
+        "bluemonocle": [
+          0,
+          1
+        ],
+        "outreal": [
+          1,
+          0
+        ]
+      },
+      "cta": "cta_la"
+    }
+  },
+  "experience": [
+    {
+      "id": "npsync",
+      "role": "Founder & Technical Artist",
+      "org": "NPsynC",
+      "where": "Dubai, UAE",
+      "dates": "Feb 2026 – Present",
+      "link": "https://npsync.dev/",
+      "bullets": [
+        "Co-founded and run NPsynC, which provides AI digital-human staff (front-of-house, assistants, concierges) to government and semi-government agencies and companies.",
+        "Create the company's digital humans in Unreal Engine (MetaHuman): modelling and texturing, rigging outfits, beard and eyebrow grooms, lighting and rendering.",
+        "Characters talk in real time with live lipsync; NPsynC's own neural lipsync runs locally on the GPU and streams facial animation into Unreal Engine at 60 fps."
+      ]
+    },
+    {
+      "id": "highstreet",
+      "role": "Unity Engineer & Technical Artist",
+      "org": "Highstreet",
+      "where": "Los Angeles, USA",
+      "dates": "Jan 2022 – Mar 2026",
+      "link": "https://highstreet.market",
+      "bullets": [
+        "Led technical art and network programming for Highstreet's VR / PC MMO in Unity, and owned its performance and rendering budgets.",
+        "Built a voxel light baker that bakes scene lighting into small 3D textures (one texture read per pixel, whatever the light count); a 45×34×45 volume is 268.9 KB, so each streamed VR scene block carries its own lighting. Used in the Arena and Lobby levels.",
+        "When dense forest scenes dropped from 60–72 fps to 35–40 fps (sometimes ~15), built a circular-view imposter system: capture tool, texture atlas and a view-blending shader with normal / albedo relighting.",
+        "Wrote custom shaders and tools for the environment art workflow, bridging the asset pipeline and the engine.",
+        "Built VR grass: an editor painter, one combined mesh, proximity-activated zones and alpha clip with 4x MSAA, lit by the voxel light baker.",
+        "Built a Shader Graph crystal shader: inset-edge meshes, parallax inner layers, sparkles, fake reflections and a growth dissolve."
+      ]
+    },
+    {
+      "id": "knotgames",
+      "role": "Technical Artist & Network Programmer",
+      "org": "Knotgames",
+      "where": "",
+      "dates": "Feb 2021 – Feb 2022",
+      "bullets": [
+        "Built network solutions and UI/UX systems for multi-user experiences, and coordinated the work.",
+        "Wrote custom HLSL shaders for specific art directions while holding 60 fps targets.",
+        "Owned QC, troubleshooting and optimisation of real-time rendering."
+      ]
+    },
+    {
+      "id": "bluemonocle",
+      "role": "Technical Artist (Freelance)",
+      "org": "BlueMonocle Software",
+      "where": "",
+      "dates": "Jun 2021 – Sep 2021",
+      "bullets": [
+        "Technical art direction for mobile and web projects.",
+        "Earlier contract (Aug 2020 – Mar 2021): React Native front-end development."
+      ]
+    },
+    {
+      "id": "sae",
+      "role": "C++ Student Support Tutor",
+      "org": "SAE Institute",
+      "where": "",
+      "dates": "Jun 2020 – Aug 2021",
+      "bullets": [
+        "Tutored students in C++ memory management, pointers and data structures; post-lecture assistant."
+      ]
+    },
+    {
+      "id": "outreal",
+      "role": "Technical Artist & R&D (Internship)",
+      "org": "Outreal XR, HoloFair",
+      "where": "",
+      "dates": "Nov 2019 – Aug 2020",
+      "link": "https://www.holofair.io/platform",
+      "bullets": [
+        "Built features in C# / Unity for HoloFair, an MMO-style virtual event platform in Unity WebGL and one of the first metaverse / virtual-event projects in the MENA region.",
+        "Optimised assets and rendering so large shared event spaces ran smoothly in the browser."
+      ]
+    }
+  ],
+  "earlier": "Also: TrueBays Software, full-stack React Native developer (freelance, Jan 2021 – Oct 2021); SAE Institute, game developer and designer (paid internship, Jun 2018 – Jun 2019).",
+  "projects": {
+    "dreamtopia": {
+      "name": "Dreamtopia",
+      "meta": "Steam, 2020 · Lead Developer",
+      "link": "https://store.steampowered.com/app/1229200/Dreamtopia/",
+      "text": "Took the game from prototype to Steam release with a team at SAE."
+    },
+    "pablo": {
+      "name": "Pablo Let's Go Bar",
+      "meta": "Steam, 2021 · Game Programmer & Rendering",
+      "link": "https://store.steampowered.com/app/1676180/Pablo_Lets_Go_Bar/",
+      "text": "Gameplay and rendering programming; won Best Project at the SAE Showcase 2021."
+    },
+    "blacksky": {
+      "name": "BlackSky",
+      "meta": "Steam · Shader Artist (contributor)",
+      "link": "https://store.steampowered.com/app/1687120/BlackSky/",
+      "text": "Contributed shader work."
+    },
+    "hero": {
+      "name": "Portfolio hero scene",
+      "meta": "Three.js / WebGL, 2026",
+      "link": "pages/blogs/allblogs/0003_ThreeJS_Hero_Scene.html",
+      "text": "Draco cut the land model from 17.65 MB to 1.87 MB (3D payload ~12 MB to ~4.4 MB); clouds in one instanced draw call; adaptive quality below 45 fps; fog matched to the sky."
+    },
+    "tod": {
+      "name": "Time of Day Lighting Study",
+      "meta": "Unity URP, 2026",
+      "link": "pages/blogs/allblogs/0009_Time_Of_Day_Lighting_Study.html",
+      "text": "One cabin scene lit for dawn, noon, dusk and night from the sun or moon, sky ambient, controlled bounce, reflections and a few support lights."
+    },
+    "voxel": {
+      "name": "Voxel Light Baker",
+      "meta": "Unity, VR, 2026 write-up",
+      "link": "pages/blogs/allblogs/0008_Voxel_Light_Baker.html",
+      "text": "Lighting baked into 3D textures for streamed VR scenes (see Highstreet)."
+    },
+    "sdf": {
+      "name": "Mesh to SDF in Unity",
+      "meta": "Ray marching, 2026",
+      "link": "pages/blogs/allblogs/0005_Mesh_To_SDF_Unity.html",
+      "text": "Converts meshes to signed distance fields stored in small 3D textures and ray-marches them."
+    },
+    "sevenbattles": {
+      "name": "Seven Battles",
+      "meta": "itch.io, 2019",
+      "link": "https://flamencoman.itch.io",
+      "text": "Browser game made as a marketing project for SAE."
+    }
+  },
+  "education": [
+    {
+      "what": "Bachelor of Games Development (Games Programming)",
+      "where": "SAE Institute",
+      "dates": "2018 – 2021",
+      "note": "GPA 6.5 / 7.0"
+    }
+  ],
+  "achievements": [
+    "SAE Showcase Award 2021, Best Project: Pablo Let's Go Bar (Jun 2021).",
+    "Shipped Dreamtopia on Steam (Jan 2020).",
+    "Certificate of Appreciation, Liv. Hackathon, Amity University, Dubai Entrepreneurship Week (Oct 2019)."
+  ],
+  "languages": "English (fluent), Spanish (conversational)"
+}

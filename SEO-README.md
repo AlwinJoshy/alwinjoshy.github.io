@@ -44,3 +44,44 @@ The homepage (`index.html`) has its SEO tags written by hand. Blog posts, the bl
 - `404.html`: served by GitHub Pages for missing URLs. It is noindex.
 - `site.webmanifest`, `favicon.ico`, `images/icons/*`: icons for browsers, phones and search results.
 - `google86d5dd9674f24f32.html`: Search Console ownership file. Don't delete it.
+
+## Role links and CV tracking
+
+There is **one homepage**. A URL parameter only changes what a visitor sees; it doesn't create a new page.
+
+| Send this link | Hero line | Download CV serves |
+|---|---|---|
+| `https://alwinjoshy.github.io/` (or `?role=ta`) | Technical Artist and Unity Engineer (default) | `downloadables/Alwin Joshy - Technical Artist - CV.pdf` |
+| `https://alwinjoshy.github.io/?role=ue` | Unity Engineer and Technical Artist | `downloadables/Alwin Joshy - Unity Engineer - CV.pdf` |
+| `https://alwinjoshy.github.io/?role=la` | Technical Artist for real-time lighting | `downloadables/Alwin Joshy - Lighting Artist - CV.pdf` |
+
+`#ta`, `#ue` and `#la` work too. Add `&ref=<where>` to see the source in GoatCounter, e.g. `?role=ue&ref=linkedin-acme`.
+
+- **SEO:** the canonical stays `https://alwinjoshy.github.io/` for every variant. Only the default Technical Artist CV is in `sitemap.xml`. Don't add role URLs to the sitemap and don't build separate role pages.
+- **How it works:** the small inline script after the hero in `index.html` (search "Role links") reads `?role` / `#role`, swaps `.hero-role` and `.hero-value`, and points every `<a data-cv>` button at that role's PDF. Give any new CV button the `data-cv` attribute. The role is kept in `sessionStorage` (`cvRole`), so a visitor who lands on a blog post from a CV link and then opens the homepage still gets the same CV. Blog posts and the archive store it through the snippet that `build-blogs.mjs` puts in their SEO block.
+- **GoatCounter (alwinjoshy.goatcounter.com):** every page loads `count.js`, including posts and the archive. Extra events:
+  - `role-ta` / `role-ue` / `role-la`: someone opened a role link. This fires once on load when the URL has a role.
+  - `cv-download-ta` / `cv-download-ue` / `cv-download-la`: someone clicked a Download CV button.
+  - `ref=cv-ta|cv-ue|cv-la`: links inside the PDFs carry this, so clicks from a CV show up under **Referrers** as `cv-ta` etc.
+- **Opening a PDF can't be tracked.** PDF viewers (Chrome, Acrobat, Gmail, ATS systems) block PDF JavaScript and remote images, and hidden tracking would hurt trust. You see a CV "in use" when a reader clicks one of its links.
+- **Daily email:** the Apps Script `goatcounter-daily-report.gs` has a "CV & role links" table that counts these events and `cv-*` referrers. Events are left out of the visitor numbers.
+
+## The CVs
+
+- Source of truth: `downloadables/cv-src/cv-content.json` (facts, per-role summary, skills, bullet order and thumbnails) and `downloadables/cv-src/template.html` (layout).
+- Build: `python3 downloadables/cv-src/build_cvs.py` (needs Google Chrome, Pillow and `pip install pikepdf`). It writes `cv-src/cv-<role>.html` and `cv-src/img/*.jpg`, then prints the three PDFs into `downloadables/` with title, author and keywords metadata.
+- Check after a build: each PDF is 2 pages or fewer. Run `pdftotext "downloadables/Alwin Joshy - Unity Engineer - CV.pdf" -` and confirm it reads top to bottom in the right order, which is what an ATS sees.
+- Font: Lato (SIL Open Font License), in `cv-src/fonts/`.
+- Keep the file names, because the site and old links depend on them.
+
+## Videos (Git LFS)
+
+GitHub Pages does **not** serve Git LFS files; it serves the 131-byte pointer, so the videos look broken. `.gitattributes` no longer sends `*.mp4` to LFS. When committing the real videos, run this once:
+
+```
+git lfs uninstall --local   # only if git-lfs is installed in this clone
+git rm --cached -r -q -- '*.mp4'
+git add --renormalize . && git add -- '*.mp4'
+```
+
+Then check with `git show HEAD:images/work/oxr.mp4 | head -c 40`. It should show binary data, not `version https://git-lfs...`.
