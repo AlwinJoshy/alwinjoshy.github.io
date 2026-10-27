@@ -72,7 +72,7 @@ const LIGHTING = {
     fillGround: 0x9a5a2a,         // warm ground bounce (lit from below)
     fillIntensity: 0.28,          // fill strength (0 = off, as before)
     propFill: 1.25,               // extra multiplier for trees / buildings (their dense canopies read darker)
-    shadowStrength: 0.75          // 0..1: how much sun the shadow map removes (1 = full, as before)
+    shadowStrength: 2.5          // 0..1: how much sun the shadow map removes (1 = full, as before)
 };
 const PROPS = {
     spawnDistance: 1500,          // props show within this distance of the plane (fog runs 300 -> 1700)
