@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>Alwin Joshy – Technical Art Blog</title>
+  <link>https://alwinjoshy.github.io/blogArchive.html</link>
+  <atom:link href="https://alwinjoshy.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+  <description>Write-ups by Alwin Joshy, Technical Artist and Unity Engineer: shaders, scene lighting, performance optimisation and Unity tools.</description>
+  <language>en</language>
+  <item>
+    <title>Time of Day Lighting Study: One Cabin, Four Moods</title>
+    <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0009_Time_Of_Day_Lighting_Study.html</link>
+    <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0009_Time_Of_Day_Lighting_Study.html</guid>
+    <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
+    <description>One Unity URP cabin scene lit four ways: dawn, noon, dusk and night. How sun, sky ambient, bounce, reflections and support lights shape each mood.</description>
+    <category>Lighting</category>
+    <category>Unity</category>
+    <category>URP</category>
+    <category>Lighting Art</category>
+    <category>Time of Day</category>
+  </item>
+  <item>
+    <title>A Voxel Light Baker for Streamed VR Scenes</title>
+    <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0008_Voxel_Light_Baker.html</link>
+    <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0008_Voxel_Light_Baker.html</guid>
+    <pubDate>Mon, 19 Oct 2026 12:00:00 GMT</pubDate>
+    <description>How I baked lighting into tiny 3D textures for Calamity at Highstreet, so streamed VR scene blocks carry their own smooth lighting for a few hundred KB.</description>
+    <category>Unity</category>
+    <category>VR</category>
+    <category>Lighting</category>
+    <category>Shaders</category>
+    <category>Tools</category>
+  </item>
+  <item>
+    <title>Cheap VR Grass for Highstreet</title>
+    <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0007_VR_Grass_Highstreet.html</link>
+    <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0007_VR_Grass_Highstreet.html</guid>
+    <pubDate>Sun, 18 Oct 2026 12:00:00 GMT</pubDate>
+    <description>How I made cheap grass for Highstreet VR: an editor painter, one combined mesh, a proximity zone, alpha clip with 4x MSAA, and light from my voxel light baker.</description>
+    <category>Unity</category>
+    <category>VR</category>
+    <category>Shader Graph</category>
+    <category>Optimisation</category>
+    <category>Tools</category>
+  </item>
+  <item>
+    <title>A Crystal Shader for Highstreet's Growing Minerals</title>
+    <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0006_Crystal_Shader_Highstreet.html</link>
+    <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0006_Crystal_Shader_Highstreet.html</guid>
+    <pubDate>Sun, 18 Oct 2026 12:00:00 GMT</pubDate>
+    <description>How I faked deep, glowing crystals for Highstreet in Unity Shader Graph: inset-edge meshes, parallax inner layers, sparkles, fake reflections and a growth dissolve.</description>
+    <category>Unity</category>
+    <category>Shader Graph</category>
+    <category>Shaders</category>
+    <category>VR</category>
+    <category>Highstreet</category>
+  </item>
+  <item>
+    <title>Turning a Mesh into a Signed Distance Field in Unity</title>
+    <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0005_Mesh_To_SDF_Unity.html</link>
+    <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0005_Mesh_To_SDF_Unity.html</guid>
+    <pubDate>Sat, 17 Oct 2026 12:00:00 GMT</pubDate>
+    <description>How I turned an ordinary palm tree mesh into a signed distance field in Unity and rendered it with ray marching, from brute force to three tiny 3D textures.</description>
+    <category>Unity</category>
+    <category>Shaders</category>
+    <category>SDF</category>
+    <category>Ray Marching</category>
+    <category>R&amp;D</category>
+  </item>
+  <item>
+    <title>Giving AI a Face: Building Digital Humans at NPsynC</title>
+    <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0004_NPsynC_Digital_Humans.html</link>
+    <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0004_NPsynC_Digital_Humans.html</guid>
+    <pubDate>Sat, 17 Oct 2026 12:00:00 GMT</pubDate>
+    <description>Why we built NPsynC, our company making AI staff with a face for government and enterprise, and how I create our digital humans in Unreal Engine.</description>
+    <category>Unreal Engine</category>
+    <category>Digital Humans</category>
+    <category>Grooms</category>
+    <category>NPsynC</category>
+  </item>
+  <item>
+    <title>How I Built the Three.js Hero Scene</title>
+    <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0003_ThreeJS_Hero_Scene.html</link>
+    <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0003_ThreeJS_Hero_Scene.html</guid>
+    <pubDate>Sat, 17 Oct 2026 12:00:00 GMT</pubDate>
+    <description>How I built the three.js Spitfire hero scene on this site: Draco-compressed terrain, endless tiles, clouds in one draw call and fog that matches the sky.</description>
+    <category>Three.js</category>
+    <category>WebGL</category>
+    <category>Shaders</category>
+    <category>Optimisation</category>
+  </item>
+  <item>
+    <title>AI Film Making</title>
+    <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0002_AI_movie_making.html</link>
+    <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0002_AI_movie_making.html</guid>
+    <pubDate>Sun, 15 Dec 2024 12:00:00 GMT</pubDate>
+    <description>My first try at making an AI movie in 2024: ChatGPT for the prompts, a diffusion model for film-noir stills, then a video AI to bring each shot to life.</description>
+    <category>AI</category>
+    <category>Film</category>
+    <category>Workflow</category>
+  </item>
+  <item>
+    <title>Custom Circular View Imposter</title>
+    <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0001_Imposter_Highstreet.html</link>
+    <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0001_Imposter_Highstreet.html</guid>
+    <pubDate>Sun, 16 Jun 2024 12:00:00 GMT</pubDate>
+    <description>How I built custom imposters in Unity for Highstreet VR forests: a multi-angle capture tool, a texture atlas and a shader that blends views and keeps lighting.</description>
+    <category>Unity</category>
+    <category>VR</category>
+    <category>Optimisation</category>
+    <category>Shaders</category>
+  </item>
+</channel>
+</rss>

@@ -205,6 +205,9 @@ form .btn2{
     .hearder-text p{
         font-size: 20px;
      }
+    .hearder-text h1 span.hero-role{
+        font-size: 20px;
+    }
 
     .hearder-text h1{
        font-size: 30px;
@@ -383,4 +386,21 @@ button.icon-button:focus-visible,
 .copyright{ color: #cfcfcf; font-size: 14px; }
 @media only screen and (max-width: 600px){
     .post-grid{ grid-template-columns: 1fr; gap: 28px; }
+}
+
+/* ------------------------------------- icons
+   Inline SVG icons replace the Font Awesome kit (no webfont / kit JS). Icons: Font Awesome Free 6.7.2 by @fontawesome,
+   https://fontawesome.com, license CC BY 4.0 (https://fontawesome.com/license/free). The svg sits inside the old
+   .fa-solid / .fa-brands element, so existing size (font-size), colour and show/hide rules still apply. */
+.fa-solid, .fa-brands{
+    display: inline-block;
+    font-style: normal;
+    line-height: 1;
+}
+.fa-svg{
+    display: inline-block;
+    height: 1em;
+    overflow: visible;
+    vertical-align: -0.125em;
+    fill: currentColor;
 }

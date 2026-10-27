@@ -92,3 +92,15 @@
 /* flex child must be allowed to shrink so long code lines scroll inside <pre> instead of widening the page */
 .blog-content-details{ min-width: 0; max-width: 100%; flex: 1 1 100%; width: 100%; }
 .blog-inline-media-container.narrow-wide video{ max-width: 560px; width: 100%; }
+
+/* diagrams and the time of day viewer (0009) */
+.tod-diagram img{ width: 100%; height: auto; }
+.tod-controls{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.tod-controls button{
+    font: inherit; font-size: 14px; color: #dcdcdc; background: #181818;
+    border: 1px solid #2a2a2a; border-radius: 6px; padding: 8px 14px; min-height: 40px; cursor: pointer;
+}
+.tod-controls button:hover{ border-color: #2eaa25; }
+.tod-controls button[aria-pressed="true"]{ background: #2eaa25; border-color: #2eaa25; color: #0d0d0d; font-weight: bold; }
+.tod-controls button:focus-visible{ outline: 2px solid #38de2c; outline-offset: 2px; }
+.tod-viewer img{ aspect-ratio: 16 / 9; background: #0d0d0d; }

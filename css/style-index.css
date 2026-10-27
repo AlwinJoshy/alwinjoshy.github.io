@@ -101,6 +101,13 @@
 .hearder-text h1{
     z-index: 2;
 }
+/* role line lives inside the H1 (for search) but looks exactly like the old <p> above it */
+.hearder-text h1 .hero-role{
+    display: block;
+    font-size: 30px;
+    font-weight: 400;
+    color: inherit;
+}
 
 /* -----------------------------------------about */
 #about{
@@ -113,6 +120,7 @@
 }
 .about-col-1 img{
     width: 80%;
+    height: auto; /* the img has width/height attributes (no layout shift); keep its aspect ratio */
     border-radius: 15px;
 }
 
