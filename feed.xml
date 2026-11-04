@@ -7,6 +7,30 @@
   <description>Write-ups by Alwin Joshy, Technical Artist and Unity Engineer: shaders, scene lighting, performance optimisation and Unity tools.</description>
   <language>en</language>
   <item>
+    <title>Stylised Gerstner Water in Unity: Cheap Waves and Foam Trails</title>
+    <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0011_Stylised_Gerstner_Water_Unity.html</link>
+    <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0011_Stylised_Gerstner_Water_Unity.html</guid>
+    <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+    <description>A toon-style Unity ocean: summed Gerstner waves on LOD rings, simple stylised shading, and a foam texture that reads and writes itself to leave trails.</description>
+    <category>Water</category>
+    <category>Shaders</category>
+    <category>Unity</category>
+    <category>Technical Art</category>
+    <category>Stylised</category>
+  </item>
+  <item>
+    <title>Screen-Space Light Occupancy: Fewer Lights per Pixel</title>
+    <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0010_Screen_Space_Light_Occupancy.html</link>
+    <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0010_Screen_Space_Light_Occupancy.html</guid>
+    <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+    <description>A Unity prototype that splits the screen into cells and stores a bitmask of the lights touching each, so pixels only shade the lights that can reach them.</description>
+    <category>Lighting</category>
+    <category>Unity</category>
+    <category>Shaders</category>
+    <category>VR</category>
+    <category>Optimisation</category>
+  </item>
+  <item>
     <title>Time of Day Lighting Study: One Cabin, Four Moods</title>
     <link>https://alwinjoshy.github.io/pages/blogs/allblogs/0009_Time_Of_Day_Lighting_Study.html</link>
     <guid isPermaLink="true">https://alwinjoshy.github.io/pages/blogs/allblogs/0009_Time_Of_Day_Lighting_Study.html</guid>

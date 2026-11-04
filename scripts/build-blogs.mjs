@@ -195,7 +195,8 @@ function inject(file, content, scriptToDrop) {
     html = html.replace(new RegExp(`\\s*<script[^>]*${scriptToDrop}[^>]*></script>`), ''); // old runtime loader
     fs.writeFileSync(file, html);
 }
-inject('index.html', posts.slice(0, 3).map((p) => card(p)).join(''), 'loadlastfourblogs\\.js');
+const HOME_POSTS = 6;   // the homepage Writing section always shows exactly the latest 6 posts, newest first
+inject('index.html', posts.slice(0, HOME_POSTS).map((p) => card(p)).join(''), 'loadlastfourblogs\\.js');
 inject('blogArchive.html', archive, 'loadblogsfromfolder\\.js');
 
 // Blog + post list JSON-LD in blogArchive.html (managed block in <head>)
