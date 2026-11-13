@@ -1842,11 +1842,16 @@ button.icon-button:focus-visible,
                 <div class="contact-right">
                     <form name="submit-to-google-sheet">
                         <label for="contact-name" class="sr-only">Your name</label>
-                        <input type="text" id="contact-name" name="Name" placeholder="Your name" autocomplete="name" required>
+                        <input type="text" id="contact-name" name="Name" placeholder="Your name" autocomplete="name" maxlength="100" required>
                         <label for="contact-email" class="sr-only">Your email</label>
-                        <input type="email" id="contact-email" name="Email" placeholder="Your email" autocomplete="email" required>
+                        <input type="email" id="contact-email" name="Email" placeholder="Your email" autocomplete="email" maxlength="254" required>
                         <label for="contact-message" class="sr-only">Your message</label>
-                        <textarea id="contact-message" name="Message" rows="6" placeholder="Your message" required></textarea>
+                        <textarea id="contact-message" name="Message" rows="6" placeholder="Your message" maxlength="5000" required></textarea>
+                        <!-- Spam trap: hidden from people; bots that fill it are ignored. -->
+                        <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+                            <label for="contact-website">Leave this field empty</label>
+                            <input type="text" id="contact-website" name="website" tabindex="-1" autocomplete="off" value="">
+                        </div>
                         <button type="submit" class="btn btn2">Send message</button>
                     </form>
                     <span id="msg" role="status" aria-live="polite"></span>
