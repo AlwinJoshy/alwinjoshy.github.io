@@ -568,10 +568,87 @@ button.icon-button:focus-visible,
 .about-col-1{
     flex-basis: 35%;
 }
-.about-col-1 img{
+.about-col-1 img,
+.about-col-1 .xor-photo{
     width: 80%;
-    height: auto; /* the img has width/height attributes (no layout shift); keep its aspect ratio */
+    height: auto; /* width/height attributes (or aspect-ratio) prevent layout shift */
     border-radius: 15px;
+}
+.xor-photo{
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: #1a1a1a;
+    overflow: hidden;
+}
+.xor-photo canvas{
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 15px;
+    background: #000;
+}
+.xor-photo-fallback{
+    position: absolute;
+    inset: 0;
+    border-radius: 15px;
+    background: #1a1a1a;
+}
+
+/* CRT scan lines + night-vision glow over the POV portrait */
+.xor-photo.xor-crt::after{
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 15px;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at center, rgba(60,255,120,.06) 0%, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%);
+    box-shadow: inset 0 0 40px rgba(0,0,0,.7), inset 0 0 12px rgba(80,255,140,.15);
+    animation: xorCrtFlicker 4s steps(60) infinite;
+}
+.xor-photo.xor-crt canvas{
+    filter: drop-shadow(0 0 2px rgba(80,255,140,.35));
+}
+
+.xor-photo .xor-fireflies{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    border-radius: 15px;
+    background: transparent;
+}
+
+/* Moving scan lines + rolling refresh band */
+.xor-photo.xor-crt::before{
+    content: "";
+    position: absolute;
+    inset: -3px 0 0 0;
+    z-index: 1;
+    border-radius: 15px;
+    pointer-events: none;
+    background:
+        linear-gradient(to bottom, rgba(120,255,150,0) 0%, rgba(120,255,150,.10) 50%, rgba(120,255,150,0) 100%) 0 -30% / 100% 30% no-repeat,
+        repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(0,0,0,.45) 2px, rgba(0,0,0,.45) 3px) 0 0 / 100% 3px;
+    animation: xorScanRoll 6s linear infinite, xorScanCrawl .5s steps(3) infinite;
+}
+.xor-photo.xor-crt::after{ z-index: 2; }
+.xor-photo .xor-fireflies{ z-index: 3; }
+@keyframes xorScanRoll{
+    from{ background-position: 0 -40%, 0 0; }
+    to{ background-position: 0 140%, 0 0; }
+}
+@keyframes xorScanCrawl{
+    from{ transform: translateY(0); }
+    to{ transform: translateY(3px); }
+}
+@keyframes xorCrtFlicker{
+    0%,100%{opacity:1} 47%{opacity:.92} 50%{opacity:1} 73%{opacity:.95}
+}
+@media (prefers-reduced-motion: reduce){
+    .xor-photo.xor-crt::after,
+    .xor-photo.xor-crt::before{animation:none}
 }
 
 .about-col-2{
@@ -927,7 +1004,8 @@ button.icon-button:focus-visible,
         font-size: 14px;
     }
 
-    .about-col-1 img{
+    .about-col-1 img,
+    .about-col-1 .xor-photo{
         width: 100%;
         border-radius: 15px;
     }
@@ -1178,12 +1256,6 @@ button.icon-button:focus-visible,
    "@id": "https://alwinjoshy.github.io/#person",
    "name": "Alwin Joshy",
    "url": "https://alwinjoshy.github.io/",
-   "image": {
-    "@type": "ImageObject",
-    "url": "https://alwinjoshy.github.io/images/Alwin_Joshy_Joseph.jpg",
-    "width": 400,
-    "height": 400
-   },
    "jobTitle": "Technical Artist",
    "hasOccupation": {
     "@type": "Occupation",
@@ -1479,7 +1551,10 @@ button.icon-button:focus-visible,
         <div class="container">
             <div class="row">
                 <div class="about-col-1">
-                    <img src="images/AlwinJoshyJeoeph_lite.webp" alt="Portrait of Alwin Joshy, Technical Artist and Unity Engineer" loading="lazy" decoding="async" width="400" height="400">
+                    <div class="xor-photo xor-crt" data-xor-photo data-xor="images/profile/photo.xor" data-density="0.80" data-decay="0" data-boost="1" data-tint="nv" data-fireflies="5" data-noise="0.5">
+                        <canvas width="400" height="400" role="img" aria-label="Portrait of Alwin Joshy, Technical Artist and Unity Engineer"></canvas>
+                        <div class="xor-photo-fallback" hidden></div>
+                    </div>
                 </div>
                 <div class="about-col-2">
                     <h2 class="subtitle">About</h2>
@@ -1864,6 +1939,7 @@ button.icon-button:focus-visible,
     </section>
     </main>
     <!-- final load scripts -->
+    <script src="scripts/xorphoto.js" defer></script>
     <script src="scripts/aboutops.js" defer></script>
     <script src="scripts/smallscreennavrops.js" defer></script>
     <script src="scripts/sendcontactrequestops.js" defer></script>
